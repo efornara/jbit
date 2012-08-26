@@ -1,0 +1,60 @@
+JBit
+====
+
+This is a JavaScript version of the JBit Virtual Machine (with MicroIO)
+hosted on the V8 JavaScript Engine.
+
+JBit is a 6502 simulator and development environment. It targets feature
+phones, but a web version is in progress. You can see a (quite old) web
+host for this code here:
+
+http://jbit.sourceforge.net/webapp
+
+
+Compile
+-------
+
+Beside the usual gcc/g++ toolchain, you need the development versions of
+ncurses and libv8. On a debian, this means having the following packages
+installed:
+
+libncurses5-dev
+libv8-dev
+
+Tested on debian stable.
+
+
+Run
+---
+
+Type:
+
+./jbit samples/charset.jb
+
+Then press 2 and 8 to scroll and 0 to halt the program.
+
+More samples that work on MicroIO are available here:
+
+http://jbit.sourceforge.net/gallery/list.php?tag=microio
+
+If you move the executable, you have to set the environment variable
+JBIT_RES to point to the res directory.
+
+Beside the keys shown on screen, there are also a couple of support
+keys.
+
+Pressing 'S' (uppercase) writes a screenshot to 'out.ppm'.
+If you have SDL, pressing 'D' (uppercase) should bring up a window with
+the display output. Note that you do not need to compile with
+libsdl1.2-dev for this to work.
+
+
+More info
+---------
+
+http://jbit.sf.net (XHTML site, optimized for feature phones)
+
+or
+
+http://jbit.sf.net/m (WAP site, for old phones / very low bandwidth)
+
