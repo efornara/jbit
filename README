@@ -2,20 +2,21 @@ JBit
 ====
 
 This is a JavaScript version of the JBit Virtual Machine (with MicroIO)
-hosted on the V8 JavaScript Engine.
+hosted on the V8 JavaScript Engine. Please note that I expect to migrate
+to SpiderMonkey (more platforms supported).
 
 JBit is a 6502 simulator and development environment. It targets feature
-phones, but a web version is in progress. You can see a (quite old) web
-host for this code here:
+phones, but a web version is in progress. You can see a web host for this
+code here (browse the gallery and click on 'sim'):
 
-http://jbit.sourceforge.net/webapp
+http://jbit.sourceforge.net/gallery/list.php?tag=microio
 
 
 Compile
 -------
 
 Beside the usual gcc/g++ toolchain, you need the development versions of
-ncurses and libv8. On a debian, this means having the following packages
+ncurses and libv8. On debian, this means having the following packages
 installed:
 
 libncurses5-dev
@@ -43,10 +44,10 @@ JBIT_RES to point to the res directory.
 Beside the keys shown on screen, there are also a couple of support
 keys.
 
-Pressing 'S' (uppercase) writes a screenshot to 'out.ppm'.
-If you have SDL, pressing 'D' (uppercase) should bring up a window with
-the display output. Note that you do not need to compile with
-libsdl1.2-dev for this to work.
+Pressing shift+S writes a screenshot to 'out.ppm'.
+If you have SDL, pressing shift+D should bring up a window with the
+display output. You do not need to compile with libsdl1.2-dev for this
+to work.
 
 
 More info
