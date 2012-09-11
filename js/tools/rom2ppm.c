@@ -31,7 +31,7 @@
 #include <assert.h>
 
 #define H "14"
-unsigned char bg[] = { 0x60, 0xe0, 0xc0 };
+unsigned char bg[] = { 0x78, 0xc8, 0xb4 };
 unsigned char fg[] = { 0x00, 0x00, 0x00 };
 
 char buffer[16 * 1024];
@@ -52,7 +52,7 @@ void loadrom()
 void saveppm()
 {
 	FILE *f;
-	int width = 32 * 8, height = 8 * h;
+	int width = 16 * 8, height = 16 * h;
 	int x, y, c, cx, cy;
 	unsigned char *color;
 
@@ -63,7 +63,7 @@ void saveppm()
 		cy = y % h;
 		for (x = 0; x < width; x++) {
 			cx = x % 8;
-			c = (y / h) * 32 + (x / 8);
+			c = (y / h) * 16 + (x / 8);
 			if (buffer[c * h + cy] & (0x80 >> cx))
 				color = fg;
 			else

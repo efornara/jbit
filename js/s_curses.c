@@ -108,11 +108,11 @@ static void draw_frame(uint32_t *f)
 {
 	int i, y, x;
 
-	frame_clear(f, 0x80ffe0ff);
+	frame_clear(f, 0x90e0c0ff);
 	for (y = 0, i = 0; y < 4; y++)
 		for (x = 0; x < 10; x++, i++)
 			frame_putchar(f, OX + x * CHAR_WIDTH, OY + y * CHAR_HEIGHT,
-			  video_buf[i], 0x000000ff, 0x60e0c0ff);
+			  video_buf[i], 0x000000ff, 0x78c8b4ff);
 }
 
 void skin_flush(void)
