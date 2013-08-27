@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<project name="JBDoc" default="build" basedir=".">
+
+	<taskdef resource="antenna.properties" />
+
+	<target name="clean">
+
+		<delete failonerror="false" dir="tmpjava" />
+		<delete failonerror="false" dir="tmpsrc" />
+		<delete failonerror="false" dir="tmpclasses" />
+		<delete failonerror="false" dir="tmpmidlets" />
+
+	</target>
+
+	<target name="build">
+
+		<property name="midlet.name" value="JBDoc" />
+		<property name="midlet.vendor" value="Emanuele Fornara" />
+		<property name="midlet.version" value="1.1.0" />
+
+		<property name="wtk.midp.version" value="1.0" />
+		<property name="wtk.cldc.version" value="1.0" />
+		<property name="profile" value="Midp1" />
+		<property name="device" value="Generic/PlainMidp1" />
+
+		<property name="midlet.base" value="bin/JBDoc" />
+		<property name="preproc.symbols" value="" />
+
+		<mkdir dir="bin" />
+
+		<wtkjad jadfile="${midlet.base}.jad" name="${midlet.name}" vendor="${midlet.vendor}" version="${midlet.version}">
+			<midlet name="${midlet.name}" class="JBDoc" />
+			<attribute name="MIDlet-Info-URL" value="http://jbit.sourceforge.net/m" />
+		</wtkjad>
+
+		<mkdir dir="tmpjava" />
+		<mkdir dir="tmpsrc" />
+		<mkdir dir="tmpclasses" />
+
+		<copy todir="tmpjava">
+			<fileset dir="src" />
+		</copy>
+
+		<wtkpreprocess srcdir="tmpjava" destdir="tmpsrc" device="${device}" symbols="${preproc.symbols}" />
+
+		<wtkbuild srcdir="tmpsrc" destdir="tmpclasses" preverify="false" />
+
+		<wtkpackage jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad" obfuscate="false" autoversion="false">
+			<fileset dir="tmpclasses" />
+			<fileset dir="res" />
+		</wtkpackage>
+
+		<wtkobfuscate jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad">
+			<argument value="'-overloadaggressively'" />
+			<argument value="'-allowaccessmodification'" />
+			<argument value="'-keep public class * extends javax.microedition.midlet.MIDlet'" />
+		</wtkobfuscate>
+
+		<wtkpreverify jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad" />
+
+		<delete failonerror="false" dir="tmpjava" />
+		<delete failonerror="false" dir="tmpsrc" />
+		<delete failonerror="false" dir="tmpclasses" />
+
+	</target>
+
+</project>
