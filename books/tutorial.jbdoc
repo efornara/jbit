@@ -25,11 +25,11 @@ p Here there is a picture of the VM:
 |              |
 +--------------+
 
-p As you can see that it looks like an ugly mobile phone. Now, the
-VM might be ugly, but it is definitely not a mobile phone. For a
-start, you cannot make or receive calls, nor send or receive text
-messages with it. Furthermore, the display can only show a matrix of
-10x4 characters and the keypad has only the standard keys (i.e. 0-9,
+p As you can see, IT looks like an ugly mobile phone. Now, the VM might
+be ugly, but it is definitely not a mobile phone. For a start, you
+cannot make or receive calls, nor send or receive text messages with it.
+Furthermore, the display can only show a matrix of 10x4 characters and
+the keypad has only the standard keys (i.e. 0-9,
 * and #).
 
 p Since the VM cannot function as a phone, what can it be useful for?
@@ -558,7 +558,7 @@ Accumulator).
 
 p Here is an example for the opcode 169:
 
-p 169 65
+169 65
 
 p Note that, unlike BRK and INX, one byte is not enough to specify the
 behaviour of the CPU. If we want the CPU to replace the content of the
@@ -569,7 +569,7 @@ of the Accumulator.
 
 p And here is an example for the opcode 173:
 
-p 173 40 2
+173 40 2
 
 p In this case the operation is three-bytes long, and the last two bytes
 (i.e. the operand) specify the address of a cell where the new value
@@ -586,7 +586,7 @@ operands.
 
 p Consider this sequence:
 
-p 169 40 2
+169 40 2
 
 p Maybe you meant to load the Accumulator from the cell 2:40. But, of
 course, the CPU cannot guess what you meant; it would load the
