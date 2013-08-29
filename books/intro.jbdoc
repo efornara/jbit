@@ -31,12 +31,9 @@ JBit, you might want to read about the available versions below.
 
 B News
 
-i JBDoc-20120819 / 1.0.1
+i JBDoc-20130829 / 1.1.0
 
-p A smaller font has been added (selection is automatic;
-there is no way to select which one is loaded).
-The book gameapi has been extended.
-New formats are available (epub and mobi).
+P There is a new book: ioprg1.
 
 B Versions
 
@@ -89,6 +86,12 @@ i gameapi
 
 p This is the beginning of a tutorial on the template demo and the
 GameKit Empty demo.
+
+i ioprg1
+
+p The first part of a guide on how to program the IO chip. There is an
+introduction to IO requests, a fairly complete treatment of images and
+an introduction to sprites.
 
 i ioref
 
