@@ -26,67 +26,62 @@
  * SUCH DAMAGE.
  */
 
-// frame.c
-
-#include "defs.h"
-
-#include <stdio.h>
-
-void frame_clear(uint32_t *f, uint32_t bg) 
-{
-	int i;
-
-	for (i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++)
-		f[i] = bg;
+div {
+ margin: 0;
+ padding: 0;
+ border: 0;
 }
 
-#if (CHAR_WIDTH != 8 || CHAR_HEIGHT != 14)
-#error "unsupported CHAR size"
-#endif
-
-void frame_putchar(uint32_t *f, int x, int y, int c, uint32_t fg, uint32_t bg)
-{
-	static char *font = NULL;
-	int i, j, mask, i_font, i_f;
-
-	if (font == NULL) {
-		int size;
-		font = load_res_file("vga14.rom", &size);
-		if (size != 14 * 256)
-			fatal("invalid font size");
-	}
-	i_font = (c & 0xFF) * 14;
-	i_f = x + y * FRAME_WIDTH;
-	for (i = 0; i < 14; i++) {
-		mask = 0x80;
-		for (j = 0; j < 8; j++) {
-			if (font[i_font] & mask)
-				f[i_f] = fg;
-			else
-				f[i_f] = bg;
-			mask >>= 1;
-			i_f++;
-		}
-		i_f += FRAME_WIDTH - 8;
-		i_font++;
-	}
+#jb_float {
+ position: fixed;
+ right: 10px;
+ width: 180px;
+ height: 240px;
+ background-color: #222;
+ -webkit-border-radius: 6px;
+ -moz-border-radius: 6px;
+ border-radius: 6px;
 }
 
-void frame_screenshot(uint32_t *f, const char *file_name)
-{
-	FILE *file;
-	int i, x, y;
+#jb_top {
+ position: relative;
+}
 
-	if ((file = fopen(file_name, "wb")) == NULL)
-		fatal("frame_screenshot failed for '%s'", file_name);
-	fprintf(file, "P6\n%d %d\n255\n", FRAME_WIDTH, FRAME_HEIGHT);
-	for (y = 0, i = 0; y < FRAME_HEIGHT; y++) {
-		for (x = 0; x < FRAME_WIDTH; x++, i++) {
-			uint32_t c = f[i];
-			fputc((c >> 24) & 0xFF, file);
-			fputc((c >> 16) & 0xFF, file);
-			fputc((c >>  8) & 0xFF, file);
-		}
-	}
-	fclose(file);
+.page {
+ position: absolute;
+ display: none;
+}
+
+.button {
+ border: none;
+ background: #cbcf88;
+ -webkit-border-radius: 2px;
+ -moz-border-radius: 3px;
+ border-radius: 2px;
+ color: black;
+ font-size: 12px;
+ font-family: sans-serif;
+ text-decoration: none;
+ vertical-align: middle;
+}
+
+.lcd {
+ position: absolute;
+ background-color: #90e0c0;
+ border-top-style: solid;
+ border-left-style: solid;
+ border-right-style: none;
+ border-bottom-style: none;
+ border-width: 2px;
+ border-color: #487060;
+}
+
+.cell {
+ position: absolute;
+ border-style: none;
+}
+
+.text {
+ position: absolute;
+ border: none;
 }
