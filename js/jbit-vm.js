@@ -160,10 +160,10 @@ function VM(io_, skin_) {
 	}
 
 	JBIT.io_get = function(address, value) {
-		return io.get(address - 512);
+		return io.get(address);
 	}
 
 	JBIT.io_put = function(address, value) {
-		io.put(address - 512, value);
+		io.put(address, value);
 	}
 }

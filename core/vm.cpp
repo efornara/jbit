@@ -49,7 +49,7 @@ public:
 			return;
 		value = value & 0xFF;
 		if ((address & 0xff00) == 0x0200)
-			io->put(address, value);
+			io->put(address & 0xff, value);
 		else
 			m[address] = static_cast<unsigned char>(value);
 	}
@@ -57,7 +57,7 @@ public:
 		if (address < 0 || address >= mem_size)
 			return 0;
 		if ((address & 0xff00) == 0x0200)
-			return io->get(address);
+			return io->get(address & 0xff);
 		else
 			return m[address];
 	}

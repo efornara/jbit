@@ -26,22 +26,12 @@
  * SUCH DAMAGE.
  */
 
-// core.h
+// jbit.h
 
-class IO {
+#include "core.h"
+
+class Device : public IO {
 public:
-	virtual void reset() = 0;
-	virtual void put(int address, int value) = 0;
-	virtual int get(int address) = 0;
-	virtual ~IO() {}
+	virtual void update(int status) = 0;
+	virtual ~Device() {}
 };
-
-class VM {
-public:
-	virtual void reset() = 0;
-	virtual void put(int address, int value) = 0;
-	virtual int step() = 0;
-	virtual ~VM() {}
-};
-
-extern VM *new_VM(IO *io);

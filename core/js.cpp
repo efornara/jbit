@@ -39,7 +39,7 @@ IO *io = 0;
 VM *vm = 0;
 
 class IOImpl : public IO {
-	virtual void reset() {
+	void reset() {
 		asm("JBIT.io_reset();"
 		    : /* output */
 		    : /* input */
@@ -66,15 +66,11 @@ class IOImpl : public IO {
 
 } // namespace
 
-IO *new_IO() {
-	return new IOImpl();
-}
-
 extern "C" {
 
 void vm_reset() {
 	if (!io)
-		io = new_IO();
+		io = new IOImpl();
 	if (!vm)
 		vm = new_VM(io);
 	vm->reset();
