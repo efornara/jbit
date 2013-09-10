@@ -34,7 +34,10 @@
  ****************************************************************************/
 
 JBIT = {};
+
+vm_reset = Module.cwrap('vm_reset', undefined, []);
 vm_step = Module.cwrap('vm_step', 'number', []);
+vm_put = Module.cwrap('vm_put', undefined, ['number','number']);
 
 function VM(io_, skin_) {
 
@@ -46,15 +49,7 @@ function VM(io_, skin_) {
 	var io = io_;
 	var skin = skin_;
 	
-	var m = new Array();
-	
-	function memoryReset() {
-		var i = 0;
-		
-		for (i = 0; i < 65536; i++)
-			m[i] = 0;
-	}
-	
+	// TODO: move to core
 	function loadProgramFromText(text) {
 		var pattern, code = -1, data, page, exc;
 		var lines = text.split("\n");
@@ -86,8 +81,8 @@ function VM(io_, skin_) {
 					var fields = line.split(" ");
 					for (var j = 1; j < fields.length; j++) {
 						value = parseInt(fields[j], 10);
-						m[address] = value;
-						address++;
+						if (!isNaN(value))
+							vm_put(address++, value);
 					}
 				}
 				break;
@@ -129,14 +124,11 @@ function VM(io_, skin_) {
 	// ENVIRONMENT INTERFACE
 	
 	this.init = function() {
-		//cpu.setAddressSpace(this);
 		this.reset();
 	};
 	
 	this.reset = function() {
-		memoryReset();
-		io.reset();
-		//cpu.reset();
+		vm_reset();
 	};
 	
 	this.load = function(text) {
@@ -162,6 +154,10 @@ function VM(io_, skin_) {
 	};
 
 	// VM INTERFACE
+
+	JBIT.io_reset = function() {
+		return io.reset();
+	}
 
 	JBIT.io_get = function(address, value) {
 		return io.get(address - 512);

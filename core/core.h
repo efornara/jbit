@@ -26,74 +26,23 @@
  * SUCH DAMAGE.
  */
 
-// js.cpp
+// core.h
 
-#include "core.h"
-
-#include <emscripten.h>
-
-namespace {
-
-const int io_addr = 0x200;
-IO *io = 0;
-VM *vm = 0;
-
-class IOImpl : public IO {
-	virtual void reset() {
-		asm("JBIT.io_reset();"
-		    : /* output */
-		    : /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	void put(int address, int value) {
-		asm("JBIT.io_put(%0, %1);"
-		    : /* output */
-		    : "n"(address), "n"(value) /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	int get(int address) {
-		int value;
-		asm("%1 = JBIT.io_get(%0);"
-		    : "=r"(value) /* output */
-		    : "n"(address) /* input */
-		    : /* clobbered registers */
-		    );
-		return value;
-	}
+class IO {
+public:
+	virtual void reset() = 0;
+	virtual void put(int address, int value) = 0;
+	virtual int get(int address) = 0;
+	virtual ~IO() {}
 };
 
-} // namespace
+class VM {
+public:
+	virtual void reset() = 0;
+	virtual void put(int address, int value) = 0;
+	virtual int step() = 0;
+	virtual ~VM() {}
+};
 
-IO *new_IO() {
-	return new IOImpl();
-}
-
-extern "C" {
-
-void vm_reset() {
-	if (!io)
-		io = new_IO();
-	if (!vm)
-		vm = new_VM(io);
-	vm->reset();
-}
-
-void vm_put(int address, int value) {
-	asm("console.log('vm_put(' + %0 + ', ' + %1 + ')');"
-	    : /* output */
-	    : "n"(address), "n"(value) /* input */
-	    : /* clobbered registers */
-	    );
-	if (vm)
-		vm->put(address, value);
-}
-
-int vm_step() {
-	if (vm)
-		return vm->step();
-	return 0;
-}
-
-} // extern "C"
+extern IO *new_IO();
+extern VM *new_VM(IO *io);

@@ -1,13 +1,15 @@
-CXX=em++
-CXXFLAGS=-std=c++98 -fno-exceptions -fno-rtti -Wall
-EXPORTS=EXPORTED_FUNCTIONS="['_vm_load', '_vm_step']"
+CXX = em++
+CXXFLAGS = -std=c++98 -fno-exceptions -fno-rtti -Wall
+EXPORTS = EXPORTED_FUNCTIONS="['_vm_reset', '_vm_put', '_vm_step']"
 
-OUT=../js/res/vm.js
+OBJS = js.o vm.o
+
+OUT = ../js/res/core.js
 
 all: $(OUT)
 
-$(OUT): js.cpp
-	$(CXX) $(CXXFLAGS) -o $(OUT) js.cpp -s $(EXPORTS)
+$(OUT): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(OUT) $(OBJS) -s $(EXPORTS)
 
 clean:
-	$(RM) $(OUT)
+	$(RM) $(OUT) *.o

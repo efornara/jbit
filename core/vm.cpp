@@ -26,74 +26,46 @@
  * SUCH DAMAGE.
  */
 
-// js.cpp
+// vm.cpp
 
 #include "core.h"
 
-#include <emscripten.h>
+#include <string.h>
 
 namespace {
 
-const int io_addr = 0x200;
-IO *io = 0;
-VM *vm = 0;
-
-class IOImpl : public IO {
-	virtual void reset() {
-		asm("JBIT.io_reset();"
-		    : /* output */
-		    : /* input */
-		    : /* clobbered registers */
-		    );
+class VMImpl : public VM {
+private:
+	static const int mem_size = 256 * 256;
+	IO *io;
+	unsigned char m[mem_size];
+public:
+	VMImpl(IO *io_) : io(io_) {}
+	void reset() {
+		io->reset();
+		memset(m, 0, mem_size);
 	}
 	void put(int address, int value) {
-		asm("JBIT.io_put(%0, %1);"
-		    : /* output */
-		    : "n"(address), "n"(value) /* input */
-		    : /* clobbered registers */
-		    );
+		if (address < 0 || address >= mem_size)
+			return;
+		if (value < 0 || value > 255)
+			return;
+		m[address] = static_cast<unsigned char>(value);
 	}
-	int get(int address) {
-		int value;
-		asm("%1 = JBIT.io_get(%0);"
-		    : "=r"(value) /* output */
-		    : "n"(address) /* input */
-		    : /* clobbered registers */
-		    );
-		return value;
+	int step() {
+		static const int io_addr = 0x200;
+		static int i = 0;
+
+		if (io->get(io_addr + 24) != 0)
+			return 0;
+		io->put(io_addr + 40, '0' + (i++ % 10));
+		io->put(io_addr + 18, 0);
+		return 1;
 	}
 };
 
 } // namespace
 
-IO *new_IO() {
-	return new IOImpl();
+VM *new_VM(IO *io) {
+	return new VMImpl(io);
 }
-
-extern "C" {
-
-void vm_reset() {
-	if (!io)
-		io = new_IO();
-	if (!vm)
-		vm = new_VM(io);
-	vm->reset();
-}
-
-void vm_put(int address, int value) {
-	asm("console.log('vm_put(' + %0 + ', ' + %1 + ')');"
-	    : /* output */
-	    : "n"(address), "n"(value) /* input */
-	    : /* clobbered registers */
-	    );
-	if (vm)
-		vm->put(address, value);
-}
-
-int vm_step() {
-	if (vm)
-		return vm->step();
-	return 0;
-}
-
-} // extern "C"
