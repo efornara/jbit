@@ -104,9 +104,9 @@ function VM(io_, skin_) {
 		}
 		skin.update();
 		switch (vm_status) {
-		case 1: // OK
+		case 0: // OK
 			break;
-		case 0: // HALT
+		case 1: // HALT
 			skin.setVMStatus("HALTED");
 			running = false;
 			break;
