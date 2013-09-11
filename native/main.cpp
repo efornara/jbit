@@ -86,11 +86,8 @@ Buffer *load_file(const char *file_name) {
 	return buffer;
 }
 
-enum DeviceTag {
-	DEV_UNKNOWN,
-	DEV_MICROIO,
-	DEV_XV65
-};
+Tag MicroIODevTag("microio");
+Tag Xv65DevTag("xv65");
 
 class JBParser {
 private:
@@ -104,7 +101,7 @@ public:
 		if (size < 12)
 			fatal("invalid jb format (size < 12)");
 	}
-	DeviceTag parse(Buffer *program) {
+	void parse(Program *prg) {
 		int code_pages = jb[8] & 0xFF;
 		int data_pages = jb[9] & 0xFF;
 		if (code_pages == 0 || code_pages + data_pages > 251)
@@ -112,50 +109,43 @@ public:
 		int program_size = (code_pages + data_pages) * 256;
 		if (size != 12 + program_size)
 			fatal("invalid jb format (size/pages mismatch)");
-		program->reset();
-		char *raw = program->append_raw(program_size);
+		prg->reset();
+		char *raw = prg->append_raw(program_size);
 		memcpy(raw, &jb[12], program_size);
 		if (memcmp(jb, "JBit", 4) == 0)
-			return DEV_MICROIO;
+			prg->device_tag = MicroIODevTag;
 		else if (memcmp(jb, "xv65", 4) == 0)
-			return DEV_XV65;
-		return DEV_UNKNOWN;
+			prg->device_tag = Xv65DevTag;
 	}
 };
 
-void startup(const char *file_name, DeviceTag dev_tag, VM **vm, Device **dev) {
+void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Buffer *file = load_file(file_name);
 	Parser parser(file);
-	Buffer program;
-	DeviceTag tag;
+	Program prg;
 	if (parser.has_signature()) {
-		const ParseError *e = parser.parse(&program);
+		const ParseError *e = parser.parse(&prg);
 		if (e)
 			fatal("line %d: %s", e->lineno, e->msg.get_data());
-		tag = DEV_XV65;
 	} else {
 		JBParser jb_parser(file);
-		tag = jb_parser.parse(&program);
+		jb_parser.parse(&prg);
 	}
 	delete file;
-	if (dev_tag != DEV_UNKNOWN)
-		tag = dev_tag;
-	switch (tag) {
-	case DEV_MICROIO:
+	if (dev_tag.is_valid())
+		prg.device_tag = dev_tag;
+	if (prg.device_tag.is_equal(MicroIODevTag))
 		(*dev) = new_CursesDevice();
-		break;
-	case DEV_XV65:
+	else if (prg.device_tag.is_equal(Xv65DevTag))
 		(*dev) = new_Xv65Device();
-		break;
-	default:
+	else
 		fatal("invalid jb format (signature)");
-	}
 	(*vm) = new_VM(*dev);
 	(*vm)->reset();
-	(*vm)->load(&program);
+	(*vm)->load(&prg);
 }
 
-void run(const char *file_name, DeviceTag dev_tag) {
+void run(const char *file_name, Tag dev_tag) {
 	VM *vm;
 	Device *dev;
 	startup(file_name, dev_tag, &vm, &dev);
@@ -171,7 +161,7 @@ void run(const char *file_name, DeviceTag dev_tag) {
 
 int main(int argc, char *argv[])
 {
-	DeviceTag dev_tag = DEV_UNKNOWN;
+	Tag dev_tag;
 	const char *file_name = 0;
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
@@ -179,10 +169,8 @@ int main(int argc, char *argv[])
 			if (++i == argc)
 				usage();
 			const char *d = argv[i];
-			if (!strcmp(d, "microio"))
-				dev_tag = DEV_MICROIO;
-			else if (!strcmp(d, "xv65"))
-				dev_tag = DEV_XV65;
+			if (!strcmp(d, "microio") || !strcmp(d, "xv65"))
+				dev_tag = Tag(d);
 			else
 				fatal("unknown device '%s'", d);
 		} else if (!file_name) {

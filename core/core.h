@@ -28,6 +28,13 @@
 
 // core.h
 
+struct Tag {
+	const char *s;
+	Tag(const char *s_ = 0) : s(s_) {}
+	bool is_valid() { return s; }
+	bool is_equal(const Tag &o);
+};
+
 class Buffer {
 private:
 	char *data;
@@ -47,6 +54,13 @@ public:
 	int get_length() const { return length; }
 };
 
+class Program : public Buffer {
+public:
+	Tag device_tag;
+	int n_of_code_pages;
+	Program() : n_of_code_pages(-1) {}
+};
+
 struct ParseError {
 	Buffer msg;
 	int lineno;
@@ -58,7 +72,7 @@ private:
 public:
 	Parser(const Buffer *src_);
 	bool has_signature();
-	const ParseError *parse(Buffer *program);
+	const ParseError *parse(Program *prg);
 };
 
 class IO {
@@ -73,7 +87,7 @@ class VM {
 public:
 	virtual void reset() = 0;
 	virtual void put(int address, int value) = 0;
-	virtual void load(const Buffer *program) = 0;
+	virtual void load(const Program *prg) = 0;
 	virtual int step() = 0;
 	virtual ~VM() {}
 };

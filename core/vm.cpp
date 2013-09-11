@@ -1172,9 +1172,9 @@ public:
 		mem.reset();
 		cpu.reset();
 	}
-	void load(const Buffer *program) {
-		const char *p = program->get_data();
-		int len = program->get_length();
+	void load(const Program *prg) {
+		const char *p = prg->get_data();
+		int len = prg->get_length();
 		if (len > 253 * 256)
 			return;
 		for (int i = 0; i < len; i++)

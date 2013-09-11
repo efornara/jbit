@@ -83,6 +83,14 @@ public:
 
 } // namespace
 
+bool Tag::is_equal(const Tag &o) {
+	if (!s)
+		return !o.s;
+	if (!o.s)
+		return false;
+	return !strcmp(s, o.s);
+}
+
 Buffer::Buffer(int initial_size) {
 	if (initial_size <= 0)
 		initial_size = 1;
@@ -133,9 +141,9 @@ bool Parser::has_signature() {
 	return src->get_length() > 2 && data[0] == '#' && data[1] == '!';
 }
 
-const ParseError *Parser::parse(Buffer *program) {
+const ParseError *Parser::parse(Program *prg) {
 	static ParseError e;
-	program->reset();
+	prg->reset();
 	Buffer token(32);
 	LineReader r(src);
 	do {
@@ -161,9 +169,10 @@ const ParseError *Parser::parse(Buffer *program) {
 			int n = atoi(t);
 			if (n > 255)
 				goto error;
-			program->append_char(n);
+			prg->append_char(n);
 		}
 	} while (r.nextline());
+	prg->device_tag = Tag("xv65");
 	return 0;
 error:
 	e.msg.reset();
