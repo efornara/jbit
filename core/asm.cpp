@@ -28,9 +28,60 @@
 
 // asm.cpp
 
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <limits.h>
 
 #include "core.h"
+
+namespace {
+
+class LineReader {
+private:
+	const char *d;
+	int len;
+	int i, start;
+	int lineno;
+public:
+	static const int EOL = INT_MAX;
+	void rewind() {
+		i = 0;
+		start = 0;
+		lineno = 1;
+	}
+	int get_lineno() { return lineno; }
+	LineReader(const Buffer *b) : d(b->get_data()), len(b->get_length()) {
+		rewind();
+	}
+	int getc() {
+		if (i >= len)
+			return EOL;
+		char c = d[i];
+		if (c == 0 || c == '\n' || c == '\r')
+			return EOL;
+		i++;
+		return c;
+	}
+	void unget() {
+		if (i != start)
+			i--;
+	}
+	bool nextline() {
+		while (getc() != EOL)
+			;
+		i++;
+		while (i < len && d[i] == '\r')
+			i++;
+		if (i >= len)
+			return false;
+		start = i;
+		lineno++;
+		return true;
+	}
+};
+
+} // namespace
 
 Buffer::Buffer(int initial_size) {
 	if (initial_size <= 0)
@@ -57,6 +108,11 @@ char *Buffer::append_raw(int len) {
 	return raw;
 }
 
+void Buffer::append_char(char c) {
+	char *raw = append_raw(1);
+	*raw = c;
+}
+
 void Buffer::append_data(const char *p, int len) {
 	char *raw = append_raw(len);
 	memcpy(raw, p, len);
@@ -69,15 +125,50 @@ void Buffer::append_line(const char *line) {
 	raw[len] = '\n';
 }
 
-Parser::Parser(const Buffer *buffer_) : buffer(buffer_) {
+Parser::Parser(const Buffer *src_) : src(src_) {
 }
 
 bool Parser::has_signature() {
-	const char *data = buffer->get_data();
-	return buffer->get_length() > 2 && data[0] == '#' && data[1] == '!';
+	const char *data = src->get_data();
+	return src->get_length() > 2 && data[0] == '#' && data[1] == '!';
 }
 
-const ParseError *Parser::parse(const Buffer *program) {
+const ParseError *Parser::parse(Buffer *program) {
+	static ParseError e;
+	program->reset();
+	Buffer token(32);
+	LineReader r(src);
+	do {
+		int c = r.getc();
+		if (c == LineReader::EOL || c == '#')
+			continue;
+		while (c != LineReader::EOL) {
+			while (isspace(c))
+				c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			token.reset();
+			while (c != LineReader::EOL && !isspace(c)) {
+				token.append_char(c);
+				c = r.getc();
+			}
+			token.append_char(0);
+			const char *t = token.get_data();
+			char ch;
+			for (int i = 0; (ch = t[i]); i++)
+				if (!isdigit(ch))
+					goto error;
+			int n = atoi(t);
+			if (n > 255)
+				goto error;
+			program->append_char(n);
+		}
+	} while (r.nextline());
 	return 0;
+error:
+	e.msg.reset();
+	e.msg.append_line("parse error");
+	e.lineno = r.get_lineno();
+	return &e;
 };
 

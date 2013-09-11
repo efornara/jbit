@@ -118,7 +118,9 @@ void startup(const char *file_name, VM **vm, Device **dev) {
 	DeviceTag dev_tag;
 	Buffer program;
 	if (parser.has_signature()) {
-		parser.parse(&program);
+		const ParseError *e = parser.parse(&program);
+		if (e)
+			fatal("line %d: %s", e->lineno, e->msg.get_data());
 		dev_tag = DEV_XV65;
 	} else {
 		JBParser jb_parser(file);

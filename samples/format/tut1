@@ -1,0 +1,10 @@
+#! /usr/bin/env jbit
+
+# This is a comment.
+
+# Just write some bytes...
+169 65 141 0 2
+
+# They are loaded from page 3 and, by default, the device is xv65.
+169 10
+141 0 2

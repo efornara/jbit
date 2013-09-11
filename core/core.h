@@ -39,9 +39,10 @@ public:
 	Buffer(int initial_size = 256);
 	~Buffer() { delete[] data; }
 	void reset() { length = 0; }
-	void append_line(const char *line);
-	void append_data(const char *p, int len);
 	char *append_raw(int len);
+	void append_char(char c);
+	void append_data(const char *p, int len);
+	void append_line(const char *line);
 	const char *get_data() const { return data; }
 	int get_length() const { return length; }
 };
@@ -53,11 +54,11 @@ struct ParseError {
 
 class Parser {
 private:
-	const Buffer *buffer;
+	const Buffer *src;
 public:
-	Parser(const Buffer *buffer_);
+	Parser(const Buffer *src_);
 	bool has_signature();
-	const ParseError *parse(const Buffer *program);
+	const ParseError *parse(Buffer *program);
 };
 
 class IO {
