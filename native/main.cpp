@@ -44,10 +44,21 @@ void fatal(const char *format, ...) {
 	va_list ap;
 
 	va_start(ap, format);
+	fprintf(stderr, "jbit: ");
 	vfprintf(stderr, format, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
 	exit(1);
+}
+
+void usage(int code = 1) {
+	printf("\n"
+	 "usage: jbit [options] file\n"
+	 "\n"
+	 "options:\n"
+	 "  -d device\n"
+	 "\n");
+	exit(code);
 }
 
 Buffer *load_file(const char *file_name) {
@@ -112,22 +123,24 @@ public:
 	}
 };
 
-void startup(const char *file_name, VM **vm, Device **dev) {
+void startup(const char *file_name, DeviceTag dev_tag, VM **vm, Device **dev) {
 	Buffer *file = load_file(file_name);
 	Parser parser(file);
-	DeviceTag dev_tag;
 	Buffer program;
+	DeviceTag tag;
 	if (parser.has_signature()) {
 		const ParseError *e = parser.parse(&program);
 		if (e)
 			fatal("line %d: %s", e->lineno, e->msg.get_data());
-		dev_tag = DEV_XV65;
+		tag = DEV_XV65;
 	} else {
 		JBParser jb_parser(file);
-		dev_tag = jb_parser.parse(&program);
+		tag = jb_parser.parse(&program);
 	}
 	delete file;
-	switch (dev_tag) {
+	if (dev_tag != DEV_UNKNOWN)
+		tag = dev_tag;
+	switch (tag) {
 	case DEV_MICROIO:
 		(*dev) = new_CursesDevice();
 		break;
@@ -142,20 +155,43 @@ void startup(const char *file_name, VM **vm, Device **dev) {
 	(*vm)->load(&program);
 }
 
-
-} // namespace
-
-int main(int argc, char *argv[])
-{
-	if (argc != 2)
-		fatal("usage: jbit file");
+void run(const char *file_name, DeviceTag dev_tag) {
 	VM *vm;
 	Device *dev;
-	startup(argv[1], &vm, &dev);
+	startup(file_name, dev_tag, &vm, &dev);
 	int vm_status = 0;
 	bool dev_keepalive = true;
 	while (vm_status == 0 || dev_keepalive) {
 		vm_status = vm->step();
 		dev_keepalive = dev->update(vm_status);
 	}
+}
+
+} // namespace
+
+int main(int argc, char *argv[])
+{
+	DeviceTag dev_tag = DEV_UNKNOWN;
+	const char *file_name = 0;
+	for (int i = 1; i < argc; i++) {
+		const char *s = argv[i];
+		if (!strcmp(s, "-d")) {
+			if (++i == argc)
+				usage();
+			const char *d = argv[i];
+			if (!strcmp(d, "microio"))
+				dev_tag = DEV_MICROIO;
+			else if (!strcmp(d, "xv65"))
+				dev_tag = DEV_XV65;
+			else
+				fatal("unknown device '%s'", d);
+		} else if (!file_name) {
+			file_name = s;
+		} else {
+			usage();
+		}
+	}
+	if (!file_name)
+		usage();
+	run(file_name, dev_tag);
 }
