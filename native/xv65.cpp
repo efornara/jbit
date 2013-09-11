@@ -50,8 +50,11 @@ public:
 	}
 };
 
-} // namespace
-
-Device *new_Xv65Device() {
+Device *new_Device() {
 	return new Xv65Device();
 }
+
+DeviceEntry entry("xv65", new_Device);
+
+} // namespace
+

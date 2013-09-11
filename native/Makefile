@@ -3,9 +3,13 @@ VPATH = .:../core
 CXX = g++
 CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -ggdb
 LDFLAGS =
-LIBS = -lncurses
+LIBS =
 
-OBJS = main.o microio.o xv65.o vm.o asm.o
+OBJS = main.o xv65.o vm.o asm.o
+
+# comment out if you don't have ncurses
+LIBS += -lncurses
+OBJS += microio.o
 
 all: jbit
 

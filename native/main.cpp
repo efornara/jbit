@@ -35,9 +35,6 @@
 
 #include "jbit.h"
 
-extern Device *new_CursesDevice();
-extern Device *new_Xv65Device();
-
 namespace {
 
 void fatal(const char *format, ...) {
@@ -142,12 +139,10 @@ void parse(const char *file_name, Tag dev_tag, Program *prg) {
 void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
-	if (prg.device_tag.is_equal(MicroIODevTag))
-		(*dev) = new_CursesDevice();
-	else if (prg.device_tag.is_equal(Xv65DevTag))
-		(*dev) = new_Xv65Device();
-	else
-		fatal("invalid jb format (signature)");
+	const DeviceEntry *dev_entry = DeviceRegistry::get_instance()->get(prg.device_tag);
+	if (!dev_entry)
+		fatal("device '%s' not available", prg.device_tag.s);
+	(*dev) = dev_entry->new_Device();
 	(*vm) = new_VM(*dev);
 	(*vm)->reset();
 	(*vm)->load(&prg);
@@ -215,6 +210,26 @@ void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 }
 
 } // namespace
+
+DeviceRegistry *DeviceRegistry::get_instance() {
+	static DeviceRegistry *registry = 0;
+	if (!registry)
+		registry = new DeviceRegistry();
+	return registry;
+}
+
+void DeviceRegistry::add(const DeviceEntry *entry) {
+	if (n == max_n_of_entries)
+		fatal("too many devices");
+	devices[n++] = entry;
+}
+
+const DeviceEntry *DeviceRegistry::get(Tag tag) {
+	for (int i = 0; i < n; i++)
+		if (devices[i]->tag.is_equal(tag))
+			return devices[i];
+	return 0;
+}
 
 int main(int argc, char *argv[])
 {

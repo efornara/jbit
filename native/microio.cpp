@@ -449,8 +449,10 @@ public:
 	}
 };
 
-} // namespace
-
-Device *new_CursesDevice() {
+Device *new_Device() {
 	return new CursesDevice();
 }
+
+DeviceEntry entry("microio", new_Device);
+
+} // namespace

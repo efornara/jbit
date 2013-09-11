@@ -35,3 +35,27 @@ public:
 	virtual bool update(int status) = 0;
 	virtual ~Device() {}
 };
+
+struct DeviceEntry;
+
+class DeviceRegistry {
+private:
+	static const int max_n_of_entries = 8;
+	const DeviceEntry *devices[max_n_of_entries];
+	int n;
+	DeviceRegistry() : n(0) {}
+public:
+	static DeviceRegistry *get_instance();
+	void add(const DeviceEntry *entry);
+	const DeviceEntry *get(Tag tag);
+};
+
+typedef Device *(*NewDeviceFn)();
+
+struct DeviceEntry {
+	Tag tag;
+	NewDeviceFn new_Device;
+	DeviceEntry(const char *t, NewDeviceFn f) : tag(t), new_Device(f)  {
+		DeviceRegistry::get_instance()->add(this);
+	}
+};
