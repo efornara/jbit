@@ -49,6 +49,7 @@ public:
 	char *append_raw(int len);
 	void append_char(char c);
 	void append_data(const char *p, int len);
+	void append_string(const char *s);
 	void append_line(const char *line);
 	const char *get_data() const { return data; }
 	int get_length() const { return length; }
@@ -86,7 +87,6 @@ public:
 class VM {
 public:
 	virtual void reset() = 0;
-	virtual void put(int address, int value) = 0;
 	virtual void load(const Program *prg) = 0;
 	virtual int step() = 0;
 	virtual ~VM() {}

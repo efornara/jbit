@@ -34,7 +34,7 @@
 
 namespace {
 
-const int io_addr = 0x200;
+Buffer *src = 0;
 IO *io = 0;
 VM *vm = 0;
 
@@ -69,6 +69,8 @@ class IOImpl : public IO {
 extern "C" {
 
 void vm_reset() {
+	if (!src)
+		src = new Buffer();
 	if (!io)
 		io = new IOImpl();
 	if (!vm)
@@ -76,9 +78,25 @@ void vm_reset() {
 	vm->reset();
 }
 
-void vm_put(int address, int value) {
-	if (vm)
-		vm->put(address, value);
+void vm_load_begin() {
+	if (src)
+		src->reset();
+}
+
+void vm_load_line(const char *line) {
+	if (src)
+		src->append_line(line);
+}
+
+void vm_load_end() {
+	if (src && vm) {
+		Program prg;
+		Parser parser(src);
+		const ParseError *e = parser.parse(&prg);
+		if (e)
+			return; // TODO report error
+		vm->load(&prg);
+	}
 }
 
 int vm_step() {

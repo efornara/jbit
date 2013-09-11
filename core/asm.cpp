@@ -126,6 +126,12 @@ void Buffer::append_data(const char *p, int len) {
 	memcpy(raw, p, len);
 }
 
+void Buffer::append_string(const char *s) {
+	int len = strlen(s) + 1;
+	char *raw = append_raw(len);
+	memcpy(raw, s, len);
+}
+
 void Buffer::append_line(const char *line) {
 	int len = strlen(line);
 	char *raw = append_raw(len + 1);
@@ -176,7 +182,7 @@ const ParseError *Parser::parse(Program *prg) {
 	return 0;
 error:
 	e.msg.reset();
-	e.msg.append_line("parse error");
+	e.msg.append_string("parse error");
 	e.lineno = r.get_lineno();
 	return &e;
 };

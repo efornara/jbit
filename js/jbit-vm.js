@@ -37,7 +37,9 @@ JBIT = {};
 
 vm_reset = Module.cwrap('vm_reset', undefined, []);
 vm_step = Module.cwrap('vm_step', 'number', []);
-vm_put = Module.cwrap('vm_put', undefined, ['number','number']);
+vm_load_begin = Module.cwrap('vm_load_begin', undefined, []);
+vm_load_line = Module.cwrap('vm_load_line', undefined, ['string']);
+vm_load_end = Module.cwrap('vm_load_end', undefined, []);
 
 function VM(io_, skin_) {
 
@@ -49,45 +51,12 @@ function VM(io_, skin_) {
 	var io = io_;
 	var skin = skin_;
 	
-	// TODO: move to core
 	function loadProgramFromText(text) {
-		var pattern, code = -1, data, page, exc;
 		var lines = text.split("\n");
-		for (var i in lines) {
-			var line = lines[i];
-			var c0 = line.charAt(0);
-			switch (c0) {
-			case 'S':
-				pattern = /^Size: (\d+) code pages?, (\d+) data pages?./;
-				if (exc = pattern.exec(line)) {
-					code = parseInt(exc[1], 10);
-					data = parseInt(exc[2], 10);
-					page = -1;
-				}
-				break;
-			case 'C':
-			case 'D':
-				pattern = /^[CD] (\d+)/;
-				if (code != -1 && (exc = pattern.exec(line))) {
-					page = parseInt(exc[1], 10) * 256;
-				}
-				break;
-			case '0':
-			case '1':
-			case '2':
-				pattern = /^(\d\d\d): /;
-				if (page != -1 && (exc = pattern.exec(line))) {
-					var address = page + parseInt(exc[1], 10);
-					var fields = line.split(" ");
-					for (var j = 1; j < fields.length; j++) {
-						value = parseInt(fields[j], 10);
-						if (!isNaN(value))
-							vm_put(address++, value);
-					}
-				}
-				break;
-			}
-		}
+		vm_load_begin();
+		for (var i in lines)
+			vm_load_line(lines[i]);
+		vm_load_end();
 	}
 
 	function advanceImpl() {

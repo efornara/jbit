@@ -1180,9 +1180,6 @@ public:
 		for (int i = 0; i < len; i++)
 			mem.put(0x300 + i, p[i] & 0xff);
 	}
-	void put(int address, int value) {
-		mem.put(address, value);
-	}
 	int step() {
 		if (cpu.status == CPU::CPUSvc_OK)
 			cpu.step();
