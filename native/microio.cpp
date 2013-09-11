@@ -421,7 +421,7 @@ public:
 	int get(int address) {
 		return io.get(address);
 	}
-	void update(int status) {
+	bool update(int status) {
 		switch (status) {
 		case 0: // OK
 			status_msg = "RUNNING";
@@ -445,6 +445,7 @@ public:
 			flush();
 			wait(ms);
 		}
+		return true;
 	}
 };
 

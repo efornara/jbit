@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "jbit.h"
 
@@ -71,6 +72,12 @@ char *load_file(const char *file_name, int *size) {
 	return buf;
 }
 
+enum DeviceTag {
+	DEV_UNKNOWN,
+	DEV_MICROIO,
+	DEV_XV65
+};
+
 class JBFile {
 private:
 	char *jb;
@@ -78,13 +85,20 @@ private:
 public:
 	JBFile(const char *file_name) : jb(0) {
 		jb = load_file(file_name, &size);
+		if (size < 12)
+			fatal("invalid jb format (size < 12)");
 	}
 	~JBFile() {
 		delete[] jb;
 	}
+	DeviceTag get_device_tag() {
+		if (memcmp(jb, "JBit", 4) == 0)
+			return DEV_MICROIO;
+		else if (memcmp(jb, "xv65", 4) == 0)
+			return DEV_XV65;
+		return DEV_UNKNOWN;
+	}
 	void load_into_vm(VM *vm) {
-		if (size < 12)
-			fatal("invalid jb format (size < 12)");
 		int code_pages = jb[8] & 0xFF;
 		int data_pages = jb[9] & 0xFF;
 		if (code_pages == 0 || code_pages + data_pages > 251)
@@ -97,26 +111,36 @@ public:
 	}
 };
 
-void load_jb_into_vm(const char *file_name, VM *vm) {
-	JBFile jb(file_name);
-	jb.load_into_vm(vm);
-}
-
 } // namespace
 
 extern Device *new_CursesDevice();
+extern Device *new_Xv65Device();
 
 int main(int argc, char *argv[])
 {
 	if (argc != 2)
 		fatal("usage: jbit file.jb");
-	Device *dev = new_CursesDevice();
+	JBFile *file = new JBFile(argv[1]);
+	DeviceTag dev_tag = file->get_device_tag();
+	Device *dev;
+	switch (dev_tag) {
+	case DEV_MICROIO:
+		dev = new_CursesDevice();
+		break;
+	case DEV_XV65:
+		dev = new_Xv65Device();
+		break;
+	default:
+		fatal("invalid jb format (signature)");
+	}
 	VM *vm = new_VM(dev);
 	vm->reset();
-	load_jb_into_vm(argv[1], vm);
+	file->load_into_vm(vm);
+	delete file;
 	int vm_status = 0;
-	while (1) {
+	bool dev_keepalive = true;
+	while (vm_status == 0 || dev_keepalive) {
 		vm_status = vm->step();
-		dev->update(vm_status);
+		dev_keepalive = dev->update(vm_status);
 	}
 }

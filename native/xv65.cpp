@@ -26,12 +26,32 @@
  * SUCH DAMAGE.
  */
 
-// jbit.h
+// xv65.cpp
 
-#include "core.h"
+#include <stdio.h>
 
-class Device : public IO {
+#include "jbit.h"
+
+namespace {
+
+class Xv65Device : public Device {
 public:
-	virtual bool update(int status) = 0;
-	virtual ~Device() {}
+	void reset() {
+	}
+	void put(int address, int value) {
+		if (address == 0)
+			putchar(value);
+	}
+	int get(int address) {
+		return 0;
+	}
+	bool update(int status) {
+		return false;
+	}
 };
+
+} // namespace
+
+Device *new_Xv65Device() {
+	return new Xv65Device();
+}
