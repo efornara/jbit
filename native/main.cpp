@@ -115,8 +115,8 @@ int main(int argc, char *argv[])
 	vm->reset();
 	load_jb_into_vm(argv[1], vm);
 	int vm_status = 0;
-	do {
+	while (1) {
 		vm_status = vm->step();
 		dev->update(vm_status);
-	} while (vm_status == 0);
+	}
 }

@@ -33,11 +33,228 @@
 #include <ctype.h>
 #include <time.h>
 
+#include <sys/time.h>
 #include <curses.h>
 
 #include "jbit.h"
 
 namespace {
+
+class MicroIO {
+
+	/*
+	 * Simple port from Java.
+	 */
+
+private:
+
+	typedef long long jlong;
+	typedef signed char jbyte;
+
+	jlong currentTimeMillis() {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		return ((jlong)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
+	}
+
+	static const int REG_FRMFPS = 17;
+	static const int REG_FRMDRAW = 18;
+	static const int REG_RANDOM = 23;
+	static const int REG_KEYBUF = 24;
+	static const int REG_CONVIDEO = 40;
+
+	static const int KEYBUF_SIZE = 8;
+
+	static const int COLS = 10;
+	static const int ROWS = 4;
+	static const int CONVIDEO_SIZE = COLS * ROWS;
+
+	static const jlong MAXRAND = 0xFFFFFFFFFFFFLL;
+
+	jlong rndSeed0;
+	jlong rndSeed1;
+	int rndN;
+	jlong rndDivisor;
+	
+	void randomReset() {	
+		rndSeed0 = currentTimeMillis() & MAXRAND;
+		rndSeed1 = 0;
+		doRandomPut(255);
+	}
+
+	jlong rndNext() {
+		rndSeed0 = (rndSeed0 * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
+		return rndSeed0;
+	}
+	
+	int doRandomGet() {
+		jlong n;
+		while (rndN <= (n = rndNext() / rndDivisor))
+			;
+		return (int)n;
+	}
+	
+	void doRandomPut(int max) {
+		if (max == 0) {
+			jlong t = rndSeed0;
+			rndSeed0 = rndSeed1;
+			rndSeed1 = t;
+		} else {
+			rndN = max + 1;
+			rndDivisor = MAXRAND / rndN;
+		}
+	}
+
+	jbyte keyBuf[KEYBUF_SIZE];
+
+	void keyBufReset() {
+		for (int i = 0; i < KEYBUF_SIZE; i++)
+			keyBuf[i] = 0;
+	}
+
+	void doKeyBufPut() {
+		for (int i = 0; i < 7; i++)
+			keyBuf[i] = keyBuf[i + 1];
+		keyBuf[7] = 0;
+	}
+
+	int doKeyBufGet(int address) {
+		return keyBuf[address - REG_KEYBUF] & 0xFF;
+	}
+
+	void enqueKeyCode(int keyCode) {
+		for (int i = 0; i < KEYBUF_SIZE; i++)
+			if (keyBuf[i] == 0) {
+				keyBuf[i] = (jbyte)keyCode;
+				return;
+			}
+	}
+	
+	jbyte video[CONVIDEO_SIZE];
+
+	void videoReset() {
+		for (int i = 0; i < CONVIDEO_SIZE; i++)
+			video[i] = ' ';
+	}
+	
+	void doVideoPut(int address, int value) {
+		video[address - REG_CONVIDEO] =  (jbyte)value;
+	}
+	
+	int doVideoGet(int address) {
+		return video[address - REG_CONVIDEO] & 0xFF;
+	}
+
+	static const int FRAME_MIN_WAIT = 10;
+
+	int fps;	
+	long nextFrame;
+	int frameInterval;
+	bool waitingForFrame;
+	
+	void frameReset() {
+		doFrmFpsPut(40);
+	}
+
+	int doFrmFpsGet() {
+		return fps;
+	}
+
+	void doFrmFpsPut(int value) {
+		fps = value;
+		if (value == 0) {
+			frameInterval = 0;
+			nextFrame = 0;
+		} else {
+			frameInterval = 4000 / value;
+			nextFrame = currentTimeMillis() + frameInterval;
+		}
+	}
+
+	void doFrmDrawPut() {
+		if (frameInterval)
+			waitingForFrame = true;
+	}
+
+public:
+
+	MicroIO() {
+		waitingForFrame = false;
+	}
+
+	void reset() {
+		frameReset();
+		randomReset();
+		keyBufReset();
+		videoReset();
+	}
+	
+	const signed char *getVideo() {
+		return video;
+	}
+
+	void keyPressed(int keyCode) {
+		enqueKeyCode(keyCode);
+	}
+
+	int doSomeWork() {
+		int wait = -1;
+		long now = currentTimeMillis();
+		if (nextFrame != 0 && now >= nextFrame - FRAME_MIN_WAIT) {
+			do
+				nextFrame += frameInterval;
+			while (nextFrame < now);
+			if (waitingForFrame) {
+				waitingForFrame = false;
+			}
+			wait = 0;
+		}
+		if (waitingForFrame) {
+			wait = (int)(nextFrame - now - (FRAME_MIN_WAIT >> 1));
+		}
+		return wait;
+	}
+
+	int get(int address) {
+		switch (address) {
+		case REG_FRMFPS:
+			return doFrmFpsGet();
+		case REG_RANDOM:
+			return doRandomGet();
+		default:
+			if (address >= REG_KEYBUF
+					&& address < REG_KEYBUF + KEYBUF_SIZE) {
+				return doKeyBufGet(address);
+			} else if (address >= REG_CONVIDEO
+					&& address < REG_CONVIDEO + CONVIDEO_SIZE) {
+				return doVideoGet(address);
+			}
+		}			
+		return 0;
+	}
+
+	int put(int address, int value) {
+		switch (address) {
+		case REG_FRMFPS:
+			doFrmFpsPut(value);
+			break;
+		case REG_FRMDRAW:
+			doFrmDrawPut();
+			break;
+		case REG_RANDOM:
+			doRandomPut(value);
+			break;
+		case REG_KEYBUF:
+			doKeyBufPut();
+			break;
+		default:
+			if (address >= REG_CONVIDEO
+					&& address < REG_CONVIDEO + CONVIDEO_SIZE)
+				doVideoPut(address, value);
+		}			
+		return 0;
+	}
+};
 
 void curses_init() {
 	initscr();
@@ -55,22 +272,10 @@ extern "C" void curses_cleanup() {
 
 class CursesDevice : public Device {
 private:
-	static const int REG_FRMFPS = 17;
-	static const int REG_FRMDRAW = 18;
-	static const int REG_RANDOM = 23;
-	static const int REG_KEYBUF = 24;
-	static const int REG_CONVIDEO = 40;
-
-	static const int KEYBUF_SIZE = 8;
-
-	static const int COLS = 10;
-	static const int ROWS = 4;
-	static const int CONVIDEO_SIZE = COLS * ROWS;
-
 	static const int KEYCODE_NONE = 0;
 	static const int KEYCODE_BREAK = -1;
 
-	char video_buf[40];
+	MicroIO io;
 	int display_y;
 	int display_x;
 	int cursor_y;
@@ -105,8 +310,8 @@ private:
 		cursor_y = y;
 		cursor_x = 0;
 	}
-
 	void flush() {
+		const signed char *video_buf = io.getVideo();
 		mvaddstr(0, 0, status_msg);
 		int i = 0;
 		for (int y = 0; y < 4; y++) {
@@ -120,7 +325,6 @@ private:
 		move(cursor_y, cursor_x);
 		refresh();
 	}
-
 	int filter_char(int c) {
 		switch (c) {
 		case 'a':
@@ -189,11 +393,8 @@ private:
 		}
 		return c;
 	}
-
 	void wait(int ms) {
 		struct timespec ts;
-		if (ms < 10)
-			ms = 10;
 		if (ms < 1000) {
 			ts.tv_sec = 0;
 			ts.tv_nsec = 1000000 * ms;
@@ -203,31 +404,22 @@ private:
 		}
 		nanosleep(&ts, NULL);
 	}
-
 public:
 	CursesDevice() {
 		curses_init();
 		atexit(curses_cleanup);
 	}
 	void reset() {
-		memset(video_buf, ' ', sizeof(video_buf));
+		io.reset();
 		status_msg = "";
 		show_static();
 		flush();
 	}
 	void put(int address, int value) {
-		if (address == REG_FRMDRAW) {
-			flush();
-			wait(100);
-		} else if (address >= REG_CONVIDEO && address < REG_CONVIDEO + CONVIDEO_SIZE) {
-			video_buf[address - REG_CONVIDEO] = value;
-		}
+		io.put(address, value);
 	}
 	int get(int address) {
-		if (address >= REG_CONVIDEO && address < REG_CONVIDEO + CONVIDEO_SIZE) {
-			return video_buf[address - REG_CONVIDEO];
-		}
-		return 0;
+		return io.get(address);
 	}
 	void update(int status) {
 		switch (status) {
@@ -244,7 +436,15 @@ public:
 		int c = filter_char(getch());
 		if (c == KEYCODE_BREAK)
 			exit(0);
-		return;
+		if (c != KEYCODE_NONE)
+			io.keyPressed(c);
+		int ms = 100;
+		if (status == 0) // OK
+			ms = io.doSomeWork();
+		if (ms) {
+			flush();
+			wait(ms);
+		}
 	}
 };
 
