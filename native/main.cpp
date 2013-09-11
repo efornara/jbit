@@ -56,7 +56,8 @@ void usage(int code = 1) {
 	 "usage: jbit [options] file\n"
 	 "\n"
 	 "options:\n"
-	 "  -d device\n"
+	 "  -d device     override device selection\n"
+	 "  -c jb|asm     convert file (warning: output to stdout)\n"
 	 "\n");
 	exit(code);
 }
@@ -85,6 +86,9 @@ Buffer *load_file(const char *file_name) {
 	fclose(f);
 	return buffer;
 }
+
+Tag AsmFmtTag("asm");
+Tag JBFmtTag("jb");
 
 Tag MicroIODevTag("microio");
 Tag Xv65DevTag("xv65");
@@ -119,21 +123,25 @@ public:
 	}
 };
 
-void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
+void parse(const char *file_name, Tag dev_tag, Program *prg) {
 	Buffer *file = load_file(file_name);
 	Parser parser(file);
-	Program prg;
 	if (parser.has_signature()) {
-		const ParseError *e = parser.parse(&prg);
+		const ParseError *e = parser.parse(prg);
 		if (e)
 			fatal("line %d: %s", e->lineno, e->msg.get_data());
 	} else {
 		JBParser jb_parser(file);
-		jb_parser.parse(&prg);
+		jb_parser.parse(prg);
 	}
 	delete file;
 	if (dev_tag.is_valid())
-		prg.device_tag = dev_tag;
+		prg->device_tag = dev_tag;
+}
+
+void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
+	Program prg;
+	parse(file_name, dev_tag, &prg);
 	if (prg.device_tag.is_equal(MicroIODevTag))
 		(*dev) = new_CursesDevice();
 	else if (prg.device_tag.is_equal(Xv65DevTag))
@@ -157,10 +165,60 @@ void run(const char *file_name, Tag dev_tag) {
 	}
 }
 
+void convert_to_asm(const Program *prg) {
+	static const int bytes_per_line = 16;
+	printf("#! /usr/bin/env jbit");
+	if (prg->device_tag.is_valid())
+		printf(" -d %s", prg->device_tag.s);
+	printf("\n\n");
+	const char *sep = 0, *space = " ";
+	for (int i = 0; i < prg->get_length(); i++) {
+		sep = (i % bytes_per_line == (bytes_per_line - 1)) ? "\n" : space;
+		printf("%d%s", prg->get_data()[i] & 0xff, sep);
+	}
+	if (sep == space)
+		printf("\n");
+}
+
+void convert_to_jb(const Program *prg) {
+	if (prg->device_tag.is_equal(MicroIODevTag))
+		printf("JBit");
+	else if (prg->device_tag.is_equal(Xv65DevTag))
+		printf("xv65");
+	else
+		fatal("convert: unknown device");
+	int n_of_pages = (prg->get_length() + 255) >> 8;
+	putchar(0); // header size
+	putchar(12);
+	putchar(1); // version
+	putchar(0);
+	putchar(n_of_pages); // code pages
+	putchar(0); // data pages
+	putchar(0); // reserved
+	putchar(0);
+	int i;
+	for (i = 0; i < prg->get_length(); i++)
+		putchar(prg->get_data()[i]);
+	for (; i & 0xff; i++)
+		putchar(0);
+}
+
+void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
+	Program prg;
+	parse(file_name, dev_tag, &prg);
+	if (fmt_tag.is_equal(AsmFmtTag))
+		convert_to_asm(&prg);
+	else if (fmt_tag.is_equal(JBFmtTag))
+		convert_to_jb(&prg);
+	else
+		fatal("internal error (convert)");
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
 {
+	Tag fmt_tag;
 	Tag dev_tag;
 	const char *file_name = 0;
 	for (int i = 1; i < argc; i++) {
@@ -173,6 +231,14 @@ int main(int argc, char *argv[])
 				dev_tag = Tag(d);
 			else
 				fatal("unknown device '%s'", d);
+		} else if (!strcmp(s, "-c")) {
+			if (++i == argc)
+				usage();
+			const char *f = argv[i];
+			if (!strcmp(f, "asm") || !strcmp(f, "jb"))
+				fmt_tag = Tag(f);
+			else
+				fatal("unknown conversion format '%s'", f);
 		} else if (!file_name) {
 			file_name = s;
 		} else {
@@ -181,5 +247,8 @@ int main(int argc, char *argv[])
 	}
 	if (!file_name)
 		usage();
-	run(file_name, dev_tag);
+	if (fmt_tag.is_valid())
+		convert(file_name, dev_tag, fmt_tag);
+	else
+		run(file_name, dev_tag);
 }

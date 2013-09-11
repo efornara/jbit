@@ -83,7 +83,7 @@ public:
 
 } // namespace
 
-bool Tag::is_equal(const Tag &o) {
+bool Tag::is_equal(const Tag &o) const {
 	if (!s)
 		return !o.s;
 	if (!o.s)
