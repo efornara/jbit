@@ -35,6 +35,9 @@
 
 #include "jbit.h"
 
+extern Device *new_CursesDevice();
+extern Device *new_Xv65Device();
+
 namespace {
 
 void fatal(const char *format, ...) {
@@ -47,19 +50,20 @@ void fatal(const char *format, ...) {
 	exit(1);
 }
 
-char *load_file(const char *file_name, int *size) {
+Buffer *load_file(const char *file_name) {
 	FILE *f;
 	int i = 0, j, n;
-	char *buf;
+	Buffer *buffer;
 	
 	if ((f = fopen(file_name, "rb")) == NULL)
 		fatal("cannot open file '%s'", file_name);
 	fseek(f, 0, SEEK_END);
 	n = ftell(f);
 	rewind(f);
-	buf = new char[n];
-	if (!buf)
-		fatal("new failed for '%s'", file_name);
+	buffer = new Buffer(n);
+	if (!buffer)
+		fatal("new Buffer failed for '%s'", file_name);
+	char *buf = buffer->append_raw(n);
 	while (i < n) {
 		if ((j = fread(&buf[i], 1, n - 1, f)) == 0)
 			break;
@@ -67,9 +71,8 @@ char *load_file(const char *file_name, int *size) {
 	}
 	if (i != n)
 		fatal("size check failed for '%s'", file_name);
-	*size = n;
 	fclose(f);
-	return buf;
+	return buffer;
 }
 
 enum DeviceTag {
@@ -78,65 +81,75 @@ enum DeviceTag {
 	DEV_XV65
 };
 
-class JBFile {
+class JBParser {
 private:
-	char *jb;
+	const Buffer *buffer;
+	const char *jb;
 	int size;
 public:
-	JBFile(const char *file_name) : jb(0) {
-		jb = load_file(file_name, &size);
+	JBParser(const Buffer *buffer_) : buffer(buffer_) {
+		jb = buffer->get_data();
+		size = buffer->get_length();
 		if (size < 12)
 			fatal("invalid jb format (size < 12)");
 	}
-	~JBFile() {
-		delete[] jb;
-	}
-	DeviceTag get_device_tag() {
+	DeviceTag parse(Buffer *program) {
+		int code_pages = jb[8] & 0xFF;
+		int data_pages = jb[9] & 0xFF;
+		if (code_pages == 0 || code_pages + data_pages > 251)
+			fatal("invalid jb format (pages)");
+		int program_size = (code_pages + data_pages) * 256;
+		if (size != 12 + program_size)
+			fatal("invalid jb format (size/pages mismatch)");
+		program->reset();
+		char *raw = program->append_raw(program_size);
+		memcpy(raw, &jb[12], program_size);
 		if (memcmp(jb, "JBit", 4) == 0)
 			return DEV_MICROIO;
 		else if (memcmp(jb, "xv65", 4) == 0)
 			return DEV_XV65;
 		return DEV_UNKNOWN;
 	}
-	void load_into_vm(VM *vm) {
-		int code_pages = jb[8] & 0xFF;
-		int data_pages = jb[9] & 0xFF;
-		if (code_pages == 0 || code_pages + data_pages > 251)
-			fatal("invalid jb format (pages)");
-		if (size != 12 + (code_pages + data_pages) * 256)
-			fatal("invalid jb format (size/pages mismatch)");
-		int p = 0x300;
-		for (int i = 12; i < size; i++)
-			vm->put(p++, jb[i]);
-	}
 };
 
-} // namespace
-
-extern Device *new_CursesDevice();
-extern Device *new_Xv65Device();
-
-int main(int argc, char *argv[])
-{
-	if (argc != 2)
-		fatal("usage: jbit file.jb");
-	JBFile *file = new JBFile(argv[1]);
-	DeviceTag dev_tag = file->get_device_tag();
-	Device *dev;
+void startup(const char *file_name, VM **vm, Device **dev) {
+	Buffer *file = load_file(file_name);
+	Parser parser(file);
+	DeviceTag dev_tag;
+	Buffer program;
+	if (parser.has_signature()) {
+		parser.parse(&program);
+		dev_tag = DEV_XV65;
+	} else {
+		JBParser jb_parser(file);
+		dev_tag = jb_parser.parse(&program);
+	}
+	delete file;
 	switch (dev_tag) {
 	case DEV_MICROIO:
-		dev = new_CursesDevice();
+		(*dev) = new_CursesDevice();
 		break;
 	case DEV_XV65:
-		dev = new_Xv65Device();
+		(*dev) = new_Xv65Device();
 		break;
 	default:
 		fatal("invalid jb format (signature)");
 	}
-	VM *vm = new_VM(dev);
-	vm->reset();
-	file->load_into_vm(vm);
-	delete file;
+	(*vm) = new_VM(*dev);
+	(*vm)->reset();
+	(*vm)->load(&program);
+}
+
+
+} // namespace
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2)
+		fatal("usage: jbit file");
+	VM *vm;
+	Device *dev;
+	startup(argv[1], &vm, &dev);
 	int vm_status = 0;
 	bool dev_keepalive = true;
 	while (vm_status == 0 || dev_keepalive) {

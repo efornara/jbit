@@ -1,11 +1,11 @@
 VPATH = .:../core
 
 CXX = g++
-CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall
-LDFLAGS = -s
+CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -ggdb
+LDFLAGS = -ggdb
 LIBS = -lncurses
 
-OBJS = main.o microio.o xv65.o vm.o
+OBJS = main.o microio.o xv65.o vm.o asm.o
 
 all: jbit
 

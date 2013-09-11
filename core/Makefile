@@ -2,7 +2,7 @@ CXX = em++
 CXXFLAGS = -std=c++98 -fno-exceptions -fno-rtti -Wall
 EXPORTS = EXPORTED_FUNCTIONS="['_vm_reset', '_vm_put', '_vm_step']"
 
-OBJS = js.o vm.o
+OBJS = js.o vm.o asm.o
 
 OUT = ../js/core.js
 

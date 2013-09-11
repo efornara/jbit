@@ -28,6 +28,38 @@
 
 // core.h
 
+class Buffer {
+private:
+	char *data;
+	int size;
+	int length;
+	Buffer(const Buffer &); // copy forbidden
+	Buffer& operator=(const Buffer&); // assignment forbidden
+public:
+	Buffer(int initial_size = 256);
+	~Buffer() { delete[] data; }
+	void reset() { length = 0; }
+	void append_line(const char *line);
+	void append_data(const char *p, int len);
+	char *append_raw(int len);
+	const char *get_data() const { return data; }
+	int get_length() const { return length; }
+};
+
+struct ParseError {
+	Buffer msg;
+	int lineno;
+};
+
+class Parser {
+private:
+	const Buffer *buffer;
+public:
+	Parser(const Buffer *buffer_);
+	bool has_signature();
+	const ParseError *parse(const Buffer *program);
+};
+
 class IO {
 public:
 	virtual void reset() = 0;
@@ -40,6 +72,7 @@ class VM {
 public:
 	virtual void reset() = 0;
 	virtual void put(int address, int value) = 0;
+	virtual void load(const Buffer *program) = 0;
 	virtual int step() = 0;
 	virtual ~VM() {}
 };

@@ -26,65 +26,58 @@
  * SUCH DAMAGE.
  */
 
-// js.cpp
+// asm.cpp
+
+#include <string.h>
 
 #include "core.h"
 
-#include <emscripten.h>
+Buffer::Buffer(int initial_size) {
+	if (initial_size <= 0)
+		initial_size = 1;
+	data = new char[initial_size]; // OK to crash if low memory
+	size = initial_size;
+	length = 0;
+}
 
-namespace {
+char *Buffer::append_raw(int len) {
+	int new_length = length + len;
+	if (new_length > size) {
+		int new_size = size * 2;
+		if (new_size < new_length)
+			new_size = new_length;
+		char *new_data = new char[new_size];
+		memcpy(new_data, data, length);
+		delete[] data;
+		data = new_data;
+		size = new_size;
+	}
+	char *raw = &data[length];
+	length += len;
+	return raw;
+}
 
-const int io_addr = 0x200;
-IO *io = 0;
-VM *vm = 0;
+void Buffer::append_data(const char *p, int len) {
+	char *raw = append_raw(len);
+	memcpy(raw, p, len);
+}
 
-class IOImpl : public IO {
-	void reset() {
-		asm("JBIT.io_reset();"
-		    : /* output */
-		    : /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	void put(int address, int value) {
-		asm("JBIT.io_put(%0, %1);"
-		    : /* output */
-		    : "n"(address), "n"(value) /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	int get(int address) {
-		int value;
-		asm("%1 = JBIT.io_get(%0);"
-		    : "=r"(value) /* output */
-		    : "n"(address) /* input */
-		    : /* clobbered registers */
-		    );
-		return value;
-	}
+void Buffer::append_line(const char *line) {
+	int len = strlen(line);
+	char *raw = append_raw(len + 1);
+	memcpy(raw, line, len);
+	raw[len] = '\n';
+}
+
+Parser::Parser(const Buffer *buffer_) : buffer(buffer_) {
+}
+
+bool Parser::has_signature() {
+	const char *data = buffer->get_data();
+	return buffer->get_length() > 2 && data[0] == '#' && data[1] == '!';
+}
+
+const ParseError *Parser::parse(const Buffer *program) {
+	return 0;
 };
 
-} // namespace
-
-extern "C" {
-
-void vm_reset() {
-	if (!io)
-		io = new IOImpl();
-	if (!vm)
-		vm = new_VM(io);
-	vm->reset();
-}
-
-void vm_put(int address, int value) {
-	if (vm)
-		vm->put(address, value);
-}
-
-int vm_step() {
-	if (vm)
-		return vm->step();
-	return 0;
-}
-
-} // extern "C"
