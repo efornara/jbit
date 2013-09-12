@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 #include "jbit.h"
@@ -55,10 +56,6 @@ extern "C" void sig_handler(int) {
 class Xv65Device : public Device {
 private:
 	const static int top_memory = 256 * 256 - 1;
-	enum RdWr {
-		Read,
-		Write
-	};
 	AddressSpace *m;
 	Buffer req;
 	int v_REQPTRHI;
@@ -236,7 +233,7 @@ private:
 			return XV65_ERANGE;
 		return 0;
 	}
-	int req_RDWR(RdWr mode) {
+	int req_rdwr(int req_id) {
 		if (n != 6)
 			return ERR;
 		int fd = r_get_uint8(1);
@@ -246,21 +243,22 @@ private:
 			return ERR;
 		req.reset(); // reuse reset (not needed anymore)
 		char *raw = req.append_raw(len);
-		int res;
-		if (mode == Read) {
-			res = read(fd, raw, len);
-			if (res > 0)
-				for (int i = 0; i < res; i++)
+		int ret;
+		if (req_id == REQ_READ) {
+			ret = read(fd, raw, len);
+			if (ret > 0)
+				for (int i = 0; i < ret; i++)
 					m->put(addr + i, raw[i]);
-		}
-		if (mode == Write) {
+		} else if (req_id == REQ_WRITE) {
 			for (int i = 0; i < len; i++)
 				raw[i] = m->get(addr + i);
-			res = write(fd, raw, len);
+			ret = write(fd, raw, len);
+		} else {
+			return ERR;
 		}
-		if (res < 0)
+		if (ret < 0)
 			return errno;
-		put_value(v_REQDAT, 8, res);
+		put_value(v_REQDAT, 8, ret);
 		return 0;
 	}
 	int req_CLOSE() {
@@ -268,6 +266,29 @@ private:
 			return ERR;
 		int fd = r_get_uint8(1);
 		int ret = close(fd);
+		return ret == -1 ? errno : 0;
+	}
+	int req_filename(int req_id) {
+		int i = r_parse_string(1);
+		if (i == -1)
+			return ERR;
+		const char *filename = &r[1];
+		if (n - i != 0)
+			return ERR;
+		int ret;
+		switch (req_id) {
+		case REQ_CHDIR:
+			ret = chdir(filename);
+			break;
+		case REQ_MKDIR:
+			ret = mkdir(filename, 0777);
+			break;
+		case REQ_UNLINK:
+			ret = unlink(filename);
+			break;
+		default:
+			return ERR;
+		}
 		return ret == -1 ? errno : 0;
 	}
 	void request() {
@@ -287,9 +308,6 @@ private:
 		case REQ_WAIT:
 			ret = req_WAIT();
 			break;
-		case REQ_READ:
-			ret = req_RDWR(Read);
-			break;
 		case REQ_KILL:
 			ret = req_KILL();
 			break;
@@ -305,11 +323,17 @@ private:
 		case REQ_OPEN:
 			ret = req_OPEN();
 			break;
+		case REQ_READ:
 		case REQ_WRITE:
-			ret = req_RDWR(Write);
+			ret = req_rdwr(id);
 			break;
 		case REQ_CLOSE:
 			ret = req_CLOSE();
+			break;
+		case REQ_CHDIR:
+		case REQ_MKDIR:
+		case REQ_UNLINK:
+			ret = req_filename(id);
 			break;
 		}
 		v_REQRES = ret;
