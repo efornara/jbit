@@ -41,6 +41,8 @@
 #define REQPTRLO 0x0204
 #define REQPTRHI 0x0205
 
+#define REQDAT 0x0260
+
 #define REQ_DEBUG 0
 
 #define REQ_SYS_fork 1

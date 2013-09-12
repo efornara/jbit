@@ -29,6 +29,10 @@
 // xv65.cpp
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "jbit.h"
 
@@ -42,41 +46,97 @@ class Xv65Device : public Device {
 private:
 	AddressSpace *m;
 	Buffer req;
-	int req_hi;
+	int v_REQPTRHI;
+	int v_REQRES;
+	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
-	int m_read_uint8(int addr) {
+	int r_get_uint8(int i) {
+		return r[i] & 0xff;
+	}
+	int m_get_uint8(int addr) {
 		int res = 0;
 		if (addr >= 0 && addr <= 0xffff)
 			res =  m->get(addr) & 0xff;
 		return res;
 	}
-	int m_read_uint16(int addr) {
-		int res = m_read_uint8(addr++);
-		res |= m_read_uint8(addr) << 8;
+	int m_get_uint16(int addr) {
+		int res = m_get_uint8(addr++);
+		res |= m_get_uint8(addr) << 8;
 		return res;
 	}
-	void req_DEBUG() {
+	void m_put_uint8(int addr, int value) {
+	}
+	int req_DEBUG() {
 		fprintf(stderr, "REQ_DEBUG %d\n", n);
+		return 0;
+	}
+	int req_SYS_fork() {
+		if (n != 0)
+			return 1;
+		pid_t pid = fork();
+		if (pid == -1)
+			return 1;
+		for (size_t i = 0; i < sizeof(pid); i++)
+			v_REQDAT[i] = ((unsigned char *)&pid)[i];
+		return 0;
+	}
+	int req_SYS_exit() {
+		int status;
+		switch (n) {
+		case 0:
+			status = 0;
+			break;
+		case 1:
+			status = r_get_uint8(1);
+			break;
+		default:
+			return 1;
+		}
+		exit(status);
+		return 0; // not reached
+	}
+	int req_SYS_wait() {
+		if (n != 0)
+			return 1;
+		int status;
+		pid_t pid = wait(&status);
+		if (pid == -1)
+			return 1;
+		for (size_t i = 0; i < sizeof(pid); i++)
+			v_REQDAT[i] = ((unsigned char *)&pid)[i];
+		return 0;
 	}
 	void request() {
+		int ret = 0xff;
 		r = req.get_data();
 		n = req.get_length();
 		if (n == 0)
 			return;
+		n--;
 		switch (*r) {
 		case REQ_DEBUG:
-			req_DEBUG();
+			ret = req_DEBUG();
+			break;
+		case REQ_SYS_fork:
+			ret = req_SYS_fork();
+			break;
+		case REQ_SYS_exit:
+			ret = req_SYS_exit();
+			break;
+		case REQ_SYS_wait:
+			ret = req_SYS_wait();
 			break;
 		}
+		v_REQRES = ret;
 	}
 	void put_REQPTRLO(int value) {
-		int addr = ((req_hi & 0xff) << 8) | (value & 0xff);
-		int len = m_read_uint16(addr);
+		int addr = ((v_REQPTRHI & 0xff) << 8) | (value & 0xff);
+		int len = m_get_uint16(addr);
 		addr += 2;
 		req.reset();
 		for (int i = 0; i < len; i++)
-			req.append_char(m_read_uint8(addr++));
+			req.append_char(m_get_uint8(addr++));
 		request();
 		req.reset();
 	}
@@ -86,11 +146,14 @@ public:
 	}
 	void reset() {
 		req.reset();
-		req_hi = 0;
+		v_REQRES = 0;
+		v_REQPTRHI = 0;
+		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
+		address += IO_BASE;
 		value &= 0xff;
-		switch (address + IO_BASE) {
+		switch (address) {
 		case PUTCHAR:
 			putchar(value);
 			break;
@@ -102,18 +165,27 @@ public:
 			req.reset();
 			break;
 		case REQPTRHI:
-			req_hi = value;
+			v_REQPTRHI = value;
 			break;
 		case REQPTRLO:
 			put_REQPTRLO(value);
 			break;
+		default:
+			if (address >= REQDAT && address < REQDAT + 16)
+				v_REQDAT[address - REQDAT] = value;
+			break;
 		}
 	}
 	int get(int address) {
-		switch (address + IO_BASE) {
+		address += IO_BASE;
+		switch (IO_BASE) {
+		case REQRES:
+			return v_REQRES;
 		case REQPTRHI:
-			return req_hi;
+			return v_REQPTRHI;
 		default:
+			if (address >= REQDAT && address < REQDAT + 16)
+				return v_REQDAT[address - REQDAT];
 			return 0;
 		}
 	}
