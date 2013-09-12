@@ -41,6 +41,9 @@
 #define REQPTRLO 0x0204
 #define REQPTRHI 0x0205
 
+/* DEBUGLEV = $0210                                                        */
+#define PIDSIZE 0x0211
+
 #define REQDAT 0x0260
 
 #define REQ_DEBUG 0
@@ -66,4 +69,16 @@
 #define REQ_SYS_link 19
 #define REQ_SYS_mkdir 20
 #define REQ_SYS_close 21
+
+#define KILL_SIGHUP 1
+#define KILL_SIGINT 2
+#define KILL_SIGQUIT 3
+#define KILL_SIGILL 4
+#define KILL_SIGABRT 6
+#define KILL_SIGFPE 8
+#define KILL_SIGKILL 9
+#define KILL_SIGSEGV 11
+#define KILL_SIGPIPE 13
+#define KILL_SIGALRM 14
+#define KILL_SIGTERM 15
 

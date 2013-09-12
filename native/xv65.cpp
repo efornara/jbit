@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <signal.h>
 
@@ -45,6 +46,9 @@
 
 namespace {
 
+extern "C" void sig_handler(int) {
+}
+
 class Xv65Device : public Device {
 private:
 	AddressSpace *m;
@@ -54,20 +58,39 @@ private:
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
+	void put_value(unsigned char *buf, int size, int64_t value) {
+		int pattern = 0x01020304;
+		int patter_v0 = *(unsigned char *)&pattern;
+		unsigned char *v = (unsigned char *)&value;
+		if (patter_v0 == 0x01) {
+			for (int i = 0; i < size; i++)
+				buf[i] = v[sizeof(int64_t) - 1 - i];
+		} else if (patter_v0 == 0x04) {
+			for (int i = 0; i < size; i++)
+				buf[i] = v[i];
+		} else 
+			abort();
+	}
+	void get_value(const unsigned char *buf, int size, int64_t *value) {
+		int64_t v = 0;
+		if (size > 0)
+			v = buf[size - 1] & 0x80 ? -1 : 0;
+		for (int i = 0; i < size; i++) {
+			v <<= 8;
+			v |= buf[size - i - 1];
+		}
+		*value = v;
+	}
 	int r_get_uint8(int i) {
 		return r[i] & 0xff;
 	}
 	bool r_get_trailing_int(int i, int *value) {
-		int len = n - i, v;
+		int len = n - i;
 		if (len < 0 || len > 8)
 			return false;
-		if (len > 0)
-			v = r[i + len - 1] & 0x80 ? -1 : 0;
-		for (i = 0; i < len; i++) {
-			v <<= 8;
-			v |= r[n - i - 1] & 0xff;
-		}
-		*value = v;
+		int64_t v;
+		get_value((const unsigned char *)&r[i], len, &v);
+		*value = (int)v;
 		return true;
 	}
 	int m_get_uint8(int addr) {
@@ -91,8 +114,7 @@ private:
 		pid_t pid = fork();
 		if (pid == -1)
 			return 1;
-		for (size_t i = 0; i < sizeof(pid); i++)
-			v_REQDAT[i] = ((unsigned char *)&pid)[i];
+		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
 	int req_SYS_exit() {
@@ -109,8 +131,7 @@ private:
 		pid_t pid = wait(&status);
 		if (pid == -1)
 			return 1;
-		for (size_t i = 0; i < sizeof(pid); i++)
-			v_REQDAT[i] = ((unsigned char *)&pid)[i];
+		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
 	int req_SYS_kill() {
@@ -125,11 +146,17 @@ private:
 		default:
 			return 1;
 		}
-		pid_t pid;
-		for (size_t i = 0; i < sizeof(pid); i++)
-			((unsigned char *)&pid)[i] = v_REQDAT[i];
-		int ret = kill(pid, sig);
+		int64_t pid;
+		get_value(v_REQDAT, sizeof(pid_t), &pid);
+		int ret = kill((pid_t)pid, sig);
 		return ret == -1 ? 1 : 0;
+	}
+	int req_SYS_getpid() {
+		if (n != 1)
+			return 1;
+		pid_t pid = getpid();
+		put_value(v_REQDAT, 8, pid);
+		return 0;
 	}
 	int req_SYS_sleep() {
 		int seconds;
@@ -160,6 +187,9 @@ private:
 		case REQ_SYS_kill:
 			ret = req_SYS_kill();
 			break;
+		case REQ_SYS_getpid:
+			ret = req_SYS_getpid();
+			break;
 		case REQ_SYS_sleep:
 			ret = req_SYS_sleep();
 			break;
@@ -177,6 +207,9 @@ private:
 		req.reset();
 	}
 public:
+	Xv65Device() {
+		signal(SIGALRM, sig_handler);
+	}
 	void set_address_space(AddressSpace *dma) {
 		m = dma;
 	}
@@ -214,11 +247,13 @@ public:
 	}
 	int get(int address) {
 		address += IO_BASE;
-		switch (IO_BASE) {
+		switch (address) {
 		case REQRES:
 			return v_REQRES;
 		case REQPTRHI:
 			return v_REQPTRHI;
+		case PIDSIZE:
+			return sizeof(pid_t);
 		default:
 			if (address >= REQDAT && address < REQDAT + 16)
 				return v_REQDAT[address - REQDAT];
@@ -237,4 +272,3 @@ Device *new_Device() {
 DeviceEntry entry("xv65", new_Device);
 
 } // namespace
-
