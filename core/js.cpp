@@ -39,6 +39,8 @@ IO *io = 0;
 VM *vm = 0;
 
 class IOImpl : public IO {
+	void set_address_space(AddressSpace *dma) {
+	}
 	void reset() {
 		asm("JBIT.io_reset();"
 		    : /* output */

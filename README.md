@@ -2,7 +2,7 @@ JBit
 ====
 
 This is a C++/JavaScript version of the JBit Virtual Machine.  It has a
-core written in C++, and a two simulators using it: a native one using
+core written in C++, and two simulators using it: a native one using
 it directly, and a JavaScript one using it via
 [emscripten](https://github.com/kripken/emscripten).
 
@@ -40,6 +40,13 @@ If you want to try writing your own programs, get my fork of
 [cc65](http://oliverschmidt.github.io/cc65/) here:
 
 <https://github.com/efornara/cc65>
+
+Xv65
+----
+
+The native version of the simulator includes a device (xv65) that offers
+a simplified version of the underlying machine. It is inspired by the
+beautiful [xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).
 
 JavaScript
 ----------

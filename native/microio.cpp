@@ -409,6 +409,8 @@ public:
 		curses_init();
 		atexit(curses_cleanup);
 	}
+	void set_address_space(AddressSpace *dma) {
+	}
 	void reset() {
 		io.reset();
 		status_msg = "";

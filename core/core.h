@@ -76,11 +76,17 @@ public:
 	const ParseError *parse(Program *prg);
 };
 
-class IO {
+class AddressSpace {
 public:
-	virtual void reset() = 0;
 	virtual void put(int address, int value) = 0;
 	virtual int get(int address) = 0;
+	virtual ~AddressSpace() {}
+};
+
+class IO : public AddressSpace {
+public:
+	virtual void set_address_space(AddressSpace *dma) = 0;
+	virtual void reset() = 0;
 	virtual ~IO() {}
 };
 

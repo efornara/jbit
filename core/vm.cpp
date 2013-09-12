@@ -34,13 +34,13 @@
 
 namespace {
 
-class AddressSpace {
+class VMAddressSpace {
 private:
 	static const int mem_size = 256 * 256;
 	IO *io;
 	unsigned char m[mem_size];
 public:
-	AddressSpace(IO *io_) : io(io_) {}
+	VMAddressSpace(IO *io_) : io(io_) {}
 	inline void reset() {
 		memset(m, 0, mem_size);
 	}
@@ -98,12 +98,12 @@ public:
 
 	class Module {
 	public:
-		AddressSpace *mem;
+		VMAddressSpace *mem;
 		void put(int a, int v) { mem->put(a, v); }
 		int get(int a) { return mem->get(a); }
 	};
 
-	CPU(AddressSpace *mem) {
+	CPU(VMAddressSpace *mem) {
 		m.mem = mem;
 	}
 	
@@ -1160,13 +1160,16 @@ break;
 	}
 };
 
-class VMImpl : public VM {
+class VMImpl : public VM, public AddressSpace {
 private:
 	IO *io;
-	AddressSpace mem;
+	VMAddressSpace mem;
 	CPU cpu;
 public:
-	VMImpl(IO *io_) : io(io_), mem(io), cpu(&mem) {}
+	VMImpl(IO *io_) : io(io_), mem(io), cpu(&mem) {
+		io->set_address_space(this);
+	}
+	// VM
 	void reset() {
 		io->reset();
 		mem.reset();
@@ -1184,6 +1187,13 @@ public:
 		if (cpu.status == CPU::CPUSvc_OK)
 			cpu.step();
 		return cpu.status;
+	}
+	// AddressSpace
+	void put(int address, int value) {
+		mem.put(address, value);
+	}
+	int get(int address) {
+		return mem.get(address);
 	}
 };
 
