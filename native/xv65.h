@@ -42,7 +42,8 @@
 #define REQPTRHI 0x0205
 
 /* DEBUGLEV = $0210                                                        */
-#define PIDSIZE 0x0211
+#define REQERRNO 0x0211
+#define PIDSIZE 0x0212
 
 #define REQDAT 0x0260
 
@@ -70,15 +71,51 @@
 #define REQ_SYS_mkdir 20
 #define REQ_SYS_close 21
 
-#define KILL_SIGHUP 1
-#define KILL_SIGINT 2
-#define KILL_SIGQUIT 3
-#define KILL_SIGILL 4
-#define KILL_SIGABRT 6
-#define KILL_SIGFPE 8
-#define KILL_SIGKILL 9
-#define KILL_SIGSEGV 11
-#define KILL_SIGPIPE 13
-#define KILL_SIGALRM 14
-#define KILL_SIGTERM 15
+
+#define XV65_SIGHUP 1
+#define XV65_SIGINT 2
+#define XV65_SIGQUIT 3
+#define XV65_SIGILL 4
+#define XV65_SIGABRT 6
+#define XV65_SIGFPE 8
+#define XV65_SIGKILL 9
+#define XV65_SIGSEGV 11
+#define XV65_SIGPIPE 13
+#define XV65_SIGALRM 14
+#define XV65_SIGTERM 15
+
+#define XV65_EPERM 1
+#define XV65_ENOENT 2
+#define XV65_ESRCH 3
+#define XV65_EINTR 4
+#define XV65_EIO 5
+#define XV65_ENXIO 6
+#define XV65_E2BIG 7
+#define XV65_ENOEXEC 8
+#define XV65_EBADF 9
+#define XV65_ECHILD 10
+#define XV65_EAGAIN 11
+#define XV65_ENOMEM 12
+#define XV65_EACCES 13
+#define XV65_EFAULT 14
+#define XV65_ENOTBLK 15
+#define XV65_EBUSY 16
+#define XV65_EEXIST 17
+#define XV65_EXDEV 18
+#define XV65_ENODEV 19
+#define XV65_ENOTDIR 20
+#define XV65_EISDIR 21
+#define XV65_EINVAL 22
+#define XV65_ENFILE 23
+#define XV65_EMFILE 24
+#define XV65_ENOTTY 25
+#define XV65_ETXTBSY 26
+#define XV65_EFBIG 27
+#define XV65_ENOSPC 28
+#define XV65_ESPIPE 29
+#define XV65_EROFS 30
+#define XV65_EMLINK 31
+#define XV65_EPIPE 32
+#define XV65_EDOM 33
+#define XV65_ERANGE 34
 

@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -43,6 +44,7 @@
 #include "xv65.h"
 
 #define IO_BASE 0x200
+#define ERR XV65_EINVAL
 
 namespace {
 
@@ -55,6 +57,7 @@ private:
 	Buffer req;
 	int v_REQPTRHI;
 	int v_REQRES;
+	int v_REQERRNO;
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
@@ -110,27 +113,27 @@ private:
 	}
 	int req_SYS_fork() {
 		if (n != 1)
-			return 1;
+			return ERR;
 		pid_t pid = fork();
 		if (pid == -1)
-			return 1;
+			return errno;
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
 	int req_SYS_exit() {
 		int status;
 		if (!r_get_trailing_int(1, &status))
-			return 1;
+			return ERR;
 		exit(status);
 		return 0; // not reached
 	}
 	int req_SYS_wait() {
 		if (n != 1)
-			return 1;
+			return ERR;
 		int status;
 		pid_t pid = wait(&status);
 		if (pid == -1)
-			return 1;
+			return errno;
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
@@ -144,16 +147,16 @@ private:
 			sig = r_get_uint8(1);
 			break;
 		default:
-			return 1;
+			return ERR;
 		}
 		int64_t pid;
 		get_value(v_REQDAT, sizeof(pid_t), &pid);
 		int ret = kill((pid_t)pid, sig);
-		return ret == -1 ? 1 : 0;
+		return ret == -1 ? errno : 0;
 	}
 	int req_SYS_getpid() {
 		if (n != 1)
-			return 1;
+			return ERR;
 		pid_t pid = getpid();
 		put_value(v_REQDAT, 8, pid);
 		return 0;
@@ -161,17 +164,22 @@ private:
 	int req_SYS_sleep() {
 		int seconds;
 		if (!r_get_trailing_int(1, &seconds))
-			return 1;
+			return ERR;
 		int ret = sleep(seconds);
-		return ret != 0 ? 1 : 0;
+		if (ret) {
+			put_value(v_REQDAT, 8, ret);
+			return XV65_EINTR;
+		}
+		return 0;
 	}
 	void request() {
-		int ret = 0xff;
+		int ret = ERR;
 		r = req.get_data();
 		n = req.get_length();
-		if (n == 0)
-			return;
-		switch (*r) {
+		int id = -1;
+		if (n > 0)
+			id = *r;
+		switch (id) {
 		case REQ_DEBUG:
 			ret = req_DEBUG();
 			break;
@@ -195,6 +203,8 @@ private:
 			break;
 		}
 		v_REQRES = ret;
+		if (ret != 0)
+			v_REQERRNO = ret;
 	}
 	void put_REQPTRLO(int value) {
 		int addr = ((v_REQPTRHI & 0xff) << 8) | (value & 0xff);
@@ -217,6 +227,7 @@ public:
 		req.reset();
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
+		v_REQERRNO = 0;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
@@ -239,6 +250,9 @@ public:
 		case REQPTRLO:
 			put_REQPTRLO(value);
 			break;
+		case REQERRNO:
+			v_REQERRNO = value;
+			break;
 		default:
 			if (address >= REQDAT && address < REQDAT + 16)
 				v_REQDAT[address - REQDAT] = value;
@@ -252,6 +266,8 @@ public:
 			return v_REQRES;
 		case REQPTRHI:
 			return v_REQPTRHI;
+		case REQERRNO:
+			return v_REQERRNO;
 		case PIDSIZE:
 			return sizeof(pid_t);
 		default:
