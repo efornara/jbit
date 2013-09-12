@@ -31,7 +31,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
+
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #include "jbit.h"
@@ -54,6 +57,19 @@ private:
 	int r_get_uint8(int i) {
 		return r[i] & 0xff;
 	}
+	bool r_get_trailing_int(int i, int *value) {
+		int len = n - i, v;
+		if (len < 0 || len > 8)
+			return false;
+		if (len > 0)
+			v = r[i + len - 1] & 0x80 ? -1 : 0;
+		for (i = 0; i < len; i++) {
+			v <<= 8;
+			v |= r[n - i - 1] & 0xff;
+		}
+		*value = v;
+		return true;
+	}
 	int m_get_uint8(int addr) {
 		int res = 0;
 		if (addr >= 0 && addr <= 0xffff)
@@ -65,14 +81,12 @@ private:
 		res |= m_get_uint8(addr) << 8;
 		return res;
 	}
-	void m_put_uint8(int addr, int value) {
-	}
 	int req_DEBUG() {
 		fprintf(stderr, "REQ_DEBUG %d\n", n);
 		return 0;
 	}
 	int req_SYS_fork() {
-		if (n != 0)
+		if (n != 1)
 			return 1;
 		pid_t pid = fork();
 		if (pid == -1)
@@ -83,21 +97,13 @@ private:
 	}
 	int req_SYS_exit() {
 		int status;
-		switch (n) {
-		case 0:
-			status = 0;
-			break;
-		case 1:
-			status = r_get_uint8(1);
-			break;
-		default:
+		if (!r_get_trailing_int(1, &status))
 			return 1;
-		}
 		exit(status);
 		return 0; // not reached
 	}
 	int req_SYS_wait() {
-		if (n != 0)
+		if (n != 1)
 			return 1;
 		int status;
 		pid_t pid = wait(&status);
@@ -107,13 +113,37 @@ private:
 			v_REQDAT[i] = ((unsigned char *)&pid)[i];
 		return 0;
 	}
+	int req_SYS_kill() {
+		int sig;
+		switch (n) {
+		case 1:
+			sig = SIGTERM;
+			break;
+		case 2:
+			sig = r_get_uint8(1);
+			break;
+		default:
+			return 1;
+		}
+		pid_t pid;
+		for (size_t i = 0; i < sizeof(pid); i++)
+			((unsigned char *)&pid)[i] = v_REQDAT[i];
+		int ret = kill(pid, sig);
+		return ret == -1 ? 1 : 0;
+	}
+	int req_SYS_sleep() {
+		int seconds;
+		if (!r_get_trailing_int(1, &seconds))
+			return 1;
+		int ret = sleep(seconds);
+		return ret != 0 ? 1 : 0;
+	}
 	void request() {
 		int ret = 0xff;
 		r = req.get_data();
 		n = req.get_length();
 		if (n == 0)
 			return;
-		n--;
 		switch (*r) {
 		case REQ_DEBUG:
 			ret = req_DEBUG();
@@ -126,6 +156,12 @@ private:
 			break;
 		case REQ_SYS_wait:
 			ret = req_SYS_wait();
+			break;
+		case REQ_SYS_kill:
+			ret = req_SYS_kill();
+			break;
+		case REQ_SYS_sleep:
+			ret = req_SYS_sleep();
 			break;
 		}
 		v_REQRES = ret;
