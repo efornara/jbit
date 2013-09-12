@@ -54,6 +54,11 @@ extern "C" void sig_handler(int) {
 
 class Xv65Device : public Device {
 private:
+	const static int top_memory = 256 * 256 - 1;
+	enum RdWr {
+		Read,
+		Write
+	};
 	AddressSpace *m;
 	Buffer req;
 	int v_REQPTRHI;
@@ -231,6 +236,33 @@ private:
 			return XV65_ERANGE;
 		return 0;
 	}
+	int req_RDWR(RdWr mode) {
+		if (n != 6)
+			return ERR;
+		int fd = r_get_uint8(1);
+		int addr = r_get_uint16(2);
+		int len = r_get_uint16(4);
+		if (addr + len > top_memory)
+			return ERR;
+		req.reset(); // reuse reset (not needed anymore)
+		char *raw = req.append_raw(len);
+		int res;
+		if (mode == Read) {
+			res = read(fd, raw, len);
+			if (res > 0)
+				for (int i = 0; i < res; i++)
+					m->put(addr + i, raw[i]);
+		}
+		if (mode == Write) {
+			for (int i = 0; i < len; i++)
+				raw[i] = m->get(addr + i);
+			res = write(fd, raw, len);
+		}
+		if (res < 0)
+			return errno;
+		put_value(v_REQDAT, 8, res);
+		return 0;
+	}
 	int req_CLOSE() {
 		if (n != 2)
 			return ERR;
@@ -255,6 +287,9 @@ private:
 		case REQ_WAIT:
 			ret = req_WAIT();
 			break;
+		case REQ_READ:
+			ret = req_RDWR(Read);
+			break;
 		case REQ_KILL:
 			ret = req_KILL();
 			break;
@@ -269,6 +304,9 @@ private:
 			break;
 		case REQ_OPEN:
 			ret = req_OPEN();
+			break;
+		case REQ_WRITE:
+			ret = req_RDWR(Write);
 			break;
 		case REQ_CLOSE:
 			ret = req_CLOSE();
