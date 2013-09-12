@@ -41,35 +41,33 @@
 #define REQPTRLO 0x0204
 #define REQPTRHI 0x0205
 
-/* DEBUGLEV = $0210                                                        */
+#define DEBUGLEV 0x0210
 #define REQERRNO 0x0211
 #define PIDSIZE 0x0212
 
 #define REQDAT 0x0260
 
-#define REQ_DEBUG 0
-
-#define REQ_SYS_fork 1
-#define REQ_SYS_exit 2
-#define REQ_SYS_wait 3
-#define REQ_SYS_pipe 4
-#define REQ_SYS_read 5
-#define REQ_SYS_kill 6
-#define REQ_SYS_exec 7
-#define REQ_SYS_fstat 8
-#define REQ_SYS_chdir 9
-#define REQ_SYS_dup 10
-#define REQ_SYS_getpid 11
-#define REQ_SYS_sbrk 12
-#define REQ_SYS_sleep 13
-#define REQ_SYS_uptime 14
-#define REQ_SYS_open 15
-#define REQ_SYS_write 16
-#define REQ_SYS_mknod 17
-#define REQ_SYS_unlink 18
-#define REQ_SYS_link 19
-#define REQ_SYS_mkdir 20
-#define REQ_SYS_close 21
+#define REQ_FORK 1
+#define REQ_EXIT 2
+#define REQ_WAIT 3
+#define REQ_PIPE 4
+#define REQ_READ 5
+#define REQ_KILL 6
+#define REQ_EXEC 7
+#define REQ_FSTAT 8
+#define REQ_CHDIR 9
+#define REQ_DUP 10
+#define REQ_GETPID 11
+#define REQ_SBRK 12
+#define REQ_SLEEP 13
+#define REQ_UPTIME 14
+#define REQ_OPEN 15
+#define REQ_WRITE 16
+#define REQ_MKNOD 17
+#define REQ_UNLINK 18
+#define REQ_LINK 19
+#define REQ_MKDIR 20
+#define REQ_CLOSE 21
 
 
 #define XV65_SIGHUP 1

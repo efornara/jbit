@@ -107,11 +107,7 @@ private:
 		res |= m_get_uint8(addr) << 8;
 		return res;
 	}
-	int req_DEBUG() {
-		fprintf(stderr, "REQ_DEBUG %d\n", n);
-		return 0;
-	}
-	int req_SYS_fork() {
+	int req_FORK() {
 		if (n != 1)
 			return ERR;
 		pid_t pid = fork();
@@ -120,14 +116,14 @@ private:
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
-	int req_SYS_exit() {
+	int req_EXIT() {
 		int status;
 		if (!r_get_trailing_int(1, &status))
 			return ERR;
 		exit(status);
 		return 0; // not reached
 	}
-	int req_SYS_wait() {
+	int req_WAIT() {
 		if (n != 1)
 			return ERR;
 		int status;
@@ -137,7 +133,7 @@ private:
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
-	int req_SYS_kill() {
+	int req_KILL() {
 		int sig;
 		switch (n) {
 		case 1:
@@ -154,14 +150,14 @@ private:
 		int ret = kill((pid_t)pid, sig);
 		return ret == -1 ? errno : 0;
 	}
-	int req_SYS_getpid() {
+	int req_GETPID() {
 		if (n != 1)
 			return ERR;
 		pid_t pid = getpid();
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
-	int req_SYS_sleep() {
+	int req_SLEEP() {
 		int seconds;
 		if (!r_get_trailing_int(1, &seconds))
 			return ERR;
@@ -180,26 +176,23 @@ private:
 		if (n > 0)
 			id = *r;
 		switch (id) {
-		case REQ_DEBUG:
-			ret = req_DEBUG();
+		case REQ_FORK:
+			ret = req_FORK();
 			break;
-		case REQ_SYS_fork:
-			ret = req_SYS_fork();
+		case REQ_EXIT:
+			ret = req_EXIT();
 			break;
-		case REQ_SYS_exit:
-			ret = req_SYS_exit();
+		case REQ_WAIT:
+			ret = req_WAIT();
 			break;
-		case REQ_SYS_wait:
-			ret = req_SYS_wait();
+		case REQ_KILL:
+			ret = req_KILL();
 			break;
-		case REQ_SYS_kill:
-			ret = req_SYS_kill();
+		case REQ_GETPID:
+			ret = req_GETPID();
 			break;
-		case REQ_SYS_getpid:
-			ret = req_SYS_getpid();
-			break;
-		case REQ_SYS_sleep:
-			ret = req_SYS_sleep();
+		case REQ_SLEEP:
+			ret = req_SLEEP();
 			break;
 		}
 		v_REQRES = ret;

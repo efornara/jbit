@@ -39,35 +39,33 @@ REQRES = $0203
 REQPTRLO = $0204
 REQPTRHI = $0205
 
-;DEBUGLEV = $0210
+DEBUGLEV = $0210
 REQERRNO = $0211
 PIDSIZE = $0212
 
 REQDAT = $0260
 
-REQ_DEBUG = 0
-
-REQ_SYS_fork   =  1
-REQ_SYS_exit   =  2
-REQ_SYS_wait   =  3
-REQ_SYS_pipe   =  4
-REQ_SYS_read   =  5
-REQ_SYS_kill   =  6
-REQ_SYS_exec   =  7
-REQ_SYS_fstat  =  8
-REQ_SYS_chdir  =  9
-REQ_SYS_dup    = 10
-REQ_SYS_getpid = 11
-REQ_SYS_sbrk   = 12
-REQ_SYS_sleep  = 13
-REQ_SYS_uptime = 14
-REQ_SYS_open   = 15
-REQ_SYS_write  = 16
-REQ_SYS_mknod  = 17
-REQ_SYS_unlink = 18
-REQ_SYS_link   = 19
-REQ_SYS_mkdir  = 20
-REQ_SYS_close  = 21
+REQ_FORK   =  1
+REQ_EXIT   =  2
+REQ_WAIT   =  3
+REQ_PIPE   =  4
+REQ_READ   =  5
+REQ_KILL   =  6
+REQ_EXEC   =  7
+REQ_FSTAT  =  8
+REQ_CHDIR  =  9
+REQ_DUP    = 10
+REQ_GETPID = 11
+REQ_SBRK   = 12
+REQ_SLEEP  = 13
+REQ_UPTIME = 14
+REQ_OPEN   = 15
+REQ_WRITE  = 16
+REQ_MKNOD  = 17
+REQ_UNLINK = 18
+REQ_LINK   = 19
+REQ_MKDIR  = 20
+REQ_CLOSE  = 21
 
 ; STANDARD SYMBOLS
 
@@ -121,7 +119,6 @@ ERANGE  = 34
 ; ASM ONLY
 
 IO = $0200
-IO_HI = $02
 
 .macro  req
 @_req_: .word @_endreq_ - @_req_ - 2
