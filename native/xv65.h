@@ -117,3 +117,8 @@
 #define XV65_EDOM 33
 #define XV65_ERANGE 34
 
+#define XV65_O_RDONLY 0
+#define XV65_O_WRONLY 1
+#define XV65_O_RDWR 2
+#define XV65_O_CREAT 64
+

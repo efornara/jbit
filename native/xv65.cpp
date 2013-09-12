@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 #include "jbit.h"
 
@@ -86,6 +87,9 @@ private:
 	}
 	int r_get_uint8(int i) {
 		return r[i] & 0xff;
+	}
+	int r_get_uint16(int i) {
+		return (r_get_uint8(i + 1) << 8) | r_get_uint8(i);
 	}
 	bool r_get_trailing_int(int i, int *value) {
 		int len = n - i;
@@ -178,7 +182,7 @@ private:
 		int i = r_parse_string(1);
 		if (i == -1)
 			return ERR;
-		const char *file = &r[1];
+		const char *filename = &r[1];
 		Buffer arr_buf;
 		int n_of_args = 0;
 		while (i < n) {
@@ -191,8 +195,48 @@ private:
 			memcpy(slot, &arg, sizeof(char *));
 			n_of_args++;
 		}
-		execvp(file, (char* const*)arr_buf.get_data());
+		execvp(filename, (char* const*)arr_buf.get_data());
 		return errno;
+	}
+	int req_OPEN() {
+		int i = r_parse_string(1);
+		if (i == -1)
+			return ERR;
+		const char *filename = &r[1];
+		if (n - i != 1)
+			return ERR;
+		int in_flags = r_get_uint8(i);
+		int out_flags = 0;
+		if (in_flags & XV65_O_CREAT)
+			out_flags = O_CREAT;
+		in_flags &= ~XV65_O_CREAT;
+		switch (in_flags) {
+		case XV65_O_RDONLY:
+			out_flags |= O_RDONLY;
+			break;
+		case XV65_O_WRONLY:
+			out_flags |= O_WRONLY;
+			break;
+		case XV65_O_RDWR:
+			out_flags |= O_RDWR;
+			break;
+		default:
+			return ERR;
+		}
+		int fd = open(filename, out_flags, 0666);
+		if (fd == -1)
+			return errno;
+		put_value(v_REQDAT, 8, fd);
+		if (fd > 255)
+			return XV65_ERANGE;
+		return 0;
+	}
+	int req_CLOSE() {
+		if (n != 2)
+			return ERR;
+		int fd = r_get_uint8(1);
+		int ret = close(fd);
+		return ret == -1 ? errno : 0;
 	}
 	void request() {
 		int ret = ERR;
@@ -223,20 +267,26 @@ private:
 		case REQ_EXEC:
 			ret = req_EXEC();
 			break;
+		case REQ_OPEN:
+			ret = req_OPEN();
+			break;
+		case REQ_CLOSE:
+			ret = req_CLOSE();
+			break;
 		}
 		v_REQRES = ret;
 		if (ret != 0)
 			v_REQERRNO = ret;
+		req.reset();
 	}
 	void put_REQPTRLO(int value) {
-		int addr = ((v_REQPTRHI & 0xff) << 8) | (value & 0xff);
+		int addr = (v_REQPTRHI << 8) | value;
 		int len = m_get_uint16(addr);
 		addr += 2;
 		req.reset();
 		for (int i = 0; i < len; i++)
 			req.append_char(m_get_uint8(addr++));
 		request();
-		req.reset();
 	}
 public:
 	Xv65Device() {
@@ -264,7 +314,6 @@ public:
 			break;
 		case REQEND:
 			request();
-			req.reset();
 			break;
 		case REQPTRHI:
 			v_REQPTRHI = value;

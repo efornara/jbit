@@ -116,6 +116,11 @@ EPIPE   = 32
 EDOM    = 33
 ERANGE  = 34
 
+O_RDONLY   =  0
+O_WRONLY   =  1
+O_RDWR     =  2
+O_CREAT    = 64
+
 ; ASM ONLY
 
 IO = $0200
