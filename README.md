@@ -41,7 +41,7 @@ If you want to try writing your own programs, get my fork of
 
 <https://github.com/efornara/cc65>
 
-Xv65
+xv65
 ----
 
 The native version of the simulator includes a device (xv65) that offers
