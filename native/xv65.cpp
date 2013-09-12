@@ -96,6 +96,12 @@ private:
 		*value = (int)v;
 		return true;
 	}
+	int r_parse_string(int i) {
+		for (; i < n; i++)
+			if (r[i] == 0)
+				return i + 1; // pos after string
+		return -1;
+	}
 	int m_get_uint8(int addr) {
 		int res = 0;
 		if (addr >= 0 && addr <= 0xffff)
@@ -168,6 +174,26 @@ private:
 		}
 		return 0;
 	}
+	int req_EXEC() {
+		int i = r_parse_string(1);
+		if (i == -1)
+			return ERR;
+		const char *file = &r[1];
+		Buffer arr_buf;
+		int n_of_args = 0;
+		while (i < n) {
+			int arg_i = i;
+			i = r_parse_string(arg_i);
+			if (i == -1)
+				return ERR;
+			const char *arg = &r[arg_i];
+			char *slot = arr_buf.append_raw(sizeof(char *));
+			memcpy(slot, &arg, sizeof(char *));
+			n_of_args++;
+		}
+		execvp(file, (char* const*)arr_buf.get_data());
+		return errno;
+	}
 	void request() {
 		int ret = ERR;
 		r = req.get_data();
@@ -193,6 +219,9 @@ private:
 			break;
 		case REQ_SLEEP:
 			ret = req_SLEEP();
+			break;
+		case REQ_EXEC:
+			ret = req_EXEC();
 			break;
 		}
 		v_REQRES = ret;
