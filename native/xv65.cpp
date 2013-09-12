@@ -145,6 +145,19 @@ private:
 		put_value(v_REQDAT, 8, pid);
 		return 0;
 	}
+	int req_PIPE() {
+		if (n != 1)
+			return ERR;
+		int p[2];
+		int ret = pipe(p);
+		if (ret < 0)
+			return errno;
+		put_value(&v_REQDAT[0], 8, p[0]);
+		put_value(&v_REQDAT[8], 8, p[1]);
+		if (p[0] > 255 || p[1] > 255)
+			return XV65_ERANGE;
+		return 0;
+	}
 	int req_KILL() {
 		int sig;
 		switch (n) {
@@ -197,6 +210,9 @@ private:
 			memcpy(slot, &arg, sizeof(char *));
 			n_of_args++;
 		}
+		const char *null = 0;
+		char *slot = arr_buf.append_raw(sizeof(char *));
+		memcpy(slot, &null, sizeof(char *));
 		execvp(filename, (char* const*)arr_buf.get_data());
 		return errno;
 	}
@@ -268,6 +284,18 @@ private:
 		int ret = close(fd);
 		return ret == -1 ? errno : 0;
 	}
+	int req_DUP() {
+		if (n != 2)
+			return ERR;
+		int fd = r_get_uint8(1);
+		fd = dup(fd);
+		if (fd == -1)
+			return errno;
+		put_value(v_REQDAT, 8, fd);
+		if (fd > 255)
+			return XV65_ERANGE;
+		return 0;
+	}
 	int req_filename(int req_id) {
 		int i = r_parse_string(1);
 		if (i == -1)
@@ -308,6 +336,9 @@ private:
 		case REQ_WAIT:
 			ret = req_WAIT();
 			break;
+		case REQ_PIPE:
+			ret = req_PIPE();
+			break;
 		case REQ_KILL:
 			ret = req_KILL();
 			break;
@@ -329,6 +360,9 @@ private:
 			break;
 		case REQ_CLOSE:
 			ret = req_CLOSE();
+			break;
+		case REQ_DUP:
+			ret = req_DUP();
 			break;
 		case REQ_CHDIR:
 		case REQ_MKDIR:
