@@ -409,6 +409,7 @@ public:
 		curses_init();
 		atexit(curses_cleanup);
 	}
+	// VM
 	void set_address_space(AddressSpace *dma) {
 	}
 	void reset() {
@@ -422,6 +423,9 @@ public:
 	}
 	int get(int address) {
 		return io.get(address);
+	}
+	// Device
+	void set_args(int argc_, char **argv_) {
 	}
 	bool update(int status) {
 		switch (status) {

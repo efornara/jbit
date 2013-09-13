@@ -34,11 +34,14 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 
 #include "jbit.h"
@@ -63,6 +66,7 @@ private:
 	int v_REQPTRHI;
 	int v_REQRES;
 	int v_REQERRNO;
+	int v_FRMFPS;
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
@@ -421,6 +425,41 @@ private:
 			req.append_char(m_get_uint8(addr++));
 		request();
 	}
+	void put_FRMDRAW() {
+		double fps = (v_FRMFPS ? v_FRMFPS : 1) / 4.0;
+		int ms = (int)(1000 / fps);
+		fflush(stdout);
+		struct timespec ts;
+		ts.tv_sec = ms / 1000;
+		ts.tv_nsec = 1000000 * (ms % 1000);
+		nanosleep(&ts, NULL);
+	}
+	int get_consize(int address) {
+		int col = 80, row = 24;
+		struct winsize win;
+		if (ioctl(0, TIOCGWINSZ, &win) >= 0) {
+			col = win.ws_col;
+			row = win.ws_row;
+		}
+		return ((address == CONCOLS) ? col : row) & 0xff;
+	}
+	void set_CONESC(int value) {
+		switch (value) {
+		case ESC_HOME:
+			printf("\x1b[;H");
+			break;
+		case ESC_CLEAR:
+			printf("\x1b[2J");
+			break;
+		case ESC_NORMAL:
+			printf("\x1b[0m");
+			break;
+		default:
+			if ((value >= ESC_BG_BLACK && value <= ESC_BG_WHITE) ||
+			    (value >= ESC_FG_BLACK && value <= ESC_FG_WHITE))
+				printf("\x1b[%dm", value);
+		}
+	}
 public:
 	Xv65Device() {
 		signal(SIGALRM, sig_handler);
@@ -434,6 +473,7 @@ public:
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
 		v_REQERRNO = 0;
+		v_FRMFPS = 40;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
@@ -458,6 +498,14 @@ public:
 		case REQERRNO:
 			v_REQERRNO = value;
 			break;
+		case FRMFPS:
+			v_FRMFPS = value;
+			break;
+		case FRMDRAW:
+			put_FRMDRAW();
+			break;
+		case CONESC:
+			set_CONESC(value);
 		default:
 			if (address >= REQDAT && address < REQDAT + 16)
 				v_REQDAT[address - REQDAT] = value;
@@ -475,6 +523,11 @@ public:
 			return v_REQERRNO;
 		case PIDSIZE:
 			return sizeof(pid_t);
+		case FRMFPS:
+			return v_FRMFPS;
+		case CONCOLS:
+		case CONROWS:
+			return get_consize(address);
 		default:
 			if (address >= REQDAT && address < REQDAT + 16)
 				return v_REQDAT[address - REQDAT];

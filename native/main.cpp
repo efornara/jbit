@@ -167,7 +167,7 @@ void convert_to_asm(const Program *prg) {
 	printf("#! /usr/bin/env jbit");
 	if (prg->device_tag.is_valid())
 		printf(" -d %s", prg->device_tag.s);
-	printf("\n\n");
+	printf(" -a\n\n");
 	const char *sep = 0, *space = " ";
 	for (int i = 0; i < prg->get_length(); i++) {
 		sep = (i % bytes_per_line == (bytes_per_line - 1)) ? "\n" : space;

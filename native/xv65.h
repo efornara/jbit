@@ -41,9 +41,16 @@
 #define REQPTRLO 0x0204
 #define REQPTRHI 0x0205
 
-#define DEBUGLEV 0x0210
-#define REQERRNO 0x0211
-#define PIDSIZE 0x0212
+#define FRMFPS 0x0211
+#define FRMDRAW 0x0212
+
+#define CONCOLS 0x0220
+#define CONROWS 0x0221
+#define CONESC 0x0227
+
+#define DEBUGLEV 0x0250
+#define REQERRNO 0x0251
+#define PIDSIZE 0x0252
 
 #define REQDAT 0x0260
 
@@ -71,6 +78,28 @@
 
 #define REQ_ARGC 32
 #define REQ_ARGV 33
+
+#define ESC_HOME 1
+#define ESC_CLEAR 2
+#define ESC_NORMAL 3
+
+#define ESC_FG_BLACK 30
+#define ESC_FG_RED 31
+#define ESC_FG_GREEN 32
+#define ESC_FG_YELLOW 33
+#define ESC_FG_BLUE 34
+#define ESC_FG_MAGENTA 35
+#define ESC_FG_CYAN 36
+#define ESC_FG_WHITE 37
+
+#define ESC_BG_BLACK 40
+#define ESC_BG_RED 41
+#define ESC_BG_GREEN 42
+#define ESC_BG_YELLOW 43
+#define ESC_BG_BLUE 44
+#define ESC_BG_MAGENTA 45
+#define ESC_BG_CYAN 46
+#define ESC_BG_WHITE 47
 
 
 #define XV65_SIGHUP 1
