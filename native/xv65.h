@@ -69,6 +69,9 @@
 #define REQ_MKDIR 20
 #define REQ_CLOSE 21
 
+#define REQ_ARGC 32
+#define REQ_ARGV 33
+
 
 #define XV65_SIGHUP 1
 #define XV65_SIGINT 2

@@ -51,6 +51,7 @@ void fatal(const char *format, ...) {
 void usage(int code = 1) {
 	printf("\n"
 	 "usage: jbit [options] file\n"
+	 "       jbit [options] -a file arg...\n"
 	 "\n"
 	 "options:\n"
 	 "  -d device     override device selection\n"
@@ -148,10 +149,11 @@ void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	(*vm)->load(&prg);
 }
 
-void run(const char *file_name, Tag dev_tag) {
+void run(int argc, char *argv[], Tag dev_tag) {
 	VM *vm;
 	Device *dev;
-	startup(file_name, dev_tag, &vm, &dev);
+	startup(argv[0], dev_tag, &vm, &dev);
+	dev->set_args(argc, argv);
 	int vm_status = 0;
 	bool dev_keepalive = true;
 	while (vm_status == 0 || dev_keepalive) {
@@ -235,7 +237,7 @@ int main(int argc, char *argv[])
 {
 	Tag fmt_tag;
 	Tag dev_tag;
-	const char *file_name = 0;
+	int filename_i = -1;
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
 		if (!strcmp(s, "-d")) {
@@ -254,16 +256,21 @@ int main(int argc, char *argv[])
 				fmt_tag = Tag(f);
 			else
 				fatal("unknown conversion format '%s'", f);
-		} else if (!file_name) {
-			file_name = s;
+		} else if (!strcmp(s, "-a") && filename_i == -1) {
+			if (++i == argc)
+				usage();
+			filename_i = i;
+			break;
+		} else if (filename_i == -1) {
+			filename_i = i;
 		} else {
 			usage();
 		}
 	}
-	if (!file_name)
+	if (!filename_i == -1)
 		usage();
 	if (fmt_tag.is_valid())
-		convert(file_name, dev_tag, fmt_tag);
+		convert(argv[filename_i], dev_tag, fmt_tag);
 	else
-		run(file_name, dev_tag);
+		run(argc - filename_i, &argv[filename_i], dev_tag);
 }

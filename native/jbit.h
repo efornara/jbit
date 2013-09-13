@@ -32,6 +32,7 @@
 
 class Device : public IO {
 public:
+	virtual void set_args(int argc, char **argv) = 0;
 	virtual bool update(int status) = 0;
 	virtual ~Device() {}
 };

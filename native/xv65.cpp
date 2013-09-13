@@ -57,6 +57,8 @@ class Xv65Device : public Device {
 private:
 	const static int top_memory = 256 * 256 - 1;
 	AddressSpace *m;
+	int argc;
+	char **argv;
 	Buffer req;
 	int v_REQPTRHI;
 	int v_REQRES;
@@ -319,6 +321,35 @@ private:
 		}
 		return ret == -1 ? errno : 0;
 	}
+	int req_ARGC() {
+		if (n != 1)
+			return ERR;
+		put_value(v_REQDAT, 8, argc);
+		return 0;
+	}
+	int req_ARGV() {
+		if (n < 5)
+			return ERR;
+		int addr = r_get_uint16(1);
+		int len = r_get_uint16(3);
+		int index;
+		if (!r_get_trailing_int(5, &index))
+			return ERR;
+		if (index < 0 || index >= argc)
+			return XV65_EDOM;
+		if (addr + len > top_memory)
+			return ERR;
+		int arg_len = strlen(argv[index]) + 1;
+		if (len >= arg_len) {
+			for (int i = 0; argv[index][i]; i++)
+				m->put(addr + i, argv[index][i]);
+			m->put(addr + arg_len, 0);
+			return 0;
+		} else {
+			put_value(v_REQDAT, 8, arg_len);
+			return XV65_ERANGE;
+		}
+	}
 	void request() {
 		int ret = ERR;
 		r = req.get_data();
@@ -369,6 +400,12 @@ private:
 		case REQ_UNLINK:
 			ret = req_filename(id);
 			break;
+		case REQ_ARGC:
+			ret = req_ARGC();
+			break;
+		case REQ_ARGV:
+			ret = req_ARGV();
+			break;
 		}
 		v_REQRES = ret;
 		if (ret != 0)
@@ -388,6 +425,7 @@ public:
 	Xv65Device() {
 		signal(SIGALRM, sig_handler);
 	}
+	// IO
 	void set_address_space(AddressSpace *dma) {
 		m = dma;
 	}
@@ -442,6 +480,11 @@ public:
 				return v_REQDAT[address - REQDAT];
 			return 0;
 		}
+	}
+	// Device
+	void set_args(int argc_, char **argv_) {
+		argc = argc_;
+		argv = argv_;
 	}
 	bool update(int status) {
 		return false;
