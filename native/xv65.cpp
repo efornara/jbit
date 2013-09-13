@@ -331,28 +331,45 @@ private:
 		put_value(v_REQDAT, 8, argc);
 		return 0;
 	}
+	int put_string(int addr, int len, const char *s) {
+		if (addr + len > top_memory)
+			return ERR;
+		int str_len = strlen(s) + 1;
+		put_value(v_REQDAT, 8, str_len);
+		if (len < str_len)
+			return XV65_ERANGE;
+		for (int i = 0; s[i]; i++)
+			m->put(addr + i, s[i]);
+		m->put(addr + str_len, 0);
+		return 0;
+	}
 	int req_ARGV() {
 		if (n < 5)
 			return ERR;
 		int addr = r_get_uint16(1);
 		int len = r_get_uint16(3);
-		int index;
-		if (!r_get_trailing_int(5, &index))
+		int i;
+		if (!r_get_trailing_int(5, &i))
 			return ERR;
-		if (index < 0 || index >= argc)
+		if (i < 0 || i >= argc)
 			return XV65_EDOM;
-		if (addr + len > top_memory)
+		return put_string(addr, len, argv[i]);
+	}
+	int req_ENV() {
+		if (n <= 5)
 			return ERR;
-		int arg_len = strlen(argv[index]) + 1;
-		if (len >= arg_len) {
-			for (int i = 0; argv[index][i]; i++)
-				m->put(addr + i, argv[index][i]);
-			m->put(addr + arg_len, 0);
-			return 0;
-		} else {
-			put_value(v_REQDAT, 8, arg_len);
-			return XV65_ERANGE;
-		}
+		int addr = r_get_uint16(1);
+		int len = r_get_uint16(3);
+		int i = r_parse_string(5);
+		if (i == -1)
+			return ERR;
+		const char *name = &r[5];
+		if (n - i != 0)
+			return ERR;
+		const char *value = getenv(name);
+		if (!value)
+			value = "";
+		return put_string(addr, len, value);
 	}
 	int req_TIME() {
 		if (n != 1)
@@ -416,6 +433,9 @@ private:
 			break;
 		case REQ_ARGV:
 			ret = req_ARGV();
+			break;
+		case REQ_ENV:
+			ret = req_ENV();
 			break;
 		case REQ_TIME:
 			ret = req_TIME();
