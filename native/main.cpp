@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 			usage();
 		}
 	}
-	if (!filename_i == -1)
+	if (filename_i == -1)
 		usage();
 	if (fmt_tag.is_valid())
 		convert(argv[filename_i], dev_tag, fmt_tag);

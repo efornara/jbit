@@ -354,6 +354,13 @@ private:
 			return XV65_ERANGE;
 		}
 	}
+	int req_TIME() {
+		if (n != 1)
+			return ERR;
+		time_t t = time(0);
+		put_value(v_REQDAT, 8, t);
+		return 0;
+	}
 	void request() {
 		int ret = ERR;
 		r = req.get_data();
@@ -410,6 +417,9 @@ private:
 		case REQ_ARGV:
 			ret = req_ARGV();
 			break;
+		case REQ_TIME:
+			ret = req_TIME();
+			break;
 		}
 		v_REQRES = ret;
 		if (ret != 0)
@@ -426,13 +436,15 @@ private:
 		request();
 	}
 	void put_FRMDRAW() {
-		double fps = (v_FRMFPS ? v_FRMFPS : 1) / 4.0;
-		int ms = (int)(1000 / fps);
 		fflush(stdout);
-		struct timespec ts;
-		ts.tv_sec = ms / 1000;
-		ts.tv_nsec = 1000000 * (ms % 1000);
-		nanosleep(&ts, NULL);
+		if (v_FRMFPS) {
+			double fps = v_FRMFPS / 4.0;
+			int ms = (int)(1000 / fps);
+			struct timespec ts;
+			ts.tv_sec = ms / 1000;
+			ts.tv_nsec = 1000000 * (ms % 1000);
+			nanosleep(&ts, NULL);
+		}
 	}
 	int get_consize(int address) {
 		int col = 80, row = 24;
@@ -473,7 +485,7 @@ public:
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
 		v_REQERRNO = 0;
-		v_FRMFPS = 40;
+		v_FRMFPS = 0;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {

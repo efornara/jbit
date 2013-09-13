@@ -43,16 +43,19 @@
 
 #define FRMFPS 0x0211
 #define FRMDRAW 0x0212
+#define RANDOM 0x0217
 
 #define CONCOLS 0x0220
 #define CONROWS 0x0221
 #define CONESC 0x0227
 
-#define DEBUGLEV 0x0250
-#define REQERRNO 0x0251
-#define PIDSIZE 0x0252
+#define REQERRNO 0x0250
+#define PIDSIZE 0x0251
+#define DBGLEVEL 0x0252
+#define ERREXIT 0x0253
 
 #define REQDAT 0x0260
+#define REQDAT2 0x0268
 
 #define REQ_FORK 1
 #define REQ_EXIT 2
@@ -78,6 +81,8 @@
 
 #define REQ_ARGC 32
 #define REQ_ARGV 33
+#define REQ_ENV 34
+#define REQ_TIME 35
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
