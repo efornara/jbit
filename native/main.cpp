@@ -59,7 +59,15 @@ void usage(int code = 1) {
 	 "options:\n"
 	 "  -d device     override device selection\n"
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
-	 "\n");
+	 "\n"
+	 "devices:\n");
+	DeviceRegistry *reg = DeviceRegistry::get_instance();
+	int n = reg->get_n();
+	if (n == 0)
+	printf("  - none -\n");
+	for (int i = 0; i < n; i++)
+		printf("  %s\n", reg->get(i)->tag.s);
+	printf("\n");
 	exit(code);
 }
 
@@ -308,7 +316,7 @@ int main(int argc, char *argv[])
 			if (++i == argc)
 				usage();
 			const char *d = argv[i];
-			if (!strcmp(d, "microio") || !strcmp(d, "xv65"))
+			if (DeviceRegistry::get_instance()->get(d))
 				dev_tag = Tag(d);
 			else
 				fatal("unknown device '%s'", d);

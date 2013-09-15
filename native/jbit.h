@@ -61,6 +61,8 @@ private:
 public:
 	static DeviceRegistry *get_instance();
 	void add(const DeviceEntry *entry);
+	int get_n() { return n; }
+	const DeviceEntry *get(int i) { return devices[i]; }
 	const DeviceEntry *get(Tag tag);
 };
 
