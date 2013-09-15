@@ -33,9 +33,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <signal.h>
-#include <errno.h>
 #include <time.h>
+#include <ctype.h>
 
+#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -56,37 +57,110 @@ namespace {
 extern "C" void sig_handler(int) {
 }
 
+const char *req_id_to_string(int id) {
+	switch (id) {
+	case 1: return "REQ_FORK";
+	case 2: return "REQ_EXIT";
+	case 3: return "REQ_WAIT";
+	case 4: return "REQ_PIPE";
+	case 5: return "REQ_READ";
+	case 6: return "REQ_KILL";
+	case 7: return "REQ_EXEC";
+	case 8: return "REQ_FSTAT";
+	case 9: return "REQ_CHDIR";
+	case 10: return "REQ_DUP";
+	case 11: return "REQ_GETPID";
+	case 12: return "REQ_SBRK";
+	case 13: return "REQ_SLEEP";
+	case 14: return "REQ_UPTIME";
+	case 15: return "REQ_OPEN";
+	case 16: return "REQ_WRITE";
+	case 17: return "REQ_MKNOD";
+	case 18: return "REQ_UNLINK";
+	case 19: return "REQ_LINK";
+	case 20: return "REQ_MKDIR";
+	case 21: return "REQ_CLOSE";
+	case 32: return "REQ_ARGC";
+	case 33: return "REQ_ARGV";
+	case 34: return "REQ_ENV";
+	case 48: return "REQ_TIME";
+	default: return "?";
+	}
+}
+
+const char *errno_to_string(int id) {
+	switch (id) {
+	case 1: return "EPERM";
+	case 2: return "ENOENT";
+	case 3: return "ESRCH";
+	case 4: return "EINTR";
+	case 5: return "EIO";
+	case 6: return "ENXIO";
+	case 7: return "E2BIG";
+	case 8: return "ENOEXEC";
+	case 9: return "EBADF";
+	case 10: return "ECHILD";
+	case 11: return "EAGAIN";
+	case 12: return "ENOMEM";
+	case 13: return "EACCES";
+	case 14: return "EFAULT";
+	case 15: return "ENOTBLK";
+	case 16: return "EBUSY";
+	case 17: return "EEXIST";
+	case 18: return "EXDEV";
+	case 19: return "ENODEV";
+	case 20: return "ENOTDIR";
+	case 21: return "EISDIR";
+	case 22: return "EINVAL";
+	case 23: return "ENFILE";
+	case 24: return "EMFILE";
+	case 25: return "ENOTTY";
+	case 26: return "ETXTBSY";
+	case 27: return "EFBIG";
+	case 28: return "ENOSPC";
+	case 29: return "ESPIPE";
+	case 30: return "EROFS";
+	case 31: return "EMLINK";
+	case 32: return "EPIPE";
+	case 33: return "EDOM";
+	case 34: return "ERANGE";
+	default: return "?";
+	}
+}
+
 class Xv65Device : public Device {
 private:
-	const static int top_memory = 256 * 256 - 1;
+	const static int top_memory = 0xffff;
 	AddressSpace *m;
 	int argc;
 	char **argv;
-	Buffer req;
+	Buffer req_buf;
+	Buffer tmp_buf;
+	Random random;
 	int v_REQPTRHI;
 	int v_REQRES;
 	int v_REQERRNO;
 	int v_FRMFPS;
+	int v_TRCLEVEL;
+	int v_ERREXIT;
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
-	void put_value(unsigned char *buf, int size, int64_t value) {
+	void put_value(unsigned char *buf, int size, uint64_t value) {
 		int pattern = 0x01020304;
 		int patter_v0 = *(unsigned char *)&pattern;
 		unsigned char *v = (unsigned char *)&value;
 		if (patter_v0 == 0x01) {
 			for (int i = 0; i < size; i++)
-				buf[i] = v[sizeof(int64_t) - 1 - i];
+				buf[i] = v[sizeof(uint64_t) - 1 - i];
 		} else if (patter_v0 == 0x04) {
 			for (int i = 0; i < size; i++)
 				buf[i] = v[i];
 		} else 
 			abort();
 	}
-	void get_value(const unsigned char *buf, int size, int64_t *value) {
-		int64_t v = 0;
-		if (size > 0)
-			v = buf[size - 1] & 0x80 ? -1 : 0;
+	void get_value(const unsigned char *buf, int size, uint64_t *value) {
+		uint64_t v = 0;
 		for (int i = 0; i < size; i++) {
 			v <<= 8;
 			v |= buf[size - i - 1];
@@ -103,7 +177,7 @@ private:
 		int len = n - i;
 		if (len < 0 || len > 8)
 			return false;
-		int64_t v;
+		uint64_t v;
 		get_value((const unsigned char *)&r[i], len, &v);
 		*value = (int)v;
 		return true;
@@ -116,14 +190,12 @@ private:
 	}
 	int m_get_uint8(int addr) {
 		int res = 0;
-		if (addr >= 0 && addr <= 0xffff)
+		if (addr >= 0 && addr <= top_memory)
 			res =  m->get(addr) & 0xff;
 		return res;
 	}
 	int m_get_uint16(int addr) {
-		int res = m_get_uint8(addr++);
-		res |= m_get_uint8(addr) << 8;
-		return res;
+		return (m_get_uint8(addr + 1) << 8) | m_get_uint8(addr);
 	}
 	int req_FORK() {
 		if (n != 1)
@@ -176,7 +248,7 @@ private:
 		default:
 			return ERR;
 		}
-		int64_t pid;
+		uint64_t pid;
 		get_value(v_REQDAT, sizeof(pid_t), &pid);
 		int ret = kill((pid_t)pid, sig);
 		return ret == -1 ? errno : 0;
@@ -263,8 +335,8 @@ private:
 		int len = r_get_uint16(4);
 		if (addr + len > top_memory)
 			return ERR;
-		req.reset(); // reuse reset (not needed anymore)
-		char *raw = req.append_raw(len);
+		tmp_buf.reset();
+		char *raw = tmp_buf.append_raw(len);
 		int ret;
 		if (req_id == REQ_READ) {
 			ret = read(fd, raw, len);
@@ -336,11 +408,11 @@ private:
 			return ERR;
 		int str_len = strlen(s) + 1;
 		put_value(v_REQDAT, 8, str_len);
-		if (len < str_len)
-			return XV65_ERANGE;
-		for (int i = 0; s[i]; i++)
-			m->put(addr + i, s[i]);
-		m->put(addr + str_len, 0);
+		if (len >= str_len) {
+			for (int i = 0; s[i]; i++)
+				m->put(addr + i, s[i]);
+			m->put(addr + str_len, 0);
+		}
 		return 0;
 	}
 	int req_ARGV() {
@@ -378,13 +450,39 @@ private:
 		put_value(v_REQDAT, 8, t);
 		return 0;
 	}
+	void dump_request() {
+		static const int cols = 10;
+		int id = r[0] & 0xff;
+		fprintf(stderr, "xv65: request %d:%s:\n", id, req_id_to_string(id));
+		int nn = ((n + (cols - 1)) / cols) * cols;
+		for (int i = 0; i < nn;) {
+			for (int j = 0; j < cols; j++, i++) {
+				int c = r[i] & 0xff;
+				if (i < n)
+					fprintf(stderr, "%03d ", c);
+				else
+					fprintf(stderr, "    ");
+			}
+			i -= cols;
+			for (int j = 0; j < cols; j++, i++) {
+				int c = r[i] & 0xff;
+				if (i < n)
+					fprintf(stderr, "%c", isprint(c) ? c : '.');
+				else
+					fprintf(stderr, " ");
+			}
+			fprintf(stderr, "\n");
+		}
+	}
 	void request() {
 		int ret = ERR;
-		r = req.get_data();
-		n = req.get_length();
+		r = req_buf.get_data();
+		n = req_buf.get_length();
 		int id = -1;
 		if (n > 0)
 			id = *r;
+		if (v_TRCLEVEL > 1)
+			dump_request();
 		switch (id) {
 		case REQ_FORK:
 			ret = req_FORK();
@@ -442,17 +540,24 @@ private:
 			break;
 		}
 		v_REQRES = ret;
-		if (ret != 0)
+		if (ret != 0) {
 			v_REQERRNO = ret;
-		req.reset();
+			if (v_TRCLEVEL <= 1 || v_ERREXIT)
+				dump_request();
+			if (v_TRCLEVEL || v_ERREXIT)
+				fprintf(stderr, "xv65: failed %d:%s.\n", ret, errno_to_string(ret));
+			if (v_ERREXIT)
+				exit(1);
+		}
+		req_buf.reset();
 	}
 	void put_REQPTRLO(int value) {
 		int addr = (v_REQPTRHI << 8) | value;
 		int len = m_get_uint16(addr);
 		addr += 2;
-		req.reset();
+		req_buf.reset();
 		for (int i = 0; i < len; i++)
-			req.append_char(m_get_uint8(addr++));
+			req_buf.append_char(m_get_uint8(addr++));
 		request();
 	}
 	void put_FRMDRAW() {
@@ -501,11 +606,14 @@ public:
 		m = dma;
 	}
 	void reset() {
-		req.reset();
+		req_buf.reset();
+		random.reset();
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
 		v_REQERRNO = 0;
 		v_FRMFPS = 0;
+		v_TRCLEVEL = 0;
+		v_ERREXIT = 0;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
@@ -516,7 +624,7 @@ public:
 			putchar(value);
 			break;
 		case REQPUT:
-			req.append_char(value);
+			req_buf.append_char(value);
 			break;
 		case REQEND:
 			request();
@@ -536,11 +644,30 @@ public:
 		case FRMDRAW:
 			put_FRMDRAW();
 			break;
+		case PUTUINT8:
+			printf("%d", value);
+			break;
+		case RANDOM:
+			random.put(value);
+			break;
 		case CONESC:
 			set_CONESC(value);
+			break;
+		case TRCLEVEL:
+			v_TRCLEVEL = value;
+			break;
+		case ERREXIT:
+			v_ERREXIT = value ? 0xff : 0;
+			break;
 		default:
-			if (address >= REQDAT && address < REQDAT + 16)
+			if (address >= REQDAT && address < REQDAT + 16) {
 				v_REQDAT[address - REQDAT] = value;
+			} else {
+				if (v_TRCLEVEL > 1 || v_ERREXIT)
+					fprintf(stderr, "xv65: io.put(%d,%d) unmapped.\n", address - IO_BASE, value);
+				if (v_ERREXIT)
+					exit(1);
+			}
 			break;
 		}
 	}
@@ -557,12 +684,25 @@ public:
 			return sizeof(pid_t);
 		case FRMFPS:
 			return v_FRMFPS;
+		case RANDOM:
+			return random.get();
+			break;
 		case CONCOLS:
 		case CONROWS:
 			return get_consize(address);
+		case TRCLEVEL:
+			return v_TRCLEVEL;
+		case ERREXIT:
+			return v_ERREXIT;
 		default:
-			if (address >= REQDAT && address < REQDAT + 16)
+			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];
+			} else {
+				if (v_TRCLEVEL > 1 || v_ERREXIT)
+					fprintf(stderr, "xv65: io.get(%d) unmapped.\n", address - IO_BASE);
+				if (v_ERREXIT)
+					exit(1);
+			}
 			return 0;
 		}
 	}

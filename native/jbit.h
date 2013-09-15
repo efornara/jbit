@@ -30,6 +30,19 @@
 
 #include "core.h"
 
+class Random {
+	static const long long MAXRAND = 0xFFFFFFFFFFFFLL;
+	long long seed[2];
+	int n;
+	long long divisor;
+	long long next();
+public:
+	Random() { reset(); }
+	void reset();
+	int get();
+	void put(int max);
+};
+
 class Device : public IO {
 public:
 	virtual void set_args(int argc, char **argv) = 0;

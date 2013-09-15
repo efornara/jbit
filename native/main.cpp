@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <unistd.h>
+#include <sys/time.h>
+
 #include "jbit.h"
 
 namespace {
@@ -60,19 +63,47 @@ void usage(int code = 1) {
 	exit(code);
 }
 
-Buffer *load_file(const char *file_name) {
+const char *resolve_file_name(const char *name, Buffer *buffer) {
+	if (name[0] == '/')
+		return name;
+	const char *c_env = getenv("JBIT_PATH");
+	if (!c_env)
+		return name;
+	int size = strlen(c_env) + 1;
+	Buffer env_buf(size);
+	char *env = env_buf.append_raw(size);
+	memcpy(env, c_env, size);
+	const char *dir = strtok(env, ":");
+	do {
+		int n = strlen(dir);
+		if (n == 0)
+			continue;
+		buffer->reset();
+		buffer->append_data(dir, n);
+		if (dir[n - 1] != '/')
+			buffer->append_char('/');
+		buffer->append_string(name);
+		const char *file_name = buffer->get_data();
+		if (access(file_name, F_OK) == 0) // less surprises than R_OK
+			return file_name;
+	} while ((dir = strtok(NULL, ":")));
+	return name;
+}
+
+Buffer *load_file(const char *name) {
 	FILE *f;
 	int i = 0, j, n;
-	Buffer *buffer;
+	Buffer *buffer = new Buffer();
 	
+	const char *file_name = resolve_file_name(name, buffer);
 	if ((f = fopen(file_name, "rb")) == NULL)
 		fatal("cannot open file '%s'", file_name);
+	buffer->reset();
 	fseek(f, 0, SEEK_END);
 	n = ftell(f);
+	if (n > 1024 * 1024)
+		fatal("invalid file '%s' (size >1M)", file_name);
 	rewind(f);
-	buffer = new Buffer(n);
-	if (!buffer)
-		fatal("new Buffer failed for '%s'", file_name);
 	char *buf = buffer->append_raw(n);
 	while (i < n) {
 		if ((j = fread(&buf[i], 1, n - 1, f)) == 0)
@@ -212,6 +243,39 @@ void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 }
 
 } // namespace
+
+long long Random::next() {
+	seed[0] = (seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
+	return seed[0];
+}
+
+void Random::reset() {	
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	long long t = ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
+	seed[0] = t & MAXRAND;
+	seed[1] = 0;
+	put(255);
+
+}
+
+int Random::get() {
+	long long i;
+	while (n <= (i = next() / divisor))
+		;
+	return (int)i;
+
+}
+void Random::put(int max) {
+	if (max == 0) {
+		long long t = seed[0];
+		seed[0] = seed[1];
+		seed[1] = t;
+	} else {
+		n = max + 1;
+		divisor = MAXRAND / n;
+	}
+}
 
 DeviceRegistry *DeviceRegistry::get_instance() {
 	static DeviceRegistry *registry = 0;

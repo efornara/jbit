@@ -48,13 +48,12 @@ class MicroIO {
 
 private:
 
-	typedef long long jlong;
 	typedef signed char jbyte;
 
-	jlong currentTimeMillis() {
+	long long currentTimeMillis() {
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
-		return ((jlong)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
+		return ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
 	}
 
 	static const int REG_FRMFPS = 17;
@@ -69,41 +68,7 @@ private:
 	static const int ROWS = 4;
 	static const int CONVIDEO_SIZE = COLS * ROWS;
 
-	static const jlong MAXRAND = 0xFFFFFFFFFFFFLL;
-
-	jlong rndSeed0;
-	jlong rndSeed1;
-	int rndN;
-	jlong rndDivisor;
-	
-	void randomReset() {	
-		rndSeed0 = currentTimeMillis() & MAXRAND;
-		rndSeed1 = 0;
-		doRandomPut(255);
-	}
-
-	jlong rndNext() {
-		rndSeed0 = (rndSeed0 * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
-		return rndSeed0;
-	}
-	
-	int doRandomGet() {
-		jlong n;
-		while (rndN <= (n = rndNext() / rndDivisor))
-			;
-		return (int)n;
-	}
-	
-	void doRandomPut(int max) {
-		if (max == 0) {
-			jlong t = rndSeed0;
-			rndSeed0 = rndSeed1;
-			rndSeed1 = t;
-		} else {
-			rndN = max + 1;
-			rndDivisor = MAXRAND / rndN;
-		}
-	}
+	Random random;
 
 	jbyte keyBuf[KEYBUF_SIZE];
 
@@ -183,10 +148,10 @@ public:
 	}
 
 	void reset() {
-		frameReset();
-		randomReset();
+		random.reset();
 		keyBufReset();
 		videoReset();
+		frameReset();
 	}
 	
 	const signed char *getVideo() {
@@ -220,7 +185,7 @@ public:
 		case REG_FRMFPS:
 			return doFrmFpsGet();
 		case REG_RANDOM:
-			return doRandomGet();
+			return random.get();
 		default:
 			if (address >= REG_KEYBUF
 					&& address < REG_KEYBUF + KEYBUF_SIZE) {
@@ -242,7 +207,7 @@ public:
 			doFrmDrawPut();
 			break;
 		case REG_RANDOM:
-			doRandomPut(value);
+			random.put(value);
 			break;
 		case REG_KEYBUF:
 			doKeyBufPut();

@@ -43,6 +43,7 @@
 
 #define FRMFPS 0x0211
 #define FRMDRAW 0x0212
+#define PUTUINT8 0x0216
 #define RANDOM 0x0217
 
 #define CONCOLS 0x0220
@@ -51,7 +52,7 @@
 
 #define REQERRNO 0x0250
 #define PIDSIZE 0x0251
-#define DBGLEVEL 0x0252
+#define TRCLEVEL 0x0252
 #define ERREXIT 0x0253
 
 #define REQDAT 0x0260
@@ -82,7 +83,8 @@
 #define REQ_ARGC 32
 #define REQ_ARGV 33
 #define REQ_ENV 34
-#define REQ_TIME 35
+
+#define REQ_TIME 48
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
