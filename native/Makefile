@@ -48,4 +48,4 @@ test: $(EXE)
 	./$(EXE) ../samples/xv65/hello.jb
 
 clean:
-	$(RM) jbit jbit.exe *.o
+	$(RM) jbit jbit.exe windows.zip *.o

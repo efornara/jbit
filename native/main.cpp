@@ -179,6 +179,8 @@ void parse(const char *file_name, Tag dev_tag, Program *prg) {
 void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
+	if (!prg.device_tag.is_valid())
+		fatal("device not set");
 	const DeviceEntry *dev_entry = DeviceRegistry::get_instance()->get(prg.device_tag);
 	if (!dev_entry)
 		fatal("device '%s' not available", prg.device_tag.s);
