@@ -29,6 +29,7 @@
 // devimpl.h
 
 class Random {
+private:
 	static const long long MAXRAND = 0xFFFFFFFFFFFFLL;
 	long long seed[2];
 	int n;
@@ -39,4 +40,20 @@ public:
 	void reset();
 	int get();
 	void put(int max);
+};
+
+class MicroIODisplay {
+public:
+	static const int COLS = 10;
+	static const int ROWS = 4;
+	static const int CONVIDEO_SIZE = COLS * ROWS;
+	static const int N_OF_LINES = ROWS + 2;
+private:
+	char video_buf[CONVIDEO_SIZE];
+	mutable char line_buf[COLS + 3];
+public:
+	void reset();
+	void put(int address, int value);
+	int get(int address) const;
+	const char *get_line(int i) const;
 };

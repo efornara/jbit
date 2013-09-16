@@ -65,10 +65,6 @@ private:
 
 	static const int KEYBUF_SIZE = 8;
 
-	static const int COLS = 10;
-	static const int ROWS = 4;
-	static const int CONVIDEO_SIZE = COLS * ROWS;
-
 	Random random;
 
 	jbyte keyBuf[KEYBUF_SIZE];
@@ -96,20 +92,7 @@ private:
 			}
 	}
 	
-	jbyte video[CONVIDEO_SIZE];
-
-	void videoReset() {
-		for (int i = 0; i < CONVIDEO_SIZE; i++)
-			video[i] = ' ';
-	}
-	
-	void doVideoPut(int address, int value) {
-		video[address - REG_CONVIDEO] =  (jbyte)value;
-	}
-	
-	int doVideoGet(int address) {
-		return video[address - REG_CONVIDEO] & 0xFF;
-	}
+	MicroIODisplay display;
 
 	static const int FRAME_MIN_WAIT = 10;
 
@@ -151,12 +134,12 @@ public:
 	void reset() {
 		random.reset();
 		keyBufReset();
-		videoReset();
+		display.reset();
 		frameReset();
 	}
 	
-	const signed char *getVideo() {
-		return video;
+	const MicroIODisplay *getDisplay() {
+		return &display;
 	}
 
 	void keyPressed(int keyCode) {
@@ -192,8 +175,8 @@ public:
 					&& address < REG_KEYBUF + KEYBUF_SIZE) {
 				return doKeyBufGet(address);
 			} else if (address >= REG_CONVIDEO
-					&& address < REG_CONVIDEO + CONVIDEO_SIZE) {
-				return doVideoGet(address);
+					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
+				return display.get(address - REG_CONVIDEO);
 			}
 		}			
 		return 0;
@@ -215,8 +198,8 @@ public:
 			break;
 		default:
 			if (address >= REG_CONVIDEO
-					&& address < REG_CONVIDEO + CONVIDEO_SIZE)
-				doVideoPut(address, value);
+					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+				display.put(address - REG_CONVIDEO, value);
 		}			
 		return 0;
 	}
@@ -255,14 +238,11 @@ private:
 		mvaddstr(y++, x, "[:] break");
 		y++;
 		x = 7;
-		display_y = y + 1;
-		display_x = x + 1;
-		mvaddstr(y++, x, "+----------+");
-		mvaddstr(y++, x, "|          |");
-		mvaddstr(y++, x, "|          |");
-		mvaddstr(y++, x, "|          |");
-		mvaddstr(y++, x, "|          |");
-		mvaddstr(y++, x, "+----------+");
+		display_y = y;
+		display_x = x;
+		const MicroIODisplay *display = io.getDisplay();
+		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+			mvaddstr(y++, x, display->get_line(i));
 		x = 0;
 		y++;
 		mvaddstr(y++, x, "[1]      [2] abc  [3] def");
@@ -277,17 +257,10 @@ private:
 		cursor_x = 0;
 	}
 	void flush() {
-		const signed char *video_buf = io.getVideo();
+		const MicroIODisplay *display = io.getDisplay();
 		mvaddstr(0, 0, status_msg);
-		int i = 0;
-		for (int y = 0; y < 4; y++) {
-			for (int x = 0; x < 10; x++) {
-				int c = video_buf[i++];
-				if (!isprint(c))
-					c = ' ';
-				mvaddch(display_y + y, display_x + x, c);
-			}
-		}
+		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+			mvaddstr(display_y + i, display_x, display->get_line(i));
 		move(cursor_y, cursor_x);
 		refresh();
 	}

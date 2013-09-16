@@ -29,6 +29,8 @@
 // devimpl.cpp
 
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
 #include <sys/time.h>
 
@@ -66,4 +68,35 @@ void Random::put(int max) {
 		n = max + 1;
 		divisor = MAXRAND / n;
 	}
+}
+
+void MicroIODisplay::reset() {
+	memset(video_buf, ' ', sizeof(video_buf));
+}
+
+void MicroIODisplay::put(int address, int value) {
+	if (address >= 0 && address < (int)sizeof(video_buf))
+		video_buf[address] = value;
+}
+
+int MicroIODisplay::get(int address) const {
+	if (address >= 0 && address < (int)sizeof(video_buf))
+		return video_buf[address] & 0xff;
+	return 0;
+}
+
+const char *MicroIODisplay::get_line(int i) const {
+	if (i <= 0 || i >= (N_OF_LINES - 1)) {
+		strcpy(line_buf, "+----------+");
+	} else {
+		line_buf[0] = '|';
+		const char *p = &video_buf[(i - 1) * COLS];
+		for (i = 1; i <= COLS; i++) {
+			char c = *p++;
+			line_buf[i] = isprint(c) ? c : ' ';
+		}
+		line_buf[COLS + 1] = '|';
+		line_buf[COLS + 2] = 0;
+	}
+	return line_buf;
 }
