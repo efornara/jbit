@@ -83,12 +83,20 @@ public:
 
 } // namespace
 
-bool Tag::is_equal(const Tag &o) const {
+bool Tag::operator==(const Tag &o) const {
 	if (!s)
 		return !o.s;
 	if (!o.s)
 		return false;
 	return !strcmp(s, o.s);
+}
+
+bool Tag::operator==(const char *o) const {
+	if (!s)
+		return !o;
+	if (!o)
+		return false;
+	return !strcmp(s, o);
 }
 
 Buffer::Buffer(int initial_size) {
@@ -178,7 +186,6 @@ const ParseError *Parser::parse(Program *prg) {
 			prg->append_char(n);
 		}
 	} while (r.nextline());
-	prg->device_tag = Tag("xv65");
 	return 0;
 error:
 	e.msg.reset();

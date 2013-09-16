@@ -32,7 +32,8 @@ struct Tag {
 	const char *s;
 	Tag(const char *s_ = 0) : s(s_) {}
 	bool is_valid() const { return s; }
-	bool is_equal(const Tag &o) const;
+	bool operator==(const Tag &o) const;
+	bool operator==(const char *o) const;
 };
 
 class Buffer {

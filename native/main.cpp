@@ -179,8 +179,14 @@ void parse(const char *file_name, Tag dev_tag, Program *prg) {
 void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
-	if (!prg.device_tag.is_valid())
-		fatal("device not set");
+	if (!prg.device_tag.is_valid()) {
+#ifdef __WIN32__
+		const char *def_device = "simple";
+#else
+		const char *def_device = "xv65";
+#endif
+		prg.device_tag = Tag(def_device);
+	}
 	const DeviceEntry *dev_entry = DeviceRegistry::get_instance()->get(prg.device_tag);
 	if (!dev_entry)
 		fatal("device '%s' not available", prg.device_tag.s);
@@ -219,9 +225,9 @@ void convert_to_asm(const Program *prg) {
 }
 
 void convert_to_jb(const Program *prg) {
-	if (prg->device_tag.is_equal(MicroIODevTag))
+	if (prg->device_tag == MicroIODevTag)
 		printf("JBit");
-	else if (prg->device_tag.is_equal(Xv65DevTag))
+	else if (prg->device_tag == Xv65DevTag)
 		printf("xv65");
 	else
 		fatal("convert: unknown device");
@@ -244,9 +250,9 @@ void convert_to_jb(const Program *prg) {
 void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
-	if (fmt_tag.is_equal(AsmFmtTag))
+	if (fmt_tag == AsmFmtTag)
 		convert_to_asm(&prg);
-	else if (fmt_tag.is_equal(JBFmtTag))
+	else if (fmt_tag == JBFmtTag)
 		convert_to_jb(&prg);
 	else
 		fatal("internal error (convert)");
@@ -302,7 +308,7 @@ void DeviceRegistry::add(const DeviceEntry *entry) {
 
 const DeviceEntry *DeviceRegistry::get(Tag tag) {
 	for (int i = 0; i < n; i++)
-		if (devices[i]->tag.is_equal(tag))
+		if (devices[i]->tag == tag)
 			return devices[i];
 	return 0;
 }

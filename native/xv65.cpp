@@ -84,6 +84,7 @@ const char *req_id_to_string(int id) {
 	case 33: return "REQ_ARGV";
 	case 34: return "REQ_ENV";
 	case 48: return "REQ_TIME";
+	case 49: return "REQ_RMDIR";
 	default: return "?";
 	}
 }
@@ -392,6 +393,9 @@ private:
 		case REQ_UNLINK:
 			ret = unlink(filename);
 			break;
+		case REQ_RMDIR:
+			ret = rmdir(filename);
+			break;
 		default:
 			return ERR;
 		}
@@ -524,6 +528,7 @@ private:
 		case REQ_CHDIR:
 		case REQ_MKDIR:
 		case REQ_UNLINK:
+		case REQ_RMDIR:
 			ret = req_filename(id);
 			break;
 		case REQ_ARGC:
@@ -548,6 +553,8 @@ private:
 				fprintf(stderr, "xv65: failed %d:%s.\n", ret, errno_to_string(ret));
 			if (v_ERREXIT)
 				exit(1);
+		} else if (v_TRCLEVEL > 1) {
+			fprintf(stderr, "xv65: succeeded.\n");
 		}
 		req_buf.reset();
 	}

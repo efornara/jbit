@@ -49,6 +49,11 @@
 #define CONCOLS 0x0220
 #define CONROWS 0x0221
 #define CONESC 0x0227
+#define CONVIDEO 0x0228
+#define CONROW0 0x0228
+#define CONROW1 0x0232
+#define CONROW2 0x023C
+#define CONROW3 0x0246
 
 #define REQERRNO 0x0250
 #define PIDSIZE 0x0251
@@ -69,14 +74,14 @@
 #define REQ_CHDIR 9
 #define REQ_DUP 10
 #define REQ_GETPID 11
-#define REQ_SBRK 12
+/* REQ_SBRK   = 12                                                         */
 #define REQ_SLEEP 13
-#define REQ_UPTIME 14
+/* REQ_UPTIME = 14                                                         */
 #define REQ_OPEN 15
 #define REQ_WRITE 16
-#define REQ_MKNOD 17
+/* REQ_MKNOD  = 17                                                         */
 #define REQ_UNLINK 18
-#define REQ_LINK 19
+/* REQ_LINK   = 19                                                         */
 #define REQ_MKDIR 20
 #define REQ_CLOSE 21
 
@@ -85,6 +90,7 @@
 #define REQ_ENV 34
 
 #define REQ_TIME 48
+#define REQ_RMDIR 49
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
