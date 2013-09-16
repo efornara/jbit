@@ -34,7 +34,6 @@
 #include <string.h>
 
 #include <unistd.h>
-#include <sys/time.h>
 
 #include "jbit.h"
 
@@ -259,39 +258,6 @@ void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 }
 
 } // namespace
-
-long long Random::next() {
-	seed[0] = (seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
-	return seed[0];
-}
-
-void Random::reset() {	
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	long long t = ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
-	seed[0] = t & MAXRAND;
-	seed[1] = 0;
-	put(255);
-
-}
-
-int Random::get() {
-	long long i;
-	while (n <= (i = next() / divisor))
-		;
-	return (int)i;
-
-}
-void Random::put(int max) {
-	if (max == 0) {
-		long long t = seed[0];
-		seed[0] = seed[1];
-		seed[1] = t;
-	} else {
-		n = max + 1;
-		divisor = MAXRAND / n;
-	}
-}
 
 DeviceRegistry *DeviceRegistry::get_instance() {
 	static DeviceRegistry *registry = 0;

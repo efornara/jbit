@@ -26,39 +26,44 @@
  * SUCH DAMAGE.
  */
 
-// jbit.h
+// devimpl.cpp
 
-#include "core.h"
+#include <stdio.h>
 
-class Device : public IO {
-public:
-	virtual void set_args(int argc, char **argv) = 0;
-	virtual bool update(int status) = 0;
-	virtual ~Device() {}
-};
+#include <sys/time.h>
 
-struct DeviceEntry;
+#include "jbit.h"
+#include "devimpl.h"
 
-class DeviceRegistry {
-private:
-	static const int max_n_of_entries = 8;
-	const DeviceEntry *devices[max_n_of_entries];
-	int n;
-	DeviceRegistry() : n(0) {}
-public:
-	static DeviceRegistry *get_instance();
-	void add(const DeviceEntry *entry);
-	int get_n() { return n; }
-	const DeviceEntry *get(int i) { return devices[i]; }
-	const DeviceEntry *get(Tag tag);
-};
+long long Random::next() {
+	seed[0] = (seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
+	return seed[0];
+}
 
-typedef Device *(*NewDeviceFn)();
+void Random::reset() {	
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	long long t = ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
+	seed[0] = t & MAXRAND;
+	seed[1] = 0;
+	put(255);
 
-struct DeviceEntry {
-	Tag tag;
-	NewDeviceFn new_Device;
-	DeviceEntry(const char *t, NewDeviceFn f) : tag(t), new_Device(f)  {
-		DeviceRegistry::get_instance()->add(this);
+}
+
+int Random::get() {
+	long long i;
+	while (n <= (i = next() / divisor))
+		;
+	return (int)i;
+
+}
+void Random::put(int max) {
+	if (max == 0) {
+		long long t = seed[0];
+		seed[0] = seed[1];
+		seed[1] = t;
+	} else {
+		n = max + 1;
+		divisor = MAXRAND / n;
 	}
-};
+}

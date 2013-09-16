@@ -26,39 +26,17 @@
  * SUCH DAMAGE.
  */
 
-// jbit.h
+// devimpl.h
 
-#include "core.h"
-
-class Device : public IO {
-public:
-	virtual void set_args(int argc, char **argv) = 0;
-	virtual bool update(int status) = 0;
-	virtual ~Device() {}
-};
-
-struct DeviceEntry;
-
-class DeviceRegistry {
-private:
-	static const int max_n_of_entries = 8;
-	const DeviceEntry *devices[max_n_of_entries];
+class Random {
+	static const long long MAXRAND = 0xFFFFFFFFFFFFLL;
+	long long seed[2];
 	int n;
-	DeviceRegistry() : n(0) {}
+	long long divisor;
+	long long next();
 public:
-	static DeviceRegistry *get_instance();
-	void add(const DeviceEntry *entry);
-	int get_n() { return n; }
-	const DeviceEntry *get(int i) { return devices[i]; }
-	const DeviceEntry *get(Tag tag);
-};
-
-typedef Device *(*NewDeviceFn)();
-
-struct DeviceEntry {
-	Tag tag;
-	NewDeviceFn new_Device;
-	DeviceEntry(const char *t, NewDeviceFn f) : tag(t), new_Device(f)  {
-		DeviceRegistry::get_instance()->add(this);
-	}
+	Random() { reset(); }
+	void reset();
+	int get();
+	void put(int max);
 };

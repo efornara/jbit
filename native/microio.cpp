@@ -37,6 +37,7 @@
 #include <curses.h>
 
 #include "jbit.h"
+#include "devimpl.h"
 
 namespace {
 

@@ -9,7 +9,7 @@ CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -ggdb
 LDFLAGS =
 LIBS =
 
-OBJS = main.o vm.o asm.o
+OBJS = main.o devimpl.o vm.o asm.o
 EXE = jbit
 
 

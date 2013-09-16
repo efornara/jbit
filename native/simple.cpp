@@ -40,6 +40,7 @@
 #endif
 
 #include "jbit.h"
+#include "devimpl.h"
 
 #include "xv65.h"
 
