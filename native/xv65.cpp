@@ -130,6 +130,10 @@ const char *errno_to_string(int id) {
 	}
 }
 
+#define STR_ESC_CLEAR "\x1b[2J"
+#define STR_ESC_HOME "\x1b[;H"
+#define STR_ESC_NORMAL "\x1b[0m"
+
 class Xv65Device : public Device {
 private:
 	const static int top_memory = 0xffff;
@@ -139,6 +143,9 @@ private:
 	Buffer req_buf;
 	Buffer tmp_buf;
 	Random random;
+	MicroIODisplay display;
+	bool microio;
+	bool microio_refresh;
 	int v_REQPTRHI;
 	int v_REQRES;
 	int v_REQERRNO;
@@ -569,10 +576,24 @@ private:
 		request();
 	}
 	void put_FRMDRAW() {
+		int fps4 = v_FRMFPS;
+		if (microio) {
+			if (microio_refresh) {
+				printf(STR_ESC_NORMAL);
+				printf(STR_ESC_CLEAR);
+				microio_refresh = false;
+			}
+			printf(STR_ESC_HOME);
+			for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+				printf("%s\n", display.get_line(i));
+			if (!fps4)
+				fps4 = 40;
+		} else {
+			microio_refresh = true;
+		}
 		fflush(stdout);
-		if (v_FRMFPS) {
-			double fps = v_FRMFPS / 4.0;
-			int ms = (int)(1000 / fps);
+		if (fps4) {
+			int ms = (int)(1000.0 / (fps4 / 4.0));
 			struct timespec ts;
 			ts.tv_sec = ms / 1000;
 			ts.tv_nsec = 1000000 * (ms % 1000);
@@ -591,13 +612,13 @@ private:
 	void set_CONESC(int value) {
 		switch (value) {
 		case ESC_HOME:
-			printf("\x1b[;H");
+			printf(STR_ESC_HOME);
 			break;
 		case ESC_CLEAR:
-			printf("\x1b[2J");
+			printf(STR_ESC_CLEAR);
 			break;
 		case ESC_NORMAL:
-			printf("\x1b[0m");
+			printf(STR_ESC_NORMAL);
 			break;
 		default:
 			if ((value >= ESC_BG_BLACK && value <= ESC_BG_WHITE) ||
@@ -616,6 +637,9 @@ public:
 	void reset() {
 		req_buf.reset();
 		random.reset();
+		display.reset();
+		microio = false;
+		microio_refresh = true;
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
 		v_REQERRNO = 0;
@@ -630,6 +654,7 @@ public:
 		switch (address) {
 		case PUTCHAR:
 			putchar(value);
+			microio = false;
 			break;
 		case REQPUT:
 			req_buf.append_char(value);
@@ -660,6 +685,7 @@ public:
 			break;
 		case CONESC:
 			set_CONESC(value);
+			microio = false;
 			break;
 		case TRCLEVEL:
 			v_TRCLEVEL = value;
@@ -670,6 +696,9 @@ public:
 		default:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				v_REQDAT[address - REQDAT] = value;
+			} else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
+				display.put(address - CONVIDEO, value);
+				microio = true;
 			} else {
 				if (v_TRCLEVEL > 1 || v_ERREXIT)
 					fprintf(stderr, "xv65: io.put(%d,%d) unmapped.\n", address - IO_BASE, value);
@@ -705,6 +734,8 @@ public:
 		default:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];
+			} else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
+				return display.get(address - CONVIDEO);
 			} else {
 				if (v_TRCLEVEL > 1 || v_ERREXIT)
 					fprintf(stderr, "xv65: io.get(%d) unmapped.\n", address - IO_BASE);
