@@ -126,9 +126,6 @@ Buffer *load_file(const char *name) {
 Tag AsmFmtTag("asm");
 Tag JBFmtTag("jb");
 
-Tag MicroIODevTag("microio");
-Tag Xv65DevTag("xv65");
-
 class JBParser {
 private:
 	const Buffer *buffer;
@@ -141,6 +138,13 @@ public:
 		if (size < 12)
 			fatal("invalid jb format (size < 12)");
 	}
+	static bool has_signature(const Buffer *buf) {
+		if (buf->get_length() < 4)
+			return false;
+		if (memcmp(buf->get_data(), "JBit", 4))
+			return false;
+		return true;
+	}
 	void parse(Program *prg) {
 		int code_pages = jb[8] & 0xFF;
 		int data_pages = jb[9] & 0xFF;
@@ -152,23 +156,19 @@ public:
 		prg->reset();
 		char *raw = prg->append_raw(program_size);
 		memcpy(raw, &jb[12], program_size);
-		if (memcmp(jb, "JBit", 4) == 0)
-			prg->device_tag = MicroIODevTag;
-		else if (memcmp(jb, "xv65", 4) == 0)
-			prg->device_tag = Xv65DevTag;
 	}
 };
 
 void parse(const char *file_name, Tag dev_tag, Program *prg) {
 	Buffer *file = load_file(file_name);
-	Parser parser(file);
-	if (parser.has_signature()) {
+	if (JBParser::has_signature(file)) {
+		JBParser jb_parser(file);
+		jb_parser.parse(prg);
+	} else {
+		Parser parser(file);
 		const ParseError *e = parser.parse(prg);
 		if (e)
 			fatal("line %d: %s", e->lineno, e->msg.get_data());
-	} else {
-		JBParser jb_parser(file);
-		jb_parser.parse(prg);
 	}
 	delete file;
 	if (dev_tag.is_valid())
@@ -224,12 +224,7 @@ void convert_to_asm(const Program *prg) {
 }
 
 void convert_to_jb(const Program *prg) {
-	if (prg->device_tag == MicroIODevTag)
-		printf("JBit");
-	else if (prg->device_tag == Xv65DevTag)
-		printf("xv65");
-	else
-		fatal("convert: unknown device");
+	printf("JBit");
 	int n_of_pages = (prg->get_length() + 255) >> 8;
 	putchar(0); // header size
 	putchar(12);

@@ -150,11 +150,6 @@ void Buffer::append_line(const char *line) {
 Parser::Parser(const Buffer *src_) : src(src_) {
 }
 
-bool Parser::has_signature() {
-	const char *data = src->get_data();
-	return src->get_length() > 2 && data[0] == '#' && data[1] == '!';
-}
-
 const ParseError *Parser::parse(Program *prg) {
 	static ParseError e;
 	prg->reset();

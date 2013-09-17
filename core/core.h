@@ -73,7 +73,6 @@ private:
 	const Buffer *src;
 public:
 	Parser(const Buffer *src_);
-	bool has_signature();
 	const ParseError *parse(Program *prg);
 };
 

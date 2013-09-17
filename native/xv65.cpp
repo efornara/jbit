@@ -679,6 +679,7 @@ public:
 			break;
 		case PUTUINT8:
 			printf("%d", value);
+			microio = false;
 			break;
 		case RANDOM:
 			random.put(value);
