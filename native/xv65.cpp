@@ -229,7 +229,8 @@ private:
 		pid_t pid = wait(&status);
 		if (pid == -1)
 			return errno;
-		put_value(v_REQDAT, 8, pid);
+		put_value(&v_REQDAT[0], 8, pid);
+		put_value(&v_REQDAT[8], 8, status);
 		return 0;
 	}
 	int req_PIPE() {
@@ -273,7 +274,14 @@ private:
 		int seconds;
 		if (!r_get_trailing_int(1, &seconds))
 			return ERR;
-		int ret = sleep(seconds);
+		int ret;
+		if (seconds == 0) {
+			uint64_t usec;
+			get_value(v_REQDAT, 4, &usec);
+			ret = usleep(usec);
+		} else {
+			ret = sleep(seconds);
+		}
 		if (ret) {
 			put_value(v_REQDAT, 8, ret);
 			return XV65_EINTR;
@@ -458,8 +466,10 @@ private:
 	int req_TIME() {
 		if (n != 1)
 			return ERR;
-		time_t t = time(0);
-		put_value(v_REQDAT, 8, t);
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		put_value(&v_REQDAT[0], 8, tv.tv_sec);
+		put_value(&v_REQDAT[8], 8, tv.tv_usec);
 		return 0;
 	}
 	void dump_request() {
