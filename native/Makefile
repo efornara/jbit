@@ -17,8 +17,8 @@ EXE = jbit
 # DEVICE SELECTION
 #
 
-# simple: minimal dependencies (tested with i586-mingw32msvc and wine)
-OBJS += simple.o
+# tty: minimal dependencies (tested with i586-mingw32msvc and wine)
+OBJS += tty.o
 
 # microio: comment out if you don't have ncurses
 OBJS += microio.o
@@ -37,7 +37,7 @@ all: $(EXE)
 $(EXE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
-simple.o: xv65.h
+tty.o: xv65.h
 xv65.o: xv65.h
 
 xv65.h: xv65.inc
