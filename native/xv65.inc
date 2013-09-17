@@ -166,6 +166,14 @@ O_WRONLY   =  1
 O_RDWR     =  2
 O_CREAT    = 64
 
+T_BLK  =  1
+T_CHR  =  2
+T_DIR  =  4
+T_FIFO =  8
+T_LNK  = 16
+T_REG  = 32
+T_SOCK = 64
+
 ; ASM ONLY
 
 IO = $0200

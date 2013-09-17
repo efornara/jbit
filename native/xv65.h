@@ -167,3 +167,11 @@
 #define XV65_O_RDWR 2
 #define XV65_O_CREAT 64
 
+#define XV65_T_BLK 1
+#define XV65_T_CHR 2
+#define XV65_T_DIR 4
+#define XV65_T_FIFO 8
+#define XV65_T_LNK 16
+#define XV65_T_REG 32
+#define XV65_T_SOCK 64
+

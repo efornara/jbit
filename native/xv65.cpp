@@ -311,6 +311,29 @@ private:
 		execvp(filename, (char* const*)arr_buf.get_data());
 		return errno;
 	}
+	int req_FSTAT() {
+		if (n != 2)
+			return ERR;
+		int fd = r_get_uint8(1);
+		struct stat sb;
+		int ret = fstat(fd, &sb);
+		if (ret != 0)
+			return errno; 
+		int type;
+		switch (sb.st_mode & S_IFMT) {
+		case S_IFBLK:  type = XV65_T_BLK;  break;
+		case S_IFCHR:  type = XV65_T_CHR;  break;
+		case S_IFDIR:  type = XV65_T_DIR;  break;
+		case S_IFIFO:  type = XV65_T_FIFO; break;
+		case S_IFLNK:  type = XV65_T_LNK;  break;
+		case S_IFREG:  type = XV65_T_REG;  break;
+		case S_IFSOCK: type = XV65_T_SOCK; break;
+		default:       type = 0;      break;
+		}
+		v_REQDAT[0] = type;
+		put_value(&v_REQDAT[8], 8, sb.st_size);
+		return 0;
+	}
 	int req_OPEN() {
 		int i = r_parse_string(1);
 		if (i == -1)
@@ -529,6 +552,9 @@ private:
 			break;
 		case REQ_EXEC:
 			ret = req_EXEC();
+			break;
+		case REQ_FSTAT:
+			ret = req_FSTAT();
 			break;
 		case REQ_OPEN:
 			ret = req_OPEN();
