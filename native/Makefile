@@ -21,6 +21,7 @@ EXE = jbit
 OBJS += tty.o
 
 # microio: comment out if you don't have ncurses
+#          on BSD replace -lncurses with -lcurses
 OBJS += microio.o
 LIBS += -lncurses
 
@@ -48,4 +49,4 @@ test: $(EXE)
 	./$(EXE) ../samples/xv65/hello.jb
 
 clean:
-	$(RM) jbit jbit.exe windows.zip *.o
+	rm -f jbit jbit.exe windows.zip *.o

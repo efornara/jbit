@@ -93,7 +93,7 @@ const char *MicroIODisplay::get_line(int i) const {
 		const char *p = &video_buf[(i - 1) * COLS];
 		for (i = 1; i <= COLS; i++) {
 			char c = *p++;
-			line_buf[i] = isprint(c) ? c : ' ';
+			line_buf[i] = isprint((int)c) ? c : ' ';
 		}
 		line_buf[COLS + 1] = '|';
 		line_buf[COLS + 2] = 0;

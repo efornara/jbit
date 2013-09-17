@@ -173,7 +173,7 @@ const ParseError *Parser::parse(Program *prg) {
 			const char *t = token.get_data();
 			char ch;
 			for (int i = 0; (ch = t[i]); i++)
-				if (!isdigit(ch))
+				if (!isdigit((int)ch))
 					goto error;
 			int n = atoi(t);
 			if (n > 255)
