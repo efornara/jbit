@@ -89,6 +89,9 @@ public:
 		parse_error.msg = msg;
 		return &parse_error;
 	}
+	const ParseError *internal_error() {
+		return error("internal_error");
+	}
 };
 
 enum TokenType {
@@ -97,17 +100,35 @@ enum TokenType {
 	TK_WORD,
 	TK_STRING,
 	TK_DIRECTIVE,
+	TK_LABEL,
 	TK_EOL
+};
+
+enum TokenArg {
+	ARG_NONE = 0,
+	ARG_HI = '>',
+	ARG_LO = '<',
+	ARG_REL = '?',
+	ARG_DEF = ':',
 };
 
 class String {
 private:
-	const Buffer *b;
+	Buffer *b;
 	int i;
+	friend class Token;
 public:
 	String() : b(0), i(-1) {}
-	String(const Buffer *b_, int i_) : b(b_), i(i_) {}
-	const char *get_s() const {
+	String(Buffer *b_, const char *s) : b(b_) {
+		if (s) {
+			i = b->get_length();
+			b->append_string(s);
+		} else {
+			i = -1;
+		}
+	}
+	String(Buffer *b_, int i_) : b(b_), i(i_) {}
+	const char *get_s() {
 		if (i == - 1)
 			return 0;
 		else
@@ -117,7 +138,8 @@ public:
 
 struct Token {
 	TokenType type;
-	const Buffer *b_value;
+	TokenArg arg;
+	Buffer *b_value;
 	union {
 		const char *s_value;
 		int i_value;
@@ -125,14 +147,10 @@ struct Token {
 	void set_string(TokenType t, Buffer *b, const char *s) {
 		type = t;
 		b_value = b;
-		if (s) {
-			i_value = b->get_length();
-			b->append_string(s);
-		} else {
-			i_value = -1;
-		}
+		String str(b, s);
+		i_value = str.i;
 	}
-	const String get_string() {
+	String get_string() {
 		return String(b_value, i_value);
 	}
 	bool operator==(const char *o) {
@@ -354,6 +372,33 @@ private:
 		}
 		return error("unknown directive");
 	}
+	Token get_identifier(TokenArg arg) {
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			if (isspace(c)) {
+				r.unget();
+				break;
+			}
+			if (c == ':') {
+				if (arg != ARG_NONE)
+					return error("unexpected ':'");
+				arg = ARG_DEF;
+				break;
+			}
+			if (!isalpha(c) && !isdigit(c) && c != '_')
+				return error("invalid character in identifier");
+			buf.append_char(c);
+		}
+		if (buf.get_length() == 0)
+			return error("empty identifier");
+		buf.append_char(0);
+		Token token;
+		token.set_string(TK_LABEL, &line_buf, buf.get_data());
+		token.arg = arg;
+		return token;
+	}
 public:
 	Tokenizer(LineReader &r_) : r(r_), buf(64) {
 		eol.type = TK_EOL;
@@ -383,6 +428,16 @@ public:
 				return get_string();
 			if (c == '.')
 				return get_directive();
+			switch (c) {
+			case '<':
+			case '>':
+			case '?':
+				return get_identifier((TokenArg)c);
+			}
+			if (isalpha(c) || c == '_') {
+				r.unget();
+				return get_identifier((TokenArg)0);
+			}
 			return error("unexpected character");
 		}
 		return eol;
@@ -398,12 +453,13 @@ private:
 	int size;
 public:
 	struct Address {
-		Segment *buf;
+		Segment *s;
 		int offset;
-		Address(Segment *b, int o) : buf(b), offset(o) {}
+		Address() : s(0), offset(0) {}
+		Address(Segment *s_, int o) : s(s_), offset(o) {}
+		int get() { return s->base + offset; }
 	};
 	Address get_address() { return Address(this, cursor); }
-	int solve_address(Address &addr) { return base + cursor; }
 	Segment(LineReader &r_) : r(r_),  cursor(0), base(-1), size(-1) {}
 	const ParseError *put(int value) {
 		if (size != -1 && cursor >= size)
@@ -416,6 +472,7 @@ public:
 	bool is_size_set() { return size != -1; }
 	void set_n_of_pages(int n) { size = n << 8; }
 	int get_n_of_pages() { return size >> 8; }
+	int get_cursor() { return base + cursor; }
 	void compute_size() {
 		if (size != -1)
 			return;
@@ -437,15 +494,53 @@ public:
 	}
 };
 
+// just a list for now (poor perf., but quick and easy to impl.)
+struct Label {
+	String name;
+	Segment::Address addr;
+	struct Label *next;
+};
+
 struct Binary {
 	LineReader &r;
+	Buffer storage;
+	Label *labels;
 	Program *prg;
 	String device;
 	Segment code;
 	Segment data;
 	Segment *segment;
-	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
+	int n_of_labels;
+	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code), n_of_labels(0) {
 		code.set_base(0x300);
+		labels = new Label();
+		labels->name = String(&storage, "__start__");
+		labels->addr = code.get_address();
+		labels->next = 0;
+	}
+	Label *find_label(const char *s) {
+		Label *l = labels;
+		while (l) {
+			if (!strcmp(s, l->name.get_s()))
+				return l;
+			l = l->next;
+		}
+		return 0;
+	}
+	Label *add_label(Segment *seg, const char *s) {
+		Label *l = new Label();
+		l->name = String(&storage, s);
+		l->addr = seg->get_address();
+		l->next = labels;
+		labels = l;
+		return l;
+	}
+	void dump_labels() {
+		Label *l = labels;
+		while (l) {
+			fprintf(stderr, "%s %d\n", l->name.get_s(), l->addr.offset);
+			l = l->next;
+		}
 	}
 };
 
@@ -460,6 +555,7 @@ public:
 	virtual const ParseError *set_size(int code, int data) { return 0; }
 	virtual const ParseError *switch_segment(const char *s) { return 0; }
 	virtual const ParseError *put(int value) { return 0; }
+	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
 	virtual const ParseError *end() { return 0; }
 	virtual ~Pass() {}
 };
@@ -496,6 +592,25 @@ public:
 	const ParseError *put(int value) {
 		return bin.segment->put(value);
 	}
+	const ParseError *label(const char *s, TokenArg a) {
+		switch (a) {
+		case ARG_DEF:
+			if (bin.find_label(s))
+				return r.error("duplicate label");
+			bin.add_label(bin.segment, s);
+			return 0;
+		case ARG_HI:
+		case ARG_LO:
+		case ARG_REL:
+			return bin.segment->put(0);
+		case ARG_NONE:
+			if (bin.segment->put(0))
+				return &parse_error;
+			return bin.segment->put(0);
+		default:
+			return r.internal_error();
+		}
+	}
 	const ParseError *end() {
 		bin.code.compute_size();
 		bin.data.compute_size();
@@ -521,6 +636,32 @@ public:
 	}
 	const ParseError *put(int value) {
 		return bin.segment->put(value);
+	}
+	const ParseError *label(const char *s, TokenArg a) {
+		if (a == ARG_DEF)
+			return 0;
+		Label *l = bin.find_label(s);
+		if (!l)
+			return r.error("undefined label");
+		int addr = l->addr.get();
+		switch (a) {
+		case ARG_HI:
+			return bin.segment->put(addr >> 8);
+		case ARG_LO:
+			return bin.segment->put(addr & 0xff);
+		case ARG_NONE:
+			if (bin.segment->put(addr & 0xff))
+				return &parse_error;
+			return bin.segment->put(addr >> 8);
+		case ARG_REL: {
+			int offset = addr - (bin.segment->get_cursor() + 1);
+			if (offset > 127 || offset < -128)
+				return r.error("address is too far");
+			return bin.segment->put(offset);
+		}
+		default:
+			return r.internal_error();
+		}
 	}
 	const ParseError *end() {
 		bin.prg->device_tag = Tag(bin.device.get_s());
@@ -588,7 +729,7 @@ private:
 		else if (directive == "code" || directive == "data")
 			return parse_codedata(directive);
 		else
-			return r.error("internal error");
+			return r.internal_error();
 	}
 public:
 	ParserEngine(const Buffer *src, Program *prg) : r(src), bin(r, prg), tokenizer(r) {}
@@ -616,12 +757,16 @@ public:
 					if (pass->put(token.i_value >> 8))
 						return &parse_error;
 					break;
+				case TK_LABEL:
+					if (pass->label(token.get_string().get_s(), token.arg))
+						return &parse_error;
+					break;
 				case TK_ERROR:
 					return token_error(token);
 				case TK_EOL:
 					break;
 				default:
-					return r.error("internal error");
+					return r.internal_error();
 				}
 			} while (token.type != TK_EOL);
 		} while (r.nextline());

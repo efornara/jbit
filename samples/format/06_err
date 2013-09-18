@@ -1,0 +1,17 @@
+; uncomment a line to test the parser
+
+.size 1 1
+
+0
+
+;not_present
+;?
+;?invalid:
+;?too_far
+
+.data
+
+0
+
+too_far:
+;too_far:
