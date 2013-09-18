@@ -87,26 +87,62 @@ enum TokenType {
 	TK_ERROR,
 	TK_BYTE,
 	TK_WORD,
+	TK_STRING,
+	TK_DIRECTIVE,
 	TK_EOL
+};
+
+class String {
+private:
+	const Buffer *b;
+	int i;
+public:
+	String(const Buffer *b_, int i_) : b(b_), i(i_) {}
+	const char *get_s() const {
+		if (i == - 1)
+			return 0;
+		else
+			return &b->get_data()[i];
+	}
 };
 
 struct Token {
 	TokenType type;
+	const Buffer *b_value;
 	union {
-		const char *e_value;
+		const char *s_value;
 		int i_value;
 	};
+	void set_string(TokenType t, Buffer *b, const char *s) {
+		type = t;
+		b_value = b;
+		if (s) {
+			i_value = b->get_length();
+			b->append_string(s);
+		} else {
+			i_value = -1;
+		}
+	}
+	const String get_string() {
+		return String(b_value, i_value);
+	}
+};
+
+const char *directives[] = {
+	"device",
+	0
 };
 
 class Tokenizer {
 private:
 	LineReader &r;
+	Buffer *storage;
 	Buffer buf;
 	Token eol;
 	Token error(const char *msg) {
 		Token err;
 		err.type = TK_ERROR;
-		err.e_value = msg;
+		err.s_value = msg;
 		return err;
 	}
 	bool iscomment(int c) {
@@ -166,7 +202,7 @@ private:
 	Token get_chr() {
 		int c = r.getc();
 		if (c == LineReader::EOL)
-			return error("expecting a character; got EOL");
+			return error("unexpected EOL");
 		if (c == '\'')
 			return error("\"'\" not supported yet");
 		if (r.getc() != '\'')
@@ -261,11 +297,53 @@ private:
 		token.i_value = value;
 		return token;
 	}
+	Token get_string() {
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				return error("unexpected EOL");
+			if (c == '"')
+				break;
+			buf.append_char(c);
+		}
+		buf.append_char(0);
+		Token token;
+		token.set_string(TK_STRING, storage, buf.get_data());
+		return token;
+	}
+	Token get_directive() {
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			if (isspace(c)) {
+				r.unget();
+				break;
+			}
+			if (!isalpha(c))
+				return error("expected alphabetic letter");
+			buf.append_char(c);
+		}
+		buf.append_char(0);
+		const char *t = buf.get_data();
+		for (int i = 0; directives[i]; i++) {
+			if (!strcmp(directives[i], t)) {
+				Token token;
+				token.type = TK_DIRECTIVE;
+				token.s_value = directives[i];
+				return token;
+			}
+		}
+		return error("unknown directive");
+	}
 public:
-	Tokenizer(LineReader &r_) : r(r_), buf(32) {
+	Tokenizer(LineReader &r_) : r(r_), buf(64) {
 		eol.type = TK_EOL;
 	}
-	void reset() {
+	void new_file(Buffer *storage_) {
+		storage = storage_;	
+	}
+	void new_line() {
 	}
 	const Token get() {
 		buf.reset();
@@ -285,6 +363,10 @@ public:
 				return get_hex();
 			if (c == '%')
 				return get_bin();
+			if (c == '"')
+				return get_string();
+			if (c == '.')
+				return get_directive();
 			return error("unexpected character");
 		}
 		return eol;
@@ -297,30 +379,54 @@ class ParserEngine {
 private:
 	LineReader reader;
 	Tokenizer tokenizer;
+	Program *prg;
 	void fill_base_error() {
 		parse_error.lineno = reader.get_lineno();
 		parse_error.colno = reader.get_colno();
 	}
-	const ParseError *internal_error() {
+	const ParseError *error(const char *msg) {
 		fill_base_error();
-		parse_error.msg = "internal error";
+		parse_error.msg = msg;
 		return &parse_error;
+	}
+	const ParseError *internal_error() {
+		return error("internal error");
 	}
 	const ParseError *token_error(const Token &token) {
 		fill_base_error();
-		parse_error.msg = token.e_value;
+		parse_error.msg = token.s_value;
 		return &parse_error;
+	}
+	const ParseError *parse_directive() {
+		Token device = tokenizer.get();
+		if (device.type == TK_ERROR)
+			return token_error(device);
+		if (device.type != TK_STRING)
+			return error("expected string");
+		Token eol = tokenizer.get(); 
+		if (eol.type != TK_EOL)
+			return error("unexpected token");
+		// TODO wait for pass 2
+		prg->device_tag = device.get_string().get_s();
+		return 0;
 	}
 public:
 	ParserEngine(const Buffer *src) : reader(src), tokenizer(reader) {}
-	const ParseError *parse(Program *prg) {
-		Token token;
+	const ParseError *parse(Program *prg_) {
+		prg = prg_;
 		prg->reset();
+		const ParseError *err;
+		tokenizer.new_file(&prg->metadata_storage);
+		Token token;
 		do {
-			tokenizer.reset();
+			tokenizer.new_line();
 			do {
 				token = tokenizer.get();
 				switch (token.type) {
+				case TK_DIRECTIVE:
+					if ((err = parse_directive()))
+						return err;
+					break;
 				case TK_BYTE:
 					prg->append_char(token.i_value);
 					break;

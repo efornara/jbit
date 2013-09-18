@@ -13,3 +13,7 @@
 
 ;%004
 ;%000000000
+
+#.unknown
+#.device "
+#.device "bogus"

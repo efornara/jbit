@@ -1,13 +1,14 @@
-#! /usr/bin/env jbit -d microio -a
+#! /usr/bin/env jbit
 
 ; You can also use ; to start a comment.
 
-; To select the microio device see the first line.
+; To select the microio device use:
+.device "microio"
 
 ; Apart from bytes, you can type characters and addresses.
 ; Note that typing 2:53 is the same as typing 53 2 (the order is reversed).
 
-169 'C'     ; you can also put comments at the end of a line
+169 'C'     ; if you use ; you can put the comment at the end of the line
 141 2:53 
 
 ; If you really, really need to, you can use the hexadecimal notation.
@@ -20,6 +21,6 @@ $8D $0236
 %10101001 'A'
 %10001101 2:55
 
-; You don't need to start at the beginning of the line.
+; You don't need to start bytes at the beginning of the line.
 
     169 'O' 141 2:56
