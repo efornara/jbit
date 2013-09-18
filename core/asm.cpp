@@ -195,6 +195,58 @@ private:
 		*value = n;
 		return 0;
 	}
+	const char *parse_char(int delim, int *ch) {
+		int c = r.getc();
+		if (c == LineReader::EOL)
+			return "unexpected EOL";
+		if (c == delim) {
+			*ch = -1;
+			return 0;
+		}
+		if (c == '\\') {
+			c = r.getc();
+			switch (c) {
+			case 'a':
+				*ch = '\a';
+				return 0;
+			case 'b':
+				*ch = '\b';
+				return 0;
+			case 'e':
+			case 'E':
+				*ch = 0x1b;
+				return 0;
+			case 'f':
+				*ch = '\f';
+				return 0;
+			case 'n':
+				*ch = '\n';
+				return 0;
+			case 'r':
+				*ch = '\r';
+				return 0;
+			case 't':
+				*ch = '\t';
+				return 0;
+			case 'v':
+				*ch = '\v';
+				return 0;
+			case '\\':
+				*ch = '\\';
+				return 0;
+			case '\'':
+				*ch = '\'';
+				return 0;
+			case '"':
+				*ch = '"';
+				return 0;
+			default:
+				return "invalid escape sequence";
+			}
+		}
+		*ch = c;
+		return 0;
+	}
 	// the get_* functions:
 	// - expect buf to be clean
 	// - unget the delimitating character (unless it's error or EOL)
@@ -236,13 +288,17 @@ private:
 		return token;
 	}
 	Token get_chr() {
-		int c = r.getc();
-		if (c == LineReader::EOL)
-			return error("unexpected EOL");
-		if (c == '\'')
-			return error("\"'\" not supported yet");
-		if (r.getc() != '\'')
-			return error("expecting \"'\" to terminate character");
+		const char *err;
+		int c;
+		if ((err = parse_char('\'', &c)))
+			return error(err);
+		if (c == -1)
+			return error("empty character");
+		int eoc;
+		if ((err = parse_char('\'', &eoc)))
+			return error(err);
+		if (eoc != -1)
+			return error("two many characters; use \" for strings");
 		Token token;
 		token.type = TK_BYTE;
 		token.i_value = c & 0xff;
@@ -335,10 +391,11 @@ private:
 	}
 	Token get_string() {
 		while (1) {
-			int c = r.getc();
-			if (c == LineReader::EOL)
-				return error("unexpected EOL");
-			if (c == '"')
+			int c;
+			const char *err = parse_char('"', &c);
+			if (err)
+				return error(err);
+			if (c == -1)
 				break;
 			buf.append_char(c);
 		}
@@ -757,6 +814,14 @@ public:
 					if (pass->put(token.i_value >> 8))
 						return &parse_error;
 					break;
+				case TK_STRING: {
+					const char *s = token.get_string().get_s
+();
+					for (int i = 0; s[i]; i++)
+						if (pass->put(s[i] & 0xff))
+							return &parse_error;
+					break;
+				}
 				case TK_LABEL:
 					if (pass->label(token.get_string().get_s(), token.arg))
 						return &parse_error;

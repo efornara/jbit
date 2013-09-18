@@ -3,7 +3,7 @@
 ; labels are declared with the : postfix
 ; the > prefix gets you the hi byte
 ; the < prefix gets you the low byte
-; the ? prefix gets you the address relative to the next byte
+; the ? prefix gets you the offset relative to the next byte
 ; no prefix gets you the full address
 
 .size 1 1
@@ -24,6 +24,7 @@ done:
 
 .data
 
-msg: 72 101 108 108 111 44 32 87 111 114 108 100 33 10 0
+; you can type strings; they are NOT zero terminated
+msg: "Hello, World!\n" 0
 
 sleep: 2 0 13 5
