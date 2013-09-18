@@ -389,37 +389,65 @@ public:
 	}
 };
 
+class Segment {
+private:
+	LineReader &r;
+	Buffer buf;
+	int cursor;
+	int base;
+	int size;
+public:
+	struct Address {
+		Segment *buf;
+		int offset;
+		Address(Segment *b, int o) : buf(b), offset(o) {}
+	};
+	Address get_address() { return Address(this, cursor); }
+	int solve_address(Address &addr) { return base + cursor; }
+	Segment(LineReader &r_) : r(r_),  cursor(0), base(-1), size(-1) {}
+	const ParseError *put(int value) {
+		if (size != -1 && cursor >= size)
+			return r.error("segment overflow");
+		buf.append_char(value);
+		return 0;
+	}
+	void set_base(int base_) { base = base_; }
+	bool is_size_set() { return size != -1; }
+	void set_n_of_pages(int n) { size = n << 8; }
+	int get_n_of_pages() { return size >> 8; }
+	void compute_size() {
+		if (size != -1)
+			return;
+		size = (cursor + 0xff) & 0xff00;
+	}
+	void fill(Buffer *prg) {
+		if (size == -1)
+			return;
+		const char *p = buf.get_data();
+		int i, n = buf.get_length();
+		for (i = 0; i < n; i++)
+			prg->append_char(p[i]);
+		for (; i < size; i++)
+			prg->append_char(0);
+	}
+};
+
 struct Asm {
 	LineReader &r;
 	Program *prg;
-	unsigned char *m;
 	String device;
-	bool segment_code;
-	int code_pages;
-	int data_pages;
-	int code_org;
-	int data_org;
-	Asm(LineReader &r_, Program *prg_) : r(r_), prg(prg_) {
-		m = new unsigned char[256 * 256];
-		memset(m, 0, sizeof(m));
-		code_org = 0x300;
-		data_org = -1;
-		code_pages = -1;
-		data_pages = -1;
-		segment_code = true;
-	}
-	~Asm() {
-		delete[] m;
+	Segment code;
+	Segment data;
+	Segment *segment;
+	Asm(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
+		code.set_base(0x300);
 	}
 	void end() {
 		prg->device_tag = Tag(device.get_s());
-		if (code_pages == -1) {
-			code_pages = ((code_org + 0xff) >> 8) - 3;
-			data_pages = 0;
-		}
-		int len = (code_pages + data_pages) * 256;
-		for (int i = 0x300; i < 0x300 + len; i++)
-			prg->append_char(m[i] & 0xff);
+		code.compute_size();
+		data.compute_size();
+		code.fill(prg);
+		data.fill(prg);
 	}
 	const ParseError *set_device(const String &s) {
 		Token t;
@@ -428,31 +456,27 @@ struct Asm {
 		return 0;
 	}
 	const ParseError *set_size(int code_, int data_) {
-		if (code_pages != -1)
+		if (code.is_size_set())
 			return r.error("program size already set");
 		if (code_ + data_ > 256 - 3)
 			return r.error("program doesn't fit in memory");
-		code_pages = code_;
-		data_pages = data_;
-		data_org = 0x300 + code_pages * 0x100;
+		code.set_n_of_pages(code_);
+		data.set_n_of_pages(data_);
+		data.set_base(0x300 + (code_ << 8));
 		return 0;
 	}
 	const ParseError *switch_segment(const char *s) {
 		if (!strcmp(s, "code")) {
-			segment_code = true;
+			segment = &code;
 			return 0;
 		}
-		if (data_pages == -1)
+		if (!data.is_size_set())
 			return r.error("program size not set");
-		segment_code = false;
+		segment = &data;
 		return 0;
 	}
 	const ParseError *put(int value) {
-		if (segment_code)
-			m[code_org++] = value;
-		else
-			m[data_org++] = value;
-		return 0;
+		return segment->put(value);
 	}
 };
 
