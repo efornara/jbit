@@ -165,10 +165,11 @@ void parse(const char *file_name, Tag dev_tag, Program *prg) {
 		JBParser jb_parser(file);
 		jb_parser.parse(prg);
 	} else {
-		Parser parser(file);
-		const ParseError *e = parser.parse(prg);
-		if (e)
-			fatal("line %d: %s", e->lineno, e->msg.get_data());
+		const ParseError *e = parse_asm(file, prg);
+		if (e) {
+			fprintf(stderr, "%s:%d:%d: error: %s\n", file_name, e->lineno, e->colno, e->msg);
+			exit(1);
+		}
 	}
 	delete file;
 	if (dev_tag.is_valid())

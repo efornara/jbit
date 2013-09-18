@@ -64,17 +64,12 @@ public:
 };
 
 struct ParseError {
-	Buffer msg;
+	const char *msg;
 	int lineno;
+	int colno;
 };
 
-class Parser {
-private:
-	const Buffer *src;
-public:
-	Parser(const Buffer *src_);
-	const ParseError *parse(Program *prg);
-};
+const ParseError *parse_asm(const Buffer *src, Program *prg);
 
 class AddressSpace {
 public:
