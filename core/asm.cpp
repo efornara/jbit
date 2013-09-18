@@ -38,6 +38,8 @@
 
 namespace {
 
+ParseError parse_error;
+
 class LineReader {
 private:
 	const char *d;
@@ -81,6 +83,12 @@ public:
 		lineno++;
 		return true;
 	}
+	const ParseError *error(const char *msg) {
+		parse_error.lineno = get_lineno();
+		parse_error.colno = get_colno();
+		parse_error.msg = msg;
+		return &parse_error;
+	}
 };
 
 enum TokenType {
@@ -97,6 +105,7 @@ private:
 	const Buffer *b;
 	int i;
 public:
+	String() : b(0), i(-1) {}
 	String(const Buffer *b_, int i_) : b(b_), i(i_) {}
 	const char *get_s() const {
 		if (i == - 1)
@@ -126,17 +135,26 @@ struct Token {
 	const String get_string() {
 		return String(b_value, i_value);
 	}
+	bool operator==(const char *o) {
+		if (type != TK_DIRECTIVE)
+			return false;
+		return !strcmp(s_value, o);
+	}
 };
 
 const char *directives[] = {
 	"device",
+	"size",
+	"code",
+	"data",
 	0
 };
+
 
 class Tokenizer {
 private:
 	LineReader &r;
-	Buffer *storage;
+	Buffer line_buf;
 	Buffer buf;
 	Token eol;
 	Token error(const char *msg) {
@@ -308,7 +326,7 @@ private:
 		}
 		buf.append_char(0);
 		Token token;
-		token.set_string(TK_STRING, storage, buf.get_data());
+		token.set_string(TK_STRING, &line_buf, buf.get_data());
 		return token;
 	}
 	Token get_directive() {
@@ -340,10 +358,8 @@ public:
 	Tokenizer(LineReader &r_) : r(r_), buf(64) {
 		eol.type = TK_EOL;
 	}
-	void new_file(Buffer *storage_) {
-		storage = storage_;	
-	}
 	void new_line() {
+		line_buf.reset();
 	}
 	const Token get() {
 		buf.reset();
@@ -373,50 +389,135 @@ public:
 	}
 };
 
-ParseError parse_error;
+struct Asm {
+	LineReader &r;
+	Program *prg;
+	unsigned char *m;
+	String device;
+	bool segment_code;
+	int code_pages;
+	int data_pages;
+	int code_org;
+	int data_org;
+	Asm(LineReader &r_, Program *prg_) : r(r_), prg(prg_) {
+		m = new unsigned char[256 * 256];
+		memset(m, 0, sizeof(m));
+		code_org = 0x300;
+		data_org = -1;
+		code_pages = -1;
+		data_pages = -1;
+		segment_code = true;
+	}
+	~Asm() {
+		delete[] m;
+	}
+	void end() {
+		prg->device_tag = Tag(device.get_s());
+		if (code_pages == -1) {
+			code_pages = ((code_org + 0xff) >> 8) - 3;
+			data_pages = 0;
+		}
+		int len = (code_pages + data_pages) * 256;
+		for (int i = 0x300; i < 0x300 + len; i++)
+			prg->append_char(m[i] & 0xff);
+	}
+	const ParseError *set_device(const String &s) {
+		Token t;
+		t.set_string(TK_STRING, &prg->metadata_storage, s.get_s());
+		device = t.get_string();
+		return 0;
+	}
+	const ParseError *set_size(int code_, int data_) {
+		if (code_pages != -1)
+			return r.error("program size already set");
+		if (code_ + data_ > 256 - 3)
+			return r.error("program doesn't fit in memory");
+		code_pages = code_;
+		data_pages = data_;
+		data_org = 0x300 + code_pages * 0x100;
+		return 0;
+	}
+	const ParseError *switch_segment(const char *s) {
+		if (!strcmp(s, "code")) {
+			segment_code = true;
+			return 0;
+		}
+		if (data_pages == -1)
+			return r.error("program size not set");
+		segment_code = false;
+		return 0;
+	}
+	const ParseError *put(int value) {
+		if (segment_code)
+			m[code_org++] = value;
+		else
+			m[data_org++] = value;
+		return 0;
+	}
+};
 
 class ParserEngine {
 private:
-	LineReader reader;
+	LineReader r;
+	Asm asm_prg;
 	Tokenizer tokenizer;
-	Program *prg;
-	void fill_base_error() {
-		parse_error.lineno = reader.get_lineno();
-		parse_error.colno = reader.get_colno();
-	}
-	const ParseError *error(const char *msg) {
-		fill_base_error();
-		parse_error.msg = msg;
-		return &parse_error;
-	}
-	const ParseError *internal_error() {
-		return error("internal error");
-	}
 	const ParseError *token_error(const Token &token) {
-		fill_base_error();
-		parse_error.msg = token.s_value;
-		return &parse_error;
+		return r.error(token.s_value);
 	}
-	const ParseError *parse_directive() {
-		Token device = tokenizer.get();
+	Token expect(TokenType expected) {
+		Token token = tokenizer.get();
+		if (token.type == TK_ERROR) {
+			token_error(token);
+		} else if (token.type != expected) {
+			switch (expected) {
+			case TK_STRING:
+				r.error("string expected");
+				return token;
+			default:
+				r.error("unexpected token");
+				token.type = TK_ERROR;
+				token.s_value = parse_error.msg;
+			}
+		}
+		return token;
+	}
+	const ParseError *parse_device() {
+		Token device = expect(TK_STRING);
 		if (device.type == TK_ERROR)
-			return token_error(device);
-		if (device.type != TK_STRING)
-			return error("expected string");
-		Token eol = tokenizer.get(); 
-		if (eol.type != TK_EOL)
-			return error("unexpected token");
-		// TODO wait for pass 2
-		prg->device_tag = device.get_string().get_s();
-		return 0;
+			return &parse_error;
+		if (tokenizer.get().type != TK_EOL)
+			return r.error("unexpected token");
+		return asm_prg.set_device(device.get_string());
+	}
+	const ParseError *parse_size() {
+		Token code_pages = expect(TK_BYTE);
+		if (code_pages.type == TK_ERROR)
+			return &parse_error;
+		Token data_pages = expect(TK_BYTE);
+		if (data_pages.type == TK_ERROR)
+			return &parse_error;
+		if (tokenizer.get().type != TK_EOL)
+			return r.error("unexpected token");
+		return asm_prg.set_size(code_pages.i_value, data_pages.i_value);
+	}
+	const ParseError *parse_codedata(Token &directive) {
+		if (tokenizer.get().type != TK_EOL)
+			return r.error("unexpected token");
+		return asm_prg.switch_segment(directive.s_value);
+	}
+	const ParseError *parse_directive(Token directive) {
+		if (directive == "device")
+			return parse_device();
+		else if (directive == "size")
+			return parse_size();
+		else if (directive == "code" || directive == "data")
+			return parse_codedata(directive);
+		else
+			return r.error("internal error");
 	}
 public:
-	ParserEngine(const Buffer *src) : reader(src), tokenizer(reader) {}
-	const ParseError *parse(Program *prg_) {
-		prg = prg_;
-		prg->reset();
-		const ParseError *err;
-		tokenizer.new_file(&prg->metadata_storage);
+	ParserEngine(const Buffer *src, Program *prg) : r(src), asm_prg(r, prg), tokenizer(r) {}
+	const ParseError *parse() {
 		Token token;
 		do {
 			tokenizer.new_line();
@@ -424,25 +525,29 @@ public:
 				token = tokenizer.get();
 				switch (token.type) {
 				case TK_DIRECTIVE:
-					if ((err = parse_directive()))
-						return err;
+					if (parse_directive(token))
+						return &parse_error;
 					break;
 				case TK_BYTE:
-					prg->append_char(token.i_value);
+					if (asm_prg.put(token.i_value))
+						return &parse_error;
 					break;
 				case TK_WORD:
-					prg->append_char(token.i_value & 0xff);
-					prg->append_char(token.i_value >> 8);
+					if (asm_prg.put(token.i_value & 0xff))
+						return &parse_error;
+					if (asm_prg.put(token.i_value >> 8))
+						return &parse_error;
 					break;
 				case TK_ERROR:
 					return token_error(token);
 				case TK_EOL:
 					break;
 				default:
-					return internal_error();
+					return r.error("internal error");
 				}
 			} while (token.type != TK_EOL);
-		} while (reader.nextline());
+		} while (r.nextline());
+		asm_prg.end();
 		return 0;
 	}
 };
@@ -514,6 +619,6 @@ void Buffer::append_line(const char *line) {
 }
 
 const ParseError *parse_asm(const Buffer *src, Program *prg) {
-	ParserEngine engine(src);
-	return engine.parse(prg);
+	ParserEngine engine(src, prg);
+	return engine.parse();
 };

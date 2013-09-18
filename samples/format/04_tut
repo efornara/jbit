@@ -1,0 +1,26 @@
+#! /usr/bin/env jbit -c asm
+
+; 1 page of code and 1 page of data
+.size 1 1
+
+0
+
+; once you set the program size, you can switch to the data page...
+.data
+
+1 2 3
+
+; ...and back to the code page...
+.code
+
+4 5 6
+
+; ...and back to the data page...
+.data
+
+7 8 9
+
+; ...and so on
+
+; expected result:
+; code page: 0 4 5 6    data page: 1 2 3 7 8 9
