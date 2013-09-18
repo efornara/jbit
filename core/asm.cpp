@@ -409,6 +409,7 @@ public:
 		if (size != -1 && cursor >= size)
 			return r.error("segment overflow");
 		buf.append_char(value);
+		cursor++;
 		return 0;
 	}
 	void set_base(int base_) { base = base_; }
@@ -419,6 +420,10 @@ public:
 		if (size != -1)
 			return;
 		size = (cursor + 0xff) & 0xff00;
+	}
+	void rewind() {
+		buf.reset();
+		cursor = 0;
 	}
 	void fill(Buffer *prg) {
 		if (size == -1)
@@ -432,59 +437,105 @@ public:
 	}
 };
 
-struct Asm {
+struct Binary {
 	LineReader &r;
 	Program *prg;
 	String device;
 	Segment code;
 	Segment data;
 	Segment *segment;
-	Asm(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
+	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
 		code.set_base(0x300);
 	}
-	void end() {
-		prg->device_tag = Tag(device.get_s());
-		code.compute_size();
-		data.compute_size();
-		code.fill(prg);
-		data.fill(prg);
-	}
-	const ParseError *set_device(const String &s) {
+};
+
+class Pass {
+protected:
+	LineReader &r;
+	Binary &bin;
+public:
+	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {}
+	virtual const ParseError *begin() { return 0; }
+	virtual const ParseError *set_device(const char *s) { return 0; }
+	virtual const ParseError *set_size(int code, int data) { return 0; }
+	virtual const ParseError *switch_segment(const char *s) { return 0; }
+	virtual const ParseError *put(int value) { return 0; }
+	virtual const ParseError *end() { return 0; }
+	virtual ~Pass() {}
+};
+
+class Pass1 : public Pass {
+public:
+	Pass1(LineReader &r_, Binary &bin_) : Pass(r_, bin_) {}
+	const ParseError *set_device(const char *s) {
 		Token t;
-		t.set_string(TK_STRING, &prg->metadata_storage, s.get_s());
-		device = t.get_string();
+		t.set_string(TK_STRING, &bin.prg->metadata_storage, s);
+		bin.device = t.get_string();
 		return 0;
 	}
 	const ParseError *set_size(int code_, int data_) {
-		if (code.is_size_set())
+		if (bin.code.is_size_set())
 			return r.error("program size already set");
 		if (code_ + data_ > 256 - 3)
 			return r.error("program doesn't fit in memory");
-		code.set_n_of_pages(code_);
-		data.set_n_of_pages(data_);
-		data.set_base(0x300 + (code_ << 8));
+		bin.code.set_n_of_pages(code_);
+		bin.data.set_n_of_pages(data_);
+		bin.data.set_base(0x300 + (code_ << 8));
 		return 0;
 	}
 	const ParseError *switch_segment(const char *s) {
 		if (!strcmp(s, "code")) {
-			segment = &code;
+			bin.segment = &bin.code;
 			return 0;
 		}
-		if (!data.is_size_set())
+		if (!bin.data.is_size_set())
 			return r.error("program size not set");
-		segment = &data;
+		bin.segment = &bin.data;
 		return 0;
 	}
 	const ParseError *put(int value) {
-		return segment->put(value);
+		return bin.segment->put(value);
+	}
+	const ParseError *end() {
+		bin.code.compute_size();
+		bin.data.compute_size();
+		return 0;
+	}
+};
+
+class Pass2 : public Pass {
+public:
+	Pass2(LineReader &r_, Binary &bin_) : Pass(r_, bin_) {}
+	const ParseError *begin() {
+		bin.code.rewind();
+		bin.data.rewind();
+		bin.segment = &bin.code;
+		return 0;
+	}
+	const ParseError *switch_segment(const char *s) {
+		if (!strcmp(s, "code"))
+			bin.segment = &bin.code;
+		else
+			bin.segment = &bin.data;
+		return 0;
+	}
+	const ParseError *put(int value) {
+		return bin.segment->put(value);
+	}
+	const ParseError *end() {
+		bin.prg->device_tag = Tag(bin.device.get_s());
+		bin.code.fill(bin.prg);
+		bin.data.fill(bin.prg);
+		return 0;
 	}
 };
 
 class ParserEngine {
 private:
 	LineReader r;
-	Asm asm_prg;
+	Binary bin;
 	Tokenizer tokenizer;
+	Pass *pass;
 	const ParseError *token_error(const Token &token) {
 		return r.error(token.s_value);
 	}
@@ -511,7 +562,7 @@ private:
 			return &parse_error;
 		if (tokenizer.get().type != TK_EOL)
 			return r.error("unexpected token");
-		return asm_prg.set_device(device.get_string());
+		return pass->set_device(device.get_string().get_s());
 	}
 	const ParseError *parse_size() {
 		Token code_pages = expect(TK_BYTE);
@@ -522,12 +573,12 @@ private:
 			return &parse_error;
 		if (tokenizer.get().type != TK_EOL)
 			return r.error("unexpected token");
-		return asm_prg.set_size(code_pages.i_value, data_pages.i_value);
+		return pass->set_size(code_pages.i_value, data_pages.i_value);
 	}
 	const ParseError *parse_codedata(Token &directive) {
 		if (tokenizer.get().type != TK_EOL)
 			return r.error("unexpected token");
-		return asm_prg.switch_segment(directive.s_value);
+		return pass->switch_segment(directive.s_value);
 	}
 	const ParseError *parse_directive(Token directive) {
 		if (directive == "device")
@@ -540,8 +591,11 @@ private:
 			return r.error("internal error");
 	}
 public:
-	ParserEngine(const Buffer *src, Program *prg) : r(src), asm_prg(r, prg), tokenizer(r) {}
-	const ParseError *parse() {
+	ParserEngine(const Buffer *src, Program *prg) : r(src), bin(r, prg), tokenizer(r) {}
+	const ParseError *do_pass() {
+		r.rewind();
+		if (pass->begin())
+			return &parse_error;
 		Token token;
 		do {
 			tokenizer.new_line();
@@ -553,13 +607,13 @@ public:
 						return &parse_error;
 					break;
 				case TK_BYTE:
-					if (asm_prg.put(token.i_value))
+					if (pass->put(token.i_value))
 						return &parse_error;
 					break;
 				case TK_WORD:
-					if (asm_prg.put(token.i_value & 0xff))
+					if (pass->put(token.i_value & 0xff))
 						return &parse_error;
-					if (asm_prg.put(token.i_value >> 8))
+					if (pass->put(token.i_value >> 8))
 						return &parse_error;
 					break;
 				case TK_ERROR:
@@ -571,7 +625,17 @@ public:
 				}
 			} while (token.type != TK_EOL);
 		} while (r.nextline());
-		asm_prg.end();
+		return pass->end();
+	}
+	const ParseError *parse() {
+		Pass1 pass1(r, bin);
+		pass = &pass1;
+		if (do_pass())
+			return &parse_error;
+		Pass2 pass2(r, bin);
+		pass = &pass2;
+		if (do_pass())
+			return &parse_error;
 		return 0;
 	}
 };
