@@ -58,7 +58,7 @@ public:
 	LineReader(const Buffer *b) : d(b->get_data()), len(b->get_length()) {
 		rewind();
 	}
-	int getc() {
+	int get() {
 		if (i >= len)
 			return EOL;
 		char c = d[i];
@@ -72,7 +72,7 @@ public:
 			i--;
 	}
 	bool nextline() {
-		while (getc() != EOL)
+		while (get() != EOL)
 			;
 		i++;
 		while (i < len && d[i] == '\r')
@@ -196,7 +196,7 @@ private:
 		return 0;
 	}
 	const char *parse_char(int delim, int *ch) {
-		int c = r.getc();
+		int c = r.get();
 		if (c == LineReader::EOL)
 			return "unexpected EOL";
 		if (c == delim) {
@@ -204,7 +204,7 @@ private:
 			return 0;
 		}
 		if (c == '\\') {
-			c = r.getc();
+			c = r.get();
 			switch (c) {
 			case 'a':
 				*ch = '\a';
@@ -255,7 +255,7 @@ private:
 		int hi = -1;
 		r.unget();
 		while (1) {
-			int c = r.getc();
+			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
 			if (isspace(c)) {
@@ -307,7 +307,7 @@ private:
 	Token get_hex() {
 		int value = 0, n = 0;
 		while (1) {
-			int c = r.getc();
+			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
 			if (isspace(c)) {
@@ -363,7 +363,7 @@ private:
 	Token get_bin() {
 		int value = 0, n = 0;
 		while (1) {
-			int c = r.getc();
+			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
 			if (isspace(c)) {
@@ -406,7 +406,7 @@ private:
 	}
 	Token get_directive() {
 		while (1) {
-			int c = r.getc();
+			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
 			if (isspace(c)) {
@@ -431,7 +431,7 @@ private:
 	}
 	Token get_identifier(TokenArg arg) {
 		while (1) {
-			int c = r.getc();
+			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
 			if (isspace(c)) {
@@ -465,12 +465,12 @@ public:
 	}
 	const Token get() {
 		buf.reset();
-		int c = r.getc();
+		int c = r.get();
 		if (c == LineReader::EOL || iscomment(c))
 			return eol;
 		while (c != LineReader::EOL) {
-			while (isspace(c))
-				c = r.getc();
+			while (c != LineReader::EOL && isspace(c))
+				c = r.get();
 			if (c == LineReader::EOL || iscomment(c))
 				return eol;
 			if (isdigit(c))
@@ -514,7 +514,7 @@ public:
 		int offset;
 		Address() : s(0), offset(0) {}
 		Address(Segment *s_, int o) : s(s_), offset(o) {}
-		int get() { return s->base + offset; }
+		int get() { return s->get_base() + offset; }
 	};
 	Address get_address() { return Address(this, cursor); }
 	Segment(LineReader &r_) : r(r_),  cursor(0), base(-1), size(-1) {}
@@ -526,6 +526,7 @@ public:
 		return 0;
 	}
 	void set_base(int base_) { base = base_; }
+	int get_base() { return base; }
 	bool is_size_set() { return size != -1; }
 	void set_n_of_pages(int n) { size = n << 8; }
 	int get_n_of_pages() { return size >> 8; }
