@@ -28,6 +28,7 @@
 
 // asm.cpp
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -85,6 +86,7 @@ public:
 enum TokenType {
 	TK_ERROR,
 	TK_BYTE,
+	TK_WORD,
 	TK_EOL
 };
 
@@ -102,9 +104,161 @@ private:
 	Buffer buf;
 	Token eol;
 	Token error(const char *msg) {
+		Token err;
+		err.type = TK_ERROR;
+		err.e_value = msg;
+		return err;
+	}
+	bool iscomment(int c) {
+		return c == '#' || c == ';';
+	}
+	const char *parse_dec(int *value) {
+		if (buf.get_length() == 0)
+			return "expected byte";
+		buf.append_char(0);
+		const char *t = buf.get_data();
+		int n = atoi(t);
+		if (n > 255)
+			return "byte out of range (expected: 0..255)";
+		*value = n;
+		return 0;
+	}
+	// the get_* functions:
+	// - expect buf to be clean
+	// - unget the delimitating character (unless it's error or EOL)
+	Token get_dec() {
+		const char *err;
+		int hi = -1;
+		r.unget();
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			if (isspace(c)) {
+				r.unget();
+				break;
+			}
+			if (c == ':') {
+				if (hi != -1)
+					return error("unexpected ':'; got one already");
+				if ((err = parse_dec(&hi)))
+					return error(err);
+				buf.reset();
+				continue;
+			}
+			if (!isdigit(c))
+				return error("expected decimal digit");
+			buf.append_char(c);
+		}
+		int lo;
+		if ((err = parse_dec(&lo)))
+			return error(err);
 		Token token;
-		token.type = TK_ERROR;
-		token.e_value = msg;
+		if (hi != -1) {
+			token.type = TK_WORD;
+			token.i_value = (hi << 8) | lo;
+		} else {
+			token.type = TK_BYTE;
+			token.i_value = lo;
+		}
+		return token;
+	}
+	Token get_chr() {
+		int c = r.getc();
+		if (c == LineReader::EOL)
+			return error("expecting a character; got EOL");
+		if (c == '\'')
+			return error("\"'\" not supported yet");
+		if (r.getc() != '\'')
+			return error("expecting \"'\" to terminate character");
+		Token token;
+		token.type = TK_BYTE;
+		token.i_value = c & 0xff;
+		return token;
+	}
+	Token get_hex() {
+		int value = 0, n = 0;
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			if (isspace(c)) {
+				r.unget();
+				break;
+			}
+			int digit;
+			switch (c) {
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				digit = c - '0';
+				break;
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+			case 'e':
+			case 'f':
+				digit = c - 'a' + 10;
+				break;
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+				digit = c - 'A' + 10;
+				break;
+			default:
+				return error("expected hexdecimal digit");
+			}
+			value = (value << 4) | digit;
+			n++;
+		}
+		Token token;
+		if (n <= 2)
+			token.type = TK_BYTE;
+		else if (n <= 4)
+			token.type = TK_WORD;
+		else
+			return error("hex. literal too long (max 4 digits)");
+		token.i_value = value;
+		return token;
+	}
+	Token get_bin() {
+		int value = 0, n = 0;
+		while (1) {
+			int c = r.getc();
+			if (c == LineReader::EOL)
+				break;
+			if (isspace(c)) {
+				r.unget();
+				break;
+			}
+			int digit;
+			switch (c) {
+			case '0':
+			case '1':
+				digit = c - '0';
+				break;
+			default:
+				return error("expected binary digit");
+			}
+			value = (value << 1) | digit;
+			n++;
+		}
+		if (n > 8)
+			return error("bin. literal too long (max 8 digits)");
+		Token token;
+		token.type = TK_BYTE;
+		token.i_value = value;
 		return token;
 	}
 public:
@@ -114,32 +268,24 @@ public:
 	void reset() {
 	}
 	const Token get() {
-		Token token;
 		buf.reset();
 		int c = r.getc();
-		if (c == LineReader::EOL || c == '#')
+		if (c == LineReader::EOL || iscomment(c))
 			return eol;
 		while (c != LineReader::EOL) {
 			while (isspace(c))
 				c = r.getc();
-			if (c == LineReader::EOL)
-				break;
-			while (c != LineReader::EOL && !isspace(c)) {
-				buf.append_char(c);
-				c = r.getc();
-			}
-			buf.append_char(0);
-			const char *t = buf.get_data();
-			char ch;
-			for (int i = 0; (ch = t[i]); i++)
-				if (!isdigit((int)ch))
-					return error("not an integer");
-			int n = atoi(t);
-			if (n > 255)
-				return error("byte out of range");
-			token.type = TK_BYTE;
-			token.i_value = n;
-			return token;
+			if (c == LineReader::EOL || iscomment(c))
+				return eol;
+			if (isdigit(c))
+				return get_dec();
+			if (c == '\'')
+				return get_chr();
+			if (c == '$')
+				return get_hex();
+			if (c == '%')
+				return get_bin();
+			return error("unexpected character");
 		}
 		return eol;
 	}
@@ -177,6 +323,10 @@ public:
 				switch (token.type) {
 				case TK_BYTE:
 					prg->append_char(token.i_value);
+					break;
+				case TK_WORD:
+					prg->append_char(token.i_value & 0xff);
+					prg->append_char(token.i_value >> 8);
 					break;
 				case TK_ERROR:
 					return token_error(token);
