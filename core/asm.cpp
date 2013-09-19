@@ -270,6 +270,7 @@ const char *directives[] = {
 	"size",
 	"code",
 	"data",
+	"define",
 	0
 };
 
@@ -700,11 +701,20 @@ public:
 	}
 };
 
+enum SymbolType {
+	SYM_UNDEFINED,
+	SYM_LABEL,
+	SYM_DEFINE,
+};
+
 // just a list for now (poor perf., but quick and easy to impl.)
-struct Label {
+struct Symbol {
+	struct Symbol *next;
+	SymbolType type;
 	String name;
 	Segment::Address addr;
-	struct Label *next;
+	int value;
+	int size;
 };
 
 struct Operand {
@@ -717,7 +727,7 @@ struct Operand {
 struct Binary {
 	LineReader &r;
 	Buffer storage;
-	Label *labels;
+	Symbol *symbols;
 	Program *prg;
 	String device;
 	Segment code;
@@ -726,34 +736,34 @@ struct Binary {
 	int n_of_labels;
 	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code), n_of_labels(0) {
 		code.set_base(0x300);
-		labels = new Label();
-		labels->name = String(&storage, "__start__");
-		labels->addr = code.get_address();
-		labels->next = 0;
+		symbols = new Symbol();
+		symbols->type = SYM_LABEL;
+		symbols->name = String(&storage, "__start__");
+		symbols->addr = code.get_address();
+		symbols->value = -1;
+		symbols->size = 2;
+		symbols->next = 0;
 	}
-	Label *find_label(const char *s) {
-		Label *l = labels;
-		while (l) {
-			if (!strcmp(s, l->name.get_s()))
-				return l;
-			l = l->next;
+	Symbol *find_symbol(const char *s) {
+		Symbol *sym = symbols;
+		while (sym) {
+			if (!strcmp(s, sym->name.get_s()))
+				return sym;
+			sym = sym->next;
 		}
 		return 0;
 	}
-	Label *add_label(Segment *seg, const char *s) {
-		Label *l = new Label();
-		l->name = String(&storage, s);
-		l->addr = seg->get_address();
-		l->next = labels;
-		labels = l;
-		return l;
-	}
-	void dump_labels() {
-		Label *l = labels;
-		while (l) {
-			fprintf(stderr, "%s %d\n", l->name.get_s(), l->addr.offset);
-			l = l->next;
+	Symbol *get_symbol(const char *s) {
+		Symbol *sym = find_symbol(s);
+		if (!sym) {
+			sym = new Symbol();
+			sym->type = SYM_UNDEFINED;
+			sym->name = String(&storage, s);
+			sym->size = 2;
+			sym->next = symbols;
+			symbols = sym;
 		}
+		return sym;
 	}
 };
 
@@ -773,6 +783,7 @@ public:
 	virtual const ParseError *begin() { return 0; }
 	virtual const ParseError *set_device(const char *s) { return 0; }
 	virtual const ParseError *set_size(int code, int data) { return 0; }
+	virtual const ParseError *define_symbol(const char *s, int value, int size) { return 0; }
 	virtual const ParseError *put(int value) { return 0; }
 	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
 	virtual const ParseError *instruction(const OpcodeList *op, int am, Operand operand) { return 0; }
@@ -799,22 +810,41 @@ public:
 		bin.data.set_base(0x300 + (code_ << 8));
 		return 0;
 	}
+	const ParseError *define_symbol(const char *s, int value, int size) {
+		Symbol *sym = bin.find_symbol(s);
+		if (!sym) {
+			sym = bin.get_symbol(s);
+			sym->type = SYM_DEFINE;
+			sym->value = value;
+			sym->size = size;
+			return 0;
+		}
+		if (sym->type == SYM_UNDEFINED)
+			return r.error("symbol used before being defined");
+		else
+			return r.error("duplicate symbol");
+	}
 	const ParseError *put(int value) {
 		return bin.segment->put(value);
 	}
 	const ParseError *label(const char *s, TokenArg a) {
+		Symbol *sym = bin.get_symbol(s);
 		switch (a) {
 		case ARG_DEF:
-			if (bin.find_label(s))
-				return r.error("duplicate label");
-			bin.add_label(bin.segment, s);
+			if (sym->type != SYM_UNDEFINED)
+				return r.error("duplicate symbol");
+			sym->type = SYM_LABEL;
+			sym->addr = bin.segment->get_address();
 			return 0;
 		case ARG_HI:
 		case ARG_LO:
 		case ARG_REL:
 			return bin.segment->put(0);
 		case ARG_NONE:
-			return bin.segment->put_word(0);
+			if (sym->size == 2)
+				return bin.segment->put_word(0);
+			else
+				return bin.segment->put(0);
 		default:
 			return r.internal_error();
 		}
@@ -823,6 +853,8 @@ public:
 		if (op->opcode[am] == -1)
 			return r.error("invalid address mode");
 		int n = am_size[am];
+		if (operand.has_label)
+			bin.get_symbol(operand.name.get_s());
 		for (int i = 0; i < n; i++)
 			if (bin.segment->put(0))
 				return &parse_error;
@@ -850,22 +882,45 @@ public:
 	const ParseError *put(int value) {
 		return bin.segment->put(value);
 	}
-	const ParseError *label(const char *s, TokenArg a) {
+	const ParseError *do_label(const char *s, TokenArg a, int size) {
 		if (a == ARG_DEF)
 			return 0;
-		Label *l = bin.find_label(s);
-		if (!l)
-			return r.error("undefined label");
-		int addr = l->addr.get();
+		Symbol *sym = bin.get_symbol(s);
+		if (sym->type == SYM_UNDEFINED)
+			return r.error("undefined symbol");
+		int value;
 		switch (a) {
 		case ARG_HI:
-			return bin.segment->put(addr >> 8);
 		case ARG_LO:
-			return bin.segment->put(addr & 0xff);
+		case ARG_REL:
+			if (sym->size == 1)
+				return r.error("symbol is a byte");
+			break;
 		case ARG_NONE:
-			return bin.segment->put_word(addr);
+			if (size != -1 && sym->size != size)
+				return r.error("symbol/operand size mismatch");
+			break;
+		default:
+			;
+		}
+		if (sym->type == SYM_LABEL)
+			value = sym->addr.get();
+		else
+			value = sym->value;
+		if (size == -1)
+			size = sym->size;
+		switch (a) {
+		case ARG_HI:
+			return bin.segment->put(value >> 8);
+		case ARG_LO:
+			return bin.segment->put(value & 0xff);
+		case ARG_NONE:
+			if (size == 1)
+				return bin.segment->put(value);
+			else
+				return bin.segment->put_word(value);
 		case ARG_REL: {
-			int offset = addr - (bin.segment->get_cursor() + 1);
+			int offset = value - (bin.segment->get_cursor() + 1);
 			if (offset > 127 || offset < -128)
 				return r.error("address is too far");
 			return bin.segment->put(offset);
@@ -874,12 +929,15 @@ public:
 			return r.internal_error();
 		}
 	}
+	const ParseError *label(const char *s, TokenArg a) {
+		return do_label(s, a, -1);
+	}
 	const ParseError *instruction(const OpcodeList *op, int am, Operand operand) {
 		if (bin.segment->put(op->opcode[am]))
 			return &parse_error;
-		if (operand.has_label)
-			return label(operand.name.get_s(), operand.arg);
 		int n = am_size[am];
+		if (operand.has_label)
+			return do_label(operand.name.get_s(), operand.arg, n - 1);
 		if (n != 1 && operand.value == VALUE_GUARD)
 			return r.error("internal error: VALUE_GUARD");
 		if (n == 2) {
@@ -951,6 +1009,30 @@ private:
 			return r.error("unexpected token");
 		return pass->switch_segment(directive.s_value);
 	}
+	const ParseError *parse_define() {
+		Token id = tokenizer.get();
+		if (id.type == TK_ERROR)
+			return &parse_error;
+		if (id.type != TK_LABEL || id.arg != ARG_NONE)
+			return r.error("expected name to define");
+		const char *s = id.get_string().get_s();
+		Token value = tokenizer.get();
+		int size;
+		switch (value.type) {
+		case TK_ERROR:
+			return &parse_error;
+			break;
+		case TK_BYTE:
+			size = 1;
+			break;
+		case TK_WORD:
+			size = 2;
+			break;
+		default:
+			return r.error("expected value");
+		}
+		return pass->define_symbol(s, value.i_value, size);
+	}
 	const ParseError *parse_directive(Token directive) {
 		if (directive == "device")
 			return parse_device();
@@ -958,6 +1040,8 @@ private:
 			return parse_size();
 		else if (directive == "code" || directive == "data")
 			return parse_codedata(directive);
+		else if (directive == "define")
+			return parse_define();
 		else
 			return r.internal_error();
 	}

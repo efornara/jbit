@@ -25,4 +25,4 @@ done:
 
 msg: "Hello, World!\n" 0
 
-sleep: 2 0 13 5
+sleep: 2 0 13 1
