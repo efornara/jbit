@@ -707,6 +707,13 @@ struct Label {
 	struct Label *next;
 };
 
+struct Operand {
+	bool has_label;
+	String name;
+	TokenArg arg;
+	int value;
+};
+
 struct Binary {
 	LineReader &r;
 	Buffer storage;
@@ -768,7 +775,7 @@ public:
 	virtual const ParseError *set_size(int code, int data) { return 0; }
 	virtual const ParseError *put(int value) { return 0; }
 	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
-	virtual const ParseError *instruction(const OpcodeList *op, int am, int value) { return 0; }
+	virtual const ParseError *instruction(const OpcodeList *op, int am, Operand operand) { return 0; }
 	virtual const ParseError *end() { return 0; }
 	virtual ~Pass() {}
 };
@@ -812,7 +819,7 @@ public:
 			return r.internal_error();
 		}
 	}
-	const ParseError *instruction(const OpcodeList *op, int am, int value) {
+	const ParseError *instruction(const OpcodeList *op, int am, Operand operand) {
 		if (op->opcode[am] == -1)
 			return r.error("invalid address mode");
 		int n = am_size[am];
@@ -828,6 +835,8 @@ public:
 		return 0;
 	}
 };
+
+#define VALUE_GUARD 100000
 
 class Pass2 : public Pass {
 public:
@@ -865,15 +874,19 @@ public:
 			return r.internal_error();
 		}
 	}
-	const ParseError *instruction(const OpcodeList *op, int am, int value) {
+	const ParseError *instruction(const OpcodeList *op, int am, Operand operand) {
 		if (bin.segment->put(op->opcode[am]))
 			return &parse_error;
+		if (operand.has_label)
+			return label(operand.name.get_s(), operand.arg);
+		if (operand.value == VALUE_GUARD)
+			return r.error("internal error: VALUE_GUARD");
 		int n = am_size[am];
 		if (n == 2) {
-			if (bin.segment->put(value))
+			if (bin.segment->put(operand.value))
 				return &parse_error;
 		} else if (n == 3) {
-			if (bin.segment->put_word(value))
+			if (bin.segment->put_word(operand.value))
 				return &parse_error;
 		}
 		return 0;
@@ -950,10 +963,14 @@ private:
 	}
 	const ParseError *parse_instruction(Token mnemonic) {
 		const OpcodeList *op = &opcodes[mnemonic.i_value];
+		Operand val;
+		val.has_label = false;
+		val.arg = ARG_NONE;
+		val.value = VALUE_GUARD;
 		AddressMode am;
+		int size = -1;
 		Token token = tokenizer.get();
 		bool need_next = true;
-		int value = 9 * 256 + 99;
 		switch (token.type) {
 		case TK_EOL:
 			am = AM_IMP;
@@ -963,16 +980,21 @@ private:
 			token = tokenizer.get();
 			switch (token.type) {
 			case TK_BYTE:
-				value = token.i_value;
+				val.value = token.i_value;
 				break;
 			case TK_LABEL:
 				switch (token.arg) {
+				case ARG_NONE:
+					return r.error("expecting single byte constant");
 				case ARG_HI:
 				case ARG_LO:
 				case ARG_REL:
+					val.has_label = true;
+					val.name = token.get_string();
+					val.arg = token.arg;
 					break;
-				default:
-					return r.error("expecting single byte constant");
+				case ARG_DEF:
+					return r.error("unexpected label definition");
 				}
 				break;
 			default:
@@ -980,7 +1002,7 @@ private:
 			}
 			break;
 		case TK_BYTE:
-			value = token.i_value;
+			val.value = token.i_value;
 			token = tokenizer.get();
 			switch (token.type) {
 			case TK_EOL:
@@ -998,23 +1020,52 @@ private:
 				break;
 			}
 		case TK_WORD:
-			value = token.i_value;
-			// passthrough
 		case TK_LABEL:
+			if (token.type == TK_WORD) {
+				val.value = token.i_value;
+				size = 2;
+			} else {
+				val.has_label = true;
+				val.name = token.get_string();
+				val.arg = token.arg;
+				switch (token.arg) {
+				case ARG_NONE:
+					size = 2;
+					break;
+				case ARG_HI:
+				case ARG_LO:
+				case ARG_REL:
+					size = 1;
+					break;
+				case ARG_DEF:
+					return r.error("unexpected label definition");
+				}
+			}
 			token = tokenizer.get();
 			switch (token.type) {
 			case TK_EOL:
-				if (op->opcode[AM_REL] != -1)
+				if (op->opcode[AM_REL] != -1) {
+					if (val.has_label) {
+						switch (val.arg) {
+						case ARG_NONE:
+						case ARG_REL:
+							val.arg = ARG_REL;
+							break;
+						default:
+							return r.error("not allowed on branches");
+						}
+					}
 					am = AM_REL;
-				else
-					am = AM_ABS;
+				} else {
+					am = size == 2 ? AM_ABS : AM_ZPG;
+				}
 				need_next = false;
 				break;
 			case TK_COMMA_X:
-				am = AM_ABS_X;
+				am = size == 2 ? AM_ABS_X : AM_ZPG_X;
 				break;
 			case TK_COMMA_Y:
-				am = AM_ABS_Y;
+				am = size == 2 ? AM_ABS_Y : AM_ZPG_Y;
 				break;
 			default:
 				need_next = false;
@@ -1035,10 +1086,8 @@ private:
 			return &parse_error;
 		if (token.type != TK_EOL)
 			return r.error("unexpected token");
-		if (pass->instruction(op, am, value))
+		if (pass->instruction(op, am, val))
 			return &parse_error;
-		while (r.get() != LineReader::EOL)
-			;
 		return 0;
 	}
 public:

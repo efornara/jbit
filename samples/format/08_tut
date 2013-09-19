@@ -1,7 +1,7 @@
 #! /usr/bin/env jbit
 
-
-
+; You can use assembly (one instruction per line).
+; There is not need to use ? for branches.
 
 
 
