@@ -6,7 +6,11 @@ OBJS = js.o vm.o asm.o
 
 OUT = ../js/core.js
 
-all: $(OUT)
+all: d_xv65.h
+
+d_xv65.h: xv65.inc
+	perl ../tools/inc2sym.pl <xv65.inc >d_xv65.h
+	perl ../tools/inc2h.pl <xv65.inc >../native/_xv65.h
 
 $(OUT): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(OUT) $(OBJS) -s $(EXPORTS)

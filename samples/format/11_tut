@@ -1,0 +1,28 @@
+#! /usr/bin/env jbit
+
+; setting a device defines its standard symbols
+.device "xv65"
+
+
+
+
+	ldx #0
+l1:	lda msg,x
+	beq done
+	sta PUTCHAR
+	inx
+	bne l1
+
+done:
+	sta FRMDRAW
+	lda #>sleep
+	sta REQPTRHI
+	lda #<sleep
+	sta REQPTRLO
+
+.data
+
+
+msg: "Hello, World!\n" 0
+
+sleep: 2 0 REQ_SLEEP 1

@@ -50,6 +50,12 @@ void fatal(const char *format, ...) {
 	exit(1);
 }
 
+void show_asm_devices() {
+	printf("asm devices:\n");
+	for (int i = 0; asm_devices[i]; i++)
+		printf("  %s\n", asm_devices[i]);
+}
+
 void usage(int code = 1) {
 	printf("\n"
 	 "usage: jbit [options] file\n"
@@ -58,17 +64,30 @@ void usage(int code = 1) {
 	 "options:\n"
 	 "  -v            show version and exit\n"
 	 "  -d device     override device selection\n"
+	 "  -l device     list symbols and exit\n"
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
-	 "\n"
-	 "devices:\n");
+	 "\n");
+	show_asm_devices();
+	printf("\n"
+	 "sim devices:\n");
 	DeviceRegistry *reg = DeviceRegistry::get_instance();
 	int n = reg->get_n();
 	if (n == 0)
-	printf("  - none -\n");
+		printf("  - none -\n");
 	for (int i = 0; i < n; i++)
 		printf("  %s\n", reg->get(i)->tag.s);
 	printf("\n");
 	exit(code);
+}
+
+void show_symbols(const char *device) {
+	const SymDef *syms = get_device_symdefs(device);
+	if (syms != 0) {
+		for (int i = 0; syms[i].name; i++)
+			printf("%s %d\n", syms[i].name, syms[i].value);
+	} else {
+		show_asm_devices();
+	}
 }
 
 const char *resolve_file_name(const char *name, Buffer *buffer) {
@@ -311,6 +330,11 @@ int main(int argc, char *argv[])
 			if (++i == argc)
 				usage();
 			dev_tag = Tag(argv[i]);
+		} else if (!strcmp(s, "-l")) {
+			if (++i == argc)
+				usage();
+			show_symbols(argv[i]);
+			exit(0);
 		} else if (!strcmp(s, "-c")) {
 			if (++i == argc)
 				usage();

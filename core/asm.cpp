@@ -798,6 +798,14 @@ public:
 		Token t;
 		t.set_string(TK_STRING, &bin.prg->metadata_storage, s);
 		bin.device = t.get_string();
+		const SymDef *syms = get_device_symdefs(bin.device.get_s());
+		if (syms) {
+			for (int i = 0; syms[i].name; i++) {
+				int value = syms[i].value;
+				if (define_symbol(syms[i].name, value, value > 255 ? 2 : 1))
+					return &parse_error;
+			}
+		}
 		return 0;
 	}
 	const ParseError *set_size(int code_, int data_) {

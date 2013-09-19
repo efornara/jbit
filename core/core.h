@@ -96,4 +96,14 @@ public:
 };
 
 extern VM *new_VM(IO *io);
+
 extern const char *get_jbit_version();
+
+struct SymDef {
+	const char *name; // last name is 0
+	int value;
+};
+
+extern const char *asm_devices[]; // 0 terminated
+
+extern const SymDef *get_device_symdefs(const char *device);

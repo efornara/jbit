@@ -9,7 +9,7 @@ CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -ggdb
 LDFLAGS =
 LIBS =
 
-OBJS = main.o devimpl.o vm.o asm.o
+OBJS = main.o devimpl.o vm.o asm.o symdefs.o
 EXE = jbit
 
 
@@ -40,9 +40,6 @@ $(EXE): $(OBJS)
 
 stdout.o: _xv65.h
 xv65.o: _xv65.h
-
-_xv65.h: ../core/xv65.inc
-	perl ../tools/inc2h.pl <../core/xv65.inc >_xv65.h
 
 clean:
 	rm -f jbit jbit.exe windows.zip *.o
