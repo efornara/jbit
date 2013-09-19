@@ -17,8 +17,8 @@ EXE = jbit
 # DEVICE SELECTION
 #
 
-# tty: minimal dependencies (tested with i586-mingw32msvc and wine)
-OBJS += tty.o
+# stdout: minimal dependencies (tested with i586-mingw32msvc and wine)
+OBJS += stdout.o
 
 # microio: comment out if you don't have ncurses
 #          on BSD replace -lncurses with -lcurses
@@ -38,15 +38,11 @@ all: $(EXE)
 $(EXE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
-tty.o: xv65.h
-xv65.o: xv65.h
+stdout.o: _xv65.h
+xv65.o: _xv65.h
 
-xv65.h: xv65.inc
-	perl ../tools/inc2h.pl <xv65.inc >xv65.h
-
-test: $(EXE)
-	./$(EXE) ../samples/microio/loop1.jb
-	./$(EXE) ../samples/xv65/hello.jb
+_xv65.h: ../core/xv65.inc
+	perl ../tools/inc2h.pl <../core/xv65.inc >_xv65.h
 
 clean:
 	rm -f jbit jbit.exe windows.zip *.o

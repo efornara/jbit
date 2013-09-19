@@ -48,7 +48,7 @@
 #include "jbit.h"
 #include "devimpl.h"
 
-#include "xv65.h"
+#include "_xv65.h"
 
 #define IO_BASE 0x200
 #define ERR XV65_EINVAL
@@ -344,8 +344,14 @@ private:
 		int in_flags = r_get_uint8(i);
 		int out_flags = 0;
 		if (in_flags & XV65_O_CREAT)
-			out_flags = O_CREAT;
-		in_flags &= ~XV65_O_CREAT;
+			out_flags |= O_CREAT;
+		if (in_flags & XV65_O_TRUNC)
+			out_flags |= O_TRUNC;
+		if (in_flags & XV65_O_APPEND)
+			out_flags |= O_APPEND;
+		if (in_flags & XV65_O_EXCL)
+			out_flags |= O_EXCL;
+		in_flags &= 0x0f;
 		switch (in_flags) {
 		case XV65_O_RDONLY:
 			out_flags |= O_RDONLY;

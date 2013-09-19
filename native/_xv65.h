@@ -162,10 +162,13 @@
 #define XV65_EDOM 33
 #define XV65_ERANGE 34
 
-#define XV65_O_RDONLY 0
-#define XV65_O_WRONLY 1
-#define XV65_O_RDWR 2
-#define XV65_O_CREAT 64
+#define XV65_O_RDONLY 1
+#define XV65_O_WRONLY 2
+#define XV65_O_RDWR 3
+#define XV65_O_CREAT 16
+#define XV65_O_TRUNC 32
+#define XV65_O_APPEND 64
+#define XV65_O_EXCL 128
 
 #define XV65_T_BLK 1
 #define XV65_T_CHR 2

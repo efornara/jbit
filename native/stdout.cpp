@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// tty.cpp
+// stdout.cpp
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,14 +41,14 @@
 
 #include "jbit.h"
 
-#include "xv65.h"
+#include "_xv65.h"
 
 #define IO_BASE 0x200
 #define ERR XV65_EINVAL
 
 namespace {
 
-class TTYDevice : public Device {
+class StdoutDevice : public Device {
 private:
 	int v_FRMFPS;
 	void put_FRMDRAW() {
@@ -109,9 +109,9 @@ public:
 };
 
 Device *new_Device() {
-	return new TTYDevice();
+	return new StdoutDevice();
 }
 
-DeviceEntry entry("tty", new_Device);
+DeviceEntry entry("stdout", new_Device);
 
 } // namespace

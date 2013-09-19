@@ -184,7 +184,7 @@ void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	parse(file_name, dev_tag, &prg);
 	if (!prg.device_tag.is_valid()) {
 #ifdef __WIN32__
-		const char *def_device = "tty";
+		const char *def_device = "stdout";
 #else
 		const char *def_device = "xv65";
 #endif

@@ -161,10 +161,13 @@ EPIPE   = 32
 EDOM    = 33
 ERANGE  = 34
 
-O_RDONLY   =  0
-O_WRONLY   =  1
-O_RDWR     =  2
-O_CREAT    = 64
+O_RDONLY =   1
+O_WRONLY =   2
+O_RDWR   =   3
+O_CREAT  =  16
+O_TRUNC  =  32
+O_APPEND =  64
+O_EXCL   = 128
 
 T_BLK  =  1
 T_CHR  =  2
