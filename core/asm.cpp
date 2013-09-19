@@ -879,9 +879,9 @@ public:
 			return &parse_error;
 		if (operand.has_label)
 			return label(operand.name.get_s(), operand.arg);
-		if (operand.value == VALUE_GUARD)
-			return r.error("internal error: VALUE_GUARD");
 		int n = am_size[am];
+		if (n != 1 && operand.value == VALUE_GUARD)
+			return r.error("internal error: VALUE_GUARD");
 		if (n == 2) {
 			if (bin.segment->put(operand.value))
 				return &parse_error;
@@ -961,6 +961,45 @@ private:
 		else
 			return r.internal_error();
 	}
+	const ParseError *parse_value(Token *token, Operand *val, int *size) {
+		// token: in (first) / out (delimiter)
+		// val: out (3 cases: has_label, value, VALUE_GUARD)
+		// size: out (-1: unknown)
+		*size = -1;
+		switch (token->type) {
+		case TK_BYTE:
+			val->value = token->i_value;
+			*size = 1;
+			break;
+		case TK_WORD:
+			val->value = token->i_value;
+			*size = 2;
+			break;
+		case TK_LABEL:
+			switch (token->arg) {
+			case ARG_NONE:
+				*size = 2;
+				break;
+			case ARG_HI:
+			case ARG_LO:
+			case ARG_REL:
+				*size = 1;
+				break;
+			case ARG_DEF:
+				return r.error("unexpected label definition");
+			}
+			val->has_label = true;
+			val->name = token->get_string();
+			val->arg = token->arg;
+			break;
+		default:
+			return r.error("expected value");
+		}
+		*token = tokenizer.get();
+		if (token->type == TK_ERROR)
+			return &parse_error;
+		return 0;
+	}
 	const ParseError *parse_instruction(Token mnemonic) {
 		const OpcodeList *op = &opcodes[mnemonic.i_value];
 		Operand val;
@@ -978,70 +1017,17 @@ private:
 		case TK_IMMEDIATE:
 			am = AM_IMM;
 			token = tokenizer.get();
-			switch (token.type) {
-			case TK_BYTE:
-				val.value = token.i_value;
-				break;
-			case TK_LABEL:
-				switch (token.arg) {
-				case ARG_NONE:
-					return r.error("expecting single byte constant");
-				case ARG_HI:
-				case ARG_LO:
-				case ARG_REL:
-					val.has_label = true;
-					val.name = token.get_string();
-					val.arg = token.arg;
-					break;
-				case ARG_DEF:
-					return r.error("unexpected label definition");
-				}
-				break;
-			default:
-				return r.error("expected immediate constant");
-			}
+			if (parse_value(&token, &val, &size))
+				return &parse_error;
+			if (size != 1)
+				return r.error("expected single byte");
+			need_next = false;
 			break;
 		case TK_BYTE:
-			val.value = token.i_value;
-			token = tokenizer.get();
-			switch (token.type) {
-			case TK_EOL:
-				am = AM_ZPG;
-				need_next = false;
-				break;
-			case TK_COMMA_X:
-				am = AM_ZPG_X;
-				break;
-			case TK_COMMA_Y:
-				am = AM_ZPG_Y;
-				break;
-			default:
-				need_next = false;
-				break;
-			}
 		case TK_WORD:
 		case TK_LABEL:
-			if (token.type == TK_WORD) {
-				val.value = token.i_value;
-				size = 2;
-			} else {
-				val.has_label = true;
-				val.name = token.get_string();
-				val.arg = token.arg;
-				switch (token.arg) {
-				case ARG_NONE:
-					size = 2;
-					break;
-				case ARG_HI:
-				case ARG_LO:
-				case ARG_REL:
-					size = 1;
-					break;
-				case ARG_DEF:
-					return r.error("unexpected label definition");
-				}
-			}
-			token = tokenizer.get();
+			if (parse_value(&token, &val, &size))
+				return &parse_error;
 			switch (token.type) {
 			case TK_EOL:
 				if (op->opcode[AM_REL] != -1) {
@@ -1049,7 +1035,7 @@ private:
 						switch (val.arg) {
 						case ARG_NONE:
 						case ARG_REL:
-							val.arg = ARG_REL;
+							val.arg = ARG_REL; // forced
 							break;
 						default:
 							return r.error("not allowed on branches");
@@ -1057,15 +1043,15 @@ private:
 					}
 					am = AM_REL;
 				} else {
-					am = size == 2 ? AM_ABS : AM_ZPG;
+					am = size == 1 ? AM_ZPG : AM_ABS;
 				}
 				need_next = false;
 				break;
 			case TK_COMMA_X:
-				am = size == 2 ? AM_ABS_X : AM_ZPG_X;
+				am = size == 1 ? AM_ZPG_X : AM_ABS_X;
 				break;
 			case TK_COMMA_Y:
-				am = size == 2 ? AM_ABS_Y : AM_ZPG_Y;
+				am = size == 1 ? AM_ZPG_Y : AM_ABS_Y;
 				break;
 			default:
 				need_next = false;
@@ -1073,7 +1059,40 @@ private:
 			}
 			break;
 		case TK_OPEN_PAR:
-			return r.error("not implemented yet");
+			token = tokenizer.get();
+			if (parse_value(&token, &val, &size))
+				return &parse_error;
+			switch (token.type) {
+			case TK_CLOSE_PAR:
+				token = tokenizer.get();
+				switch (token.type) {
+				case TK_COMMA_Y:
+					if (size != 1)
+						return r.error("expected single byte");
+					am = AM_IND_Y;
+					break;
+				case TK_EOL:
+					if (size != 2)
+						return r.error("expected address");
+					am = AM_IND;
+					need_next = false;
+					break;
+				default:
+					return r.error("expected EOL or ',Y'");
+				}
+				break;
+			case TK_COMMA_X:
+				if (size != 1)
+					return r.error("expected single byte");
+				token = tokenizer.get();
+				if (token.type != TK_CLOSE_PAR)
+					return r.error("expected ')'");
+				am = AM_IND_X;
+				break;
+			default:
+				return r.error("expected ')' or ',X'");
+			}
+			break;
 		case TK_ERROR:
 			need_next = false;
 			break;
@@ -1108,6 +1127,7 @@ public:
 				case TK_DIRECTIVE:
 					if (parse_directive(token))
 						return &parse_error;
+					token.type = TK_EOL;
 					break;
 				case TK_BYTE:
 					if (pass->put(token.i_value))
@@ -1134,6 +1154,7 @@ public:
 				case TK_MNEMONIC:
 					if (parse_instruction(token))
 						return &parse_error;
+					token.type = TK_EOL;
 					break;
 				case TK_IMMEDIATE:
 				case TK_OPEN_PAR:

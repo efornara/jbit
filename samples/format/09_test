@@ -1,0 +1,24 @@
+; uncomment a line to test the parser
+
+0
+
+brk
+bne 3:1
+lda 3:2
+lda #3
+lda (4,x)
+lda (5),y
+lda 6
+lda 7,x
+ldx 8,y
+lda 3:9,x
+lda 3:10,x
+jmp (3:11)
+
+; errors
+;lda
+;lda (
+;lda #3:0
+;lda (3:0,x)
+;lda (3:0),y
+;jmp (0)
