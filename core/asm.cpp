@@ -921,3 +921,7 @@ const ParseError *parse_asm(const Buffer *src, Program *prg) {
 	ParserEngine engine(src, prg);
 	return engine.parse();
 };
+
+const char *get_jbit_version() {
+	return "1.1";
+}

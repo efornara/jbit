@@ -56,6 +56,7 @@ void usage(int code = 1) {
 	 "       jbit [options] -a file arg...\n"
 	 "\n"
 	 "options:\n"
+	 "  -v            show version and exit\n"
 	 "  -d device     override device selection\n"
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
 	 "\n"
@@ -282,7 +283,10 @@ int main(int argc, char *argv[])
 	int filename_i = -1;
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
-		if (!strcmp(s, "-d")) {
+		if (!strcmp(s, "-v")) {
+			printf("jbit %s\n", get_jbit_version());
+			exit(0);
+		} else if (!strcmp(s, "-d")) {
 			if (++i == argc)
 				usage();
 			const char *d = argv[i];

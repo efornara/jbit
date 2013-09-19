@@ -95,3 +95,4 @@ public:
 };
 
 extern VM *new_VM(IO *io);
+extern const char *get_jbit_version();
