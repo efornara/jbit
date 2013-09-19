@@ -1,12 +1,10 @@
 #! /usr/bin/env jbit
 
-; labels are declared with the : postfix
-; the > prefix gets you the hi byte
-; the < prefix gets you the low byte
-; the ? prefix gets you the offset relative to the next byte
-; no prefix gets you the full address
-
-.size 1 1
+; Labels are declared with the : postfix.
+; The > prefix gets you the high byte.
+; The < prefix gets you the low byte.
+; The ? prefix gets you the offset relative to the next byte.
+; No prefix gets you the full address.
 
 	162 0
 l1:	189 msg
@@ -24,7 +22,7 @@ done:
 
 .data
 
-; you can type strings; they are NOT zero terminated
+; You can type strings; they are NOT zero terminated.
 msg: "Hello, World!\n" 0
 
 sleep: 2 0 13 5

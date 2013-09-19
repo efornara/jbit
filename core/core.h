@@ -61,6 +61,7 @@ public:
 	Buffer metadata_storage;
 	Tag device_tag;
 	int n_of_code_pages;
+	int n_of_data_pages;
 	Program() : n_of_code_pages(-1) {}
 };
 

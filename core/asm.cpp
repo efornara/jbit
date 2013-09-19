@@ -608,10 +608,16 @@ protected:
 	Binary &bin;
 public:
 	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {}
+	const ParseError *switch_segment(const char *s) {
+		if (!strcmp(s, "code"))
+			bin.segment = &bin.code;
+		else
+			bin.segment = &bin.data;
+		return 0;
+	}
 	virtual const ParseError *begin() { return 0; }
 	virtual const ParseError *set_device(const char *s) { return 0; }
 	virtual const ParseError *set_size(int code, int data) { return 0; }
-	virtual const ParseError *switch_segment(const char *s) { return 0; }
 	virtual const ParseError *put(int value) { return 0; }
 	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
 	virtual const ParseError *end() { return 0; }
@@ -635,16 +641,6 @@ public:
 		bin.code.set_n_of_pages(code_);
 		bin.data.set_n_of_pages(data_);
 		bin.data.set_base(0x300 + (code_ << 8));
-		return 0;
-	}
-	const ParseError *switch_segment(const char *s) {
-		if (!strcmp(s, "code")) {
-			bin.segment = &bin.code;
-			return 0;
-		}
-		if (!bin.data.is_size_set())
-			return r.error("program size not set");
-		bin.segment = &bin.data;
 		return 0;
 	}
 	const ParseError *put(int value) {
@@ -672,6 +668,7 @@ public:
 	const ParseError *end() {
 		bin.code.compute_size();
 		bin.data.compute_size();
+		bin.data.set_base(0x300 + (bin.code.get_n_of_pages() << 8));
 		return 0;
 	}
 };
@@ -683,13 +680,6 @@ public:
 		bin.code.rewind();
 		bin.data.rewind();
 		bin.segment = &bin.code;
-		return 0;
-	}
-	const ParseError *switch_segment(const char *s) {
-		if (!strcmp(s, "code"))
-			bin.segment = &bin.code;
-		else
-			bin.segment = &bin.data;
 		return 0;
 	}
 	const ParseError *put(int value) {
@@ -723,6 +713,8 @@ public:
 	}
 	const ParseError *end() {
 		bin.prg->device_tag = Tag(bin.device.get_s());
+		bin.prg->n_of_code_pages = bin.code.get_n_of_pages();
+		bin.prg->n_of_data_pages = bin.data.get_n_of_pages();
 		bin.code.fill(bin.prg);
 		bin.data.fill(bin.prg);
 		return 0;

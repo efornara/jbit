@@ -157,6 +157,8 @@ public:
 		prg->reset();
 		char *raw = prg->append_raw(program_size);
 		memcpy(raw, &jb[12], program_size);
+		prg->n_of_code_pages = code_pages;
+		prg->n_of_data_pages = data_pages;
 	}
 };
 
@@ -210,30 +212,49 @@ void run(int argc, char *argv[], Tag dev_tag) {
 	}
 }
 
-void convert_to_asm(const Program *prg) {
+void dump_page(const Program *prg, int page, bool truncate = false) {
 	static const int bytes_per_line = 16;
-	printf("#! /usr/bin/env jbit");
-	if (prg->device_tag.is_valid())
-		printf(" -d %s", prg->device_tag.s);
-	printf(" -a\n\n");
 	const char *sep = 0, *space = " ";
-	for (int i = 0; i < prg->get_length(); i++) {
+	const char *p = &prg->get_data()[page << 8];
+	int n = 255;
+	if (truncate)
+		for (; n > 0; n--)
+			if (p[n])
+				break;
+	n++;
+	for (int i = 0; i < n; i++) {
 		sep = (i % bytes_per_line == (bytes_per_line - 1)) ? "\n" : space;
-		printf("%d%s", prg->get_data()[i] & 0xff, sep);
+		printf("%d%s", p[i] & 0xff, sep);
 	}
 	if (sep == space)
 		printf("\n");
 }
 
+void convert_to_asm(const Program *prg) {
+	printf("#! /usr/bin/env jbit");
+	printf(" -a\n\n");
+	if (prg->device_tag.is_valid())
+		printf(".device \"%s\"\n", prg->device_tag.s);
+	printf(".size %d %d\n", prg->n_of_code_pages, prg->n_of_data_pages);
+	int page = 0, n;
+	printf(".code\n");
+	n = prg->n_of_code_pages;
+	for (int i = 0; i < n; i++)
+		dump_page(prg, page++, i == n - 1);
+	printf(".data\n");
+	n = prg->n_of_data_pages;
+	for (int i = 0; i < n; i++)
+		dump_page(prg, page++, i == n - 1);
+}
+
 void convert_to_jb(const Program *prg) {
 	printf("JBit");
-	int n_of_pages = (prg->get_length() + 255) >> 8;
 	putchar(0); // header size
 	putchar(12);
 	putchar(1); // version
 	putchar(0);
-	putchar(n_of_pages); // code pages
-	putchar(0); // data pages
+	putchar(prg->n_of_code_pages);
+	putchar(prg->n_of_data_pages);
 	putchar(0); // reserved
 	putchar(0);
 	int i;
@@ -289,11 +310,7 @@ int main(int argc, char *argv[])
 		} else if (!strcmp(s, "-d")) {
 			if (++i == argc)
 				usage();
-			const char *d = argv[i];
-			if (DeviceRegistry::get_instance()->get(d))
-				dev_tag = Tag(d);
-			else
-				fatal("unknown device '%s'", d);
+			dev_tag = Tag(argv[i]);
 		} else if (!strcmp(s, "-c")) {
 			if (++i == argc)
 				usage();
