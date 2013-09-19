@@ -1,0 +1,28 @@
+#! /usr/bin/env jbit
+
+
+
+
+
+
+
+	ldx #0
+l1:	lda msg,x
+	beq done
+	sta 2:0
+	inx
+	bne l1
+
+done:
+	sta 2:18
+	lda #>sleep
+	sta 2:5
+	lda #<sleep
+	sta 2:4
+
+.data
+
+
+msg: "Hello, World!\n" 0
+
+sleep: 2 0 13 5

@@ -159,6 +159,38 @@ const OpcodeList opcodes[] = {
 {"JMP",{ -1,   -1,   76,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  108,   -1}},
 };
 
+const int n_of_mnemonics = sizeof(opcodes) / sizeof(OpcodeList);
+
+enum AddressMode {
+	AM_IMP = 0,
+	AM_REL,
+	AM_ABS,
+	AM_IMM,
+	AM_IND_X,
+	AM_IND_Y,
+	AM_ZPG,
+	AM_ZPG_X,
+	AM_ZPG_Y,
+	AM_ABS_Y,
+	AM_IND,
+	AM_ABS_X,
+};
+
+const int am_size[] = {
+	1, // -
+	2, // r
+	3, // n:n
+	2, // #n
+	2, // (n,X)
+	2, // (n),Y
+	2, // n"
+	2, // n,X"
+	2, // n,Y"
+	3, // n:n,Y"
+	3, // (n:n)"
+	3, // n:n,X"
+};
+
 enum TokenType {
 	TK_ERROR,
 	TK_BYTE,
@@ -167,6 +199,11 @@ enum TokenType {
 	TK_DIRECTIVE,
 	TK_LABEL,
 	TK_MNEMONIC,
+	TK_IMMEDIATE,
+	TK_OPEN_PAR,
+	TK_CLOSE_PAR,
+	TK_COMMA_X,
+	TK_COMMA_Y,
 	TK_EOL
 };
 
@@ -210,6 +247,8 @@ struct Token {
 		const char *s_value;
 		int i_value;
 	};
+	Token() {}
+	Token(TokenType type_) : type(type_) {}
 	void set_string(TokenType t, Buffer *b, const char *s) {
 		type = t;
 		b_value = b;
@@ -247,8 +286,15 @@ private:
 		err.s_value = msg;
 		return err;
 	}
-	bool iscomment(int c) {
-		return c == '#' || c == ';';
+	bool isseparator(int c) {
+		switch (c) {
+		case '#':
+		case ',':
+		case ')':
+			return true;
+		default:
+			return isspace(c);
+		}
 	}
 	const char *parse_dec(int *value) {
 		if (buf.get_length() == 0)
@@ -324,7 +370,7 @@ private:
 			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
-			if (isspace(c)) {
+			if (isseparator(c)) {
 				r.unget();
 				break;
 			}
@@ -376,7 +422,7 @@ private:
 			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
-			if (isspace(c)) {
+			if (isseparator(c)) {
 				r.unget();
 				break;
 			}
@@ -432,7 +478,7 @@ private:
 			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
-			if (isspace(c)) {
+			if (isseparator(c)) {
 				r.unget();
 				break;
 			}
@@ -500,7 +546,7 @@ private:
 			int c = r.get();
 			if (c == LineReader::EOL)
 				break;
-			if (isspace(c)) {
+			if (isseparator(c)) {
 				r.unget();
 				break;
 			}
@@ -517,10 +563,34 @@ private:
 		if (buf.get_length() == 0)
 			return error("empty identifier");
 		buf.append_char(0);
+		const char *s = buf.get_data();
+		for (int i = 0; i < n_of_mnemonics; i++) {
+			if (!strcasecmp(s, opcodes[i].mnemonic)) {
+				if (arg != ARG_NONE)
+					return error("label qualifier incompatible with mnemonic");
+				Token token;
+				token.type = TK_MNEMONIC;
+				token.i_value = i;
+				return token;
+			}
+		}
 		Token token;
-		token.set_string(TK_LABEL, &line_buf, buf.get_data());
+		token.set_string(TK_LABEL, &line_buf, s);
 		token.arg = arg;
 		return token;
+	}
+	Token get_comma() {
+		int c = r.get();
+		switch (c) {
+		case 'x':
+		case 'X':
+			return Token(TK_COMMA_X);
+		case 'y':
+		case 'Y':
+			return Token(TK_COMMA_Y);
+		default:
+			return error("expected X or Y after ','");
+		}
 	}
 public:
 	Tokenizer(LineReader &r_) : r(r_), buf(64) {
@@ -532,31 +602,38 @@ public:
 	const Token get() {
 		buf.reset();
 		int c = r.get();
-		if (c == LineReader::EOL || iscomment(c))
-			return eol;
 		while (c != LineReader::EOL) {
 			while (c != LineReader::EOL && isspace(c))
 				c = r.get();
-			if (c == LineReader::EOL || iscomment(c))
-				return eol;
-			if (isdigit(c))
-				return get_dec();
-			if (c == '\'')
-				return get_chr();
-			if (c == '$')
-				return get_hex();
-			if (c == '%')
-				return get_bin();
-			if (c == '"')
-				return get_string();
-			if (c == '.')
-				return get_directive();
 			switch (c) {
+			case LineReader::EOL:
+			case ';':
+				return eol;
+			case '\'':
+				return get_chr();
+			case '$':
+				return get_hex();
+			case '%':
+				return get_bin();
+			case '"':
+				return get_string();
+			case '.':
+				return get_directive();
 			case '<':
 			case '>':
 			case '?':
 				return get_identifier((TokenArg)c);
+			case '#':
+				return Token(TK_IMMEDIATE);
+			case '(':
+				return Token(TK_OPEN_PAR);
+			case ')':
+				return Token(TK_CLOSE_PAR);
+			case ',':
+				return get_comma();
 			}
+			if (isdigit(c))
+				return get_dec();
 			if (isalpha(c) || c == '_') {
 				r.unget();
 				return get_identifier((TokenArg)0);
@@ -590,6 +667,11 @@ public:
 		buf.append_char(value);
 		cursor++;
 		return 0;
+	}
+	const ParseError *put_word(int value) {
+		if (put(value & 0xff))
+			return &parse_error;
+		return put(value >> 8);
 	}
 	void set_base(int base_) { base = base_; }
 	int get_base() { return base; }
@@ -686,6 +768,7 @@ public:
 	virtual const ParseError *set_size(int code, int data) { return 0; }
 	virtual const ParseError *put(int value) { return 0; }
 	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
+	virtual const ParseError *instruction(const OpcodeList *op, int am, int value) { return 0; }
 	virtual const ParseError *end() { return 0; }
 	virtual ~Pass() {}
 };
@@ -724,12 +807,19 @@ public:
 		case ARG_REL:
 			return bin.segment->put(0);
 		case ARG_NONE:
-			if (bin.segment->put(0))
-				return &parse_error;
-			return bin.segment->put(0);
+			return bin.segment->put_word(0);
 		default:
 			return r.internal_error();
 		}
+	}
+	const ParseError *instruction(const OpcodeList *op, int am, int value) {
+		if (op->opcode[am] == -1)
+			return r.error("invalid address mode");
+		int n = am_size[am];
+		for (int i = 0; i < n; i++)
+			if (bin.segment->put(0))
+				return &parse_error;
+		return 0;
 	}
 	const ParseError *end() {
 		bin.code.compute_size();
@@ -764,9 +854,7 @@ public:
 		case ARG_LO:
 			return bin.segment->put(addr & 0xff);
 		case ARG_NONE:
-			if (bin.segment->put(addr & 0xff))
-				return &parse_error;
-			return bin.segment->put(addr >> 8);
+			return bin.segment->put_word(addr);
 		case ARG_REL: {
 			int offset = addr - (bin.segment->get_cursor() + 1);
 			if (offset > 127 || offset < -128)
@@ -776,6 +864,19 @@ public:
 		default:
 			return r.internal_error();
 		}
+	}
+	const ParseError *instruction(const OpcodeList *op, int am, int value) {
+		if (bin.segment->put(op->opcode[am]))
+			return &parse_error;
+		int n = am_size[am];
+		if (n == 2) {
+			if (bin.segment->put(value))
+				return &parse_error;
+		} else if (n == 3) {
+			if (bin.segment->put_word(value))
+				return &parse_error;
+		}
+		return 0;
 	}
 	const ParseError *end() {
 		bin.prg->device_tag = Tag(bin.device.get_s());
@@ -847,6 +948,99 @@ private:
 		else
 			return r.internal_error();
 	}
+	const ParseError *parse_instruction(Token mnemonic) {
+		const OpcodeList *op = &opcodes[mnemonic.i_value];
+		AddressMode am;
+		Token token = tokenizer.get();
+		bool need_next = true;
+		int value = 9 * 256 + 99;
+		switch (token.type) {
+		case TK_EOL:
+			am = AM_IMP;
+			break;
+		case TK_IMMEDIATE:
+			am = AM_IMM;
+			token = tokenizer.get();
+			switch (token.type) {
+			case TK_BYTE:
+				value = token.i_value;
+				break;
+			case TK_LABEL:
+				switch (token.arg) {
+				case ARG_HI:
+				case ARG_LO:
+				case ARG_REL:
+					break;
+				default:
+					return r.error("expecting single byte constant");
+				}
+				break;
+			default:
+				return r.error("expected immediate constant");
+			}
+			break;
+		case TK_BYTE:
+			value = token.i_value;
+			token = tokenizer.get();
+			switch (token.type) {
+			case TK_EOL:
+				am = AM_ZPG;
+				need_next = false;
+				break;
+			case TK_COMMA_X:
+				am = AM_ZPG_X;
+				break;
+			case TK_COMMA_Y:
+				am = AM_ZPG_Y;
+				break;
+			default:
+				need_next = false;
+				break;
+			}
+		case TK_WORD:
+			value = token.i_value;
+			// passthrough
+		case TK_LABEL:
+			token = tokenizer.get();
+			switch (token.type) {
+			case TK_EOL:
+				if (op->opcode[AM_REL] != -1)
+					am = AM_REL;
+				else
+					am = AM_ABS;
+				need_next = false;
+				break;
+			case TK_COMMA_X:
+				am = AM_ABS_X;
+				break;
+			case TK_COMMA_Y:
+				am = AM_ABS_Y;
+				break;
+			default:
+				need_next = false;
+				break;
+			}
+			break;
+		case TK_OPEN_PAR:
+			return r.error("not implemented yet");
+		case TK_ERROR:
+			need_next = false;
+			break;
+		default:
+			return r.error("unexpected token");
+		}
+		if (need_next)
+			token = tokenizer.get();
+		if (token.type == TK_ERROR)
+			return &parse_error;
+		if (token.type != TK_EOL)
+			return r.error("unexpected token");
+		if (pass->instruction(op, am, value))
+			return &parse_error;
+		while (r.get() != LineReader::EOL)
+			;
+		return 0;
+	}
 public:
 	ParserEngine(const Buffer *src, Program *prg) : r(src), bin(r, prg), tokenizer(r) {}
 	const ParseError *do_pass() {
@@ -855,6 +1049,9 @@ public:
 			return &parse_error;
 		Token token;
 		do {
+			if (r.get() == '#')
+				continue;
+			r.unget();
 			tokenizer.new_line();
 			do {
 				token = tokenizer.get();
@@ -885,6 +1082,16 @@ public:
 					if (pass->label(token.get_string().get_s(), token.arg))
 						return &parse_error;
 					break;
+				case TK_MNEMONIC:
+					if (parse_instruction(token))
+						return &parse_error;
+					break;
+				case TK_IMMEDIATE:
+				case TK_OPEN_PAR:
+				case TK_CLOSE_PAR:
+				case TK_COMMA_X:
+				case TK_COMMA_Y:
+					return r.error("unexpected delimiter");
 				case TK_ERROR:
 					return token_error(token);
 				case TK_EOL:
