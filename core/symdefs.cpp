@@ -42,6 +42,11 @@ const SymDef stdout_symdefs[] = {
 {0,0},
 }; 
 
+const SymDef xv65_symdefs[] = {
+#include "d_xv65.h"
+{ 0, 0 },
+}; 
+
 const SymDef microio_symdefs[] = {
 #include "d_microio.h"
 { 0, 0 },
@@ -52,29 +57,24 @@ const SymDef io2_symdefs[] = {
 { 0, 0 },
 }; 
 
-const SymDef xv65_symdefs[] = {
-#include "d_xv65.h"
-{ 0, 0 },
-}; 
-
 } // namespace
 
 const char *asm_devices[] = {
 	"stdout",
+	"xv65",
 	"microio",
 	"io2",
-	"xv65",
 	0
 };
 
 const SymDef *get_device_symdefs(const char *device) {
 	if (!strcmp(device, "stdout"))
 		return stdout_symdefs;
+	if (!strcmp(device, "xv65"))
+		return xv65_symdefs;
 	if (!strcmp(device, "microio"))
 		return microio_symdefs;
 	if (!strcmp(device, "io2"))
 		return io2_symdefs;
-	if (!strcmp(device, "xv65"))
-		return xv65_symdefs;
 	return 0;
 }
