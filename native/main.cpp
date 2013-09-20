@@ -64,7 +64,7 @@ void usage(int code = 1) {
 	 "options:\n"
 	 "  -v            show version and exit\n"
 	 "  -d device     override device selection\n"
-	 "  -l device     list symbols and exit\n"
+	 "  -s device     list symbols and exit\n"
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
 	 "\n");
 	show_asm_devices();
@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
 			if (++i == argc)
 				usage();
 			dev_tag = Tag(argv[i]);
-		} else if (!strcmp(s, "-l")) {
+		} else if (!strcmp(s, "-s")) {
 			if (++i == argc)
 				usage();
 			show_symbols(argv[i]);
