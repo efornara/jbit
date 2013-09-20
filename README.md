@@ -26,7 +26,8 @@ lines in the Makefile (or edit them). The (n)curses library is needed
 for the microio device, and, unless you are coming from the mobile
 version of JBit, you are unlikely to need it.
 
-A precompiled EXE for Windows is also available (see the wiki below).
+A precompiled EXE for Windows is available here:
+<http://sourceforge.net/projects/jbit/files/jbit/Native/v1.1/jbit.exe/download>.
 
 Testing
 -------

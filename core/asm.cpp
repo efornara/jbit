@@ -1219,7 +1219,7 @@ private:
 		val.has_label = false;
 		val.arg = ARG_NONE;
 		val.value = VALUE_GUARD;
-		AddressMode am;
+		AddressMode am = AM_IMP; // overwritten or error
 		int size = -1;
 		Token token = tokenizer.get();
 		bool need_next = true;
