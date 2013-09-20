@@ -61,7 +61,7 @@ are familiar with 6502 assembly and new to JBit.
 
 The CPU in JBit is pretty similar to a regular 6502. The main difference
 is that it lacks BCD mode and interrupts. Code is loaded starting from
-page 3 and a "IO chip" is mapped on page 2. BRK (0) terminates the
+page 3 and a "IO chip" is mapped to page 2. BRK (0) terminates the
 program.
 
 Type and run:
@@ -93,13 +93,23 @@ You can of course write in assembly instead:
 	lda #'A'
 	sta PUTCHAR
 
-stdout
-------
+Devices
+-------
 
-The stdout device is very simple and is the only device also available
-on Windows.
+Different devices are available (all mapped to page 2). Type:
 
-To see what symbols are defined for a device, run:
+	jbit -d ?
+	jbit -s ?
+
+The first command shows which devices can be simulated, and the second
+one shows for which devices the assembler can import symbols.
+
+### stdout
+
+The stdout device is very simple and is the only device that can also be
+simulated on Windows (you can still develop for all the other devices).
+
+To see which symbols are defined for a device, run:
 
 	jbit -s stdout
 
@@ -129,8 +139,7 @@ keeps printing one X every second, until you press Ctrl-C.
 More information about the assembly format is in the samples/format
 directory.
 
-xv65
-----
+### xv65
 
 The device xv65 maps an extended subset of the traditonal Unix V6 API
 (fork, exec, pipe, dup, write etc...) and it was inspired by the
@@ -139,12 +148,11 @@ beautiful [xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).
 xv65 is quite a complex device. For an example of use, look at
 xtermpal.asm in samples. xtermpal just prints out some escape characters
 to produce a color palette, and could have been written for the stdout
-device.  However, since sending escape characters might confuse dumb
+device.  However, since sending escape characters might confuse other
 terminals, xtermpal uses the ENV request to query the environment
 variable TERM and guard against running on a non-xterm terminal.
 
-microio
--------
+### microio
 
 A couple of jb files for the microio device are included. Since the jb
 format does not include device information, you need to tell jbit to use
@@ -152,8 +160,7 @@ the microio device when you start it:
 
 	jbit -d microio charset.jb
 
-io2
----
+### io2
 
 Together with xv65, the other major device supported by JBit is io2.  It
 cannot be simulated by jbit, but you can still use jbit to write
@@ -161,33 +168,33 @@ programs for it. If you have [java](http://www.java.com) installed, you
 can run the J2ME version of JBit using
 [microemulator](http://www.microemu.org/) to test them.
 
-1. I assume every file is placed in a new directory and you are working
-in it.
+I assume every file is placed in a new directory and you are working in
+it.
 
-2. Get a io2 sample file (for example, `smile.asm` in the samples
+1. Get a io2 sample file (for example, `smile.asm` in the samples
 directory).
 
-1. Download `microemulator-2.0.4.zip` from here: <http://code.google.com/p/microemu/downloads/list>
+2. Download `microemulator-2.0.4.zip` from here: <http://code.google.com/p/microemu/downloads/list>
 
-2. Extract `microemulator.jar` from the archive.
+3. Extract `microemulator.jar` from the archive.
 
-3. Check that it runs fine and then close it (the default device is fine):
+4. Check that it runs fine and then close it (the default device is fine):
 
 	`java -jar microemulator.jar`
 
-4. Download `JBit2_microemulator.zip`:
+5. Download `JBit2_microemulator.zip`:
 <http://sourceforge.net/projects/jbit/files/jbit/Resources/JBit2_microemulator.zip/download>.
 
-5. Extract the content of the archive (`JBit2_me.jad` and
+6. Extract the content of the archive (`JBit2_me.jad` and
 `JBit2_me.jar`).
 
-6. Convert the assembly source to the *jb* binary format. The resulting file
+7. Convert the assembly source to the *jb* binary format. The resulting file
 *must* be named `out.jb` for this setup to work. If everything goes well,
 the command is silent. Conversion errors are sent to stderr.
 
 	`jbit -c jb smile.asm >out.jb`
 
-7. The directory should now look like this:
+8. The directory should now look like this:
 
 	`JBit2_me.jad`
 	`JBit2_me.jar`
@@ -195,11 +202,11 @@ the command is silent. Conversion errors are sent to stderr.
 	`out.jb`
 	`smile.asm`
 
-7. Execute the following command (on Windows replace ':' with ';'):
+9. Execute the following command (on Windows replace `:` with `;`):
 
 	`java -jar microemulator.jar --appclasspath JBit2_me.jar:.  --propertiesjad JBit2_me.jad JBit`
 
-8. If you press a menu button (one of the two big buttons on either side
+10. If you press a menu button (one of the two big buttons on either side
 of the joypad), you can stop the program, select *Menu* and then select
 *Debug* to debug the program.
 
@@ -214,8 +221,3 @@ working at the moment. You can see an older version running here:
 
 Browse the gallery and click on *sim* to run the sample on your browser
 and *jb* to download it to run it on the native simulator.
-
-More info
----------
-
-<https://github.com/efornara/jbit/wiki>

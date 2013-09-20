@@ -273,6 +273,8 @@ const char *directives[] = {
 	"define",
 	"req",
 	"endreq",
+	"lookup",
+	"bits",
 	0
 };
 
@@ -773,11 +775,15 @@ public:
 };
 
 class Pass {
+private:
+	char lookup_table[16 + 1];
 protected:
 	LineReader &r;
 	Binary &bin;
 public:
-	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {}
+	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {
+		strcpy(lookup_table, "01");
+	}
 	int get_symbol_size(const char *s) {
 		return bin.get_symbol(s)->size;
 	}
@@ -786,6 +792,56 @@ public:
 			bin.segment = &bin.code;
 		else
 			bin.segment = &bin.data;
+		return 0;
+	}
+	const ParseError *lookup(const char *s) {
+		int n = strlen(s);
+		if (n < 2 || n > 16)
+			return r.error("lookup length must 2..16");
+		strcpy(lookup_table, s);
+		return 0;
+	}
+	const ParseError *bits(const char *s) {
+		int lookup_n = strlen(lookup_table);
+		int n_of_bits;
+		if (lookup_n == 2)
+			n_of_bits = 1;	
+		else if (lookup_n <= 4)
+			n_of_bits = 2;	
+		else
+			n_of_bits = 4;	
+		int buffer = 0;
+		int accumulated = 0;
+		for (int i = 0; s[i]; i++) {
+			int c;
+			for (c = 0; c < lookup_n; c++)
+				if (lookup_table[c] == s[i])
+					break;
+			if (c == lookup_n)
+				return r.error("couldn't find character in lookup");
+			int mask = 1 << (n_of_bits - 1);
+			while (mask) {
+				buffer <<= 1;
+				if (c & mask)
+					buffer |= 0x01;
+				mask >>= 1;
+				accumulated++;
+			}
+			if (accumulated == 8) {
+				if (bin.segment->put(buffer))
+					return &parse_error;
+				buffer = 0;
+				accumulated = 0;
+			}
+		}
+		if (accumulated) {
+			while (accumulated < 8) {
+				buffer <<= 1;
+				accumulated++;
+			}
+			if (bin.segment->put(buffer))
+				return &parse_error;
+		}
 		return 0;
 	}
 	virtual const ParseError *begin() { return 0; }
@@ -1086,6 +1142,18 @@ private:
 			return r.error("unexpected token");
 		return pass->req(start);
 	}
+	const ParseError *parse_bits(bool lookup) {
+		Token arg = expect(TK_STRING);
+		if (arg.type == TK_ERROR)
+			return &parse_error;
+		if (tokenizer.get().type != TK_EOL)
+			return r.error("unexpected token");
+		const char *s = arg.get_string().get_s();
+		if (lookup)
+			return pass->lookup(s);
+		else
+			return pass->bits(s);
+	}
 	const ParseError *parse_directive(Token directive) {
 		if (directive == "device")
 			return parse_device();
@@ -1099,6 +1167,10 @@ private:
 			return parse_req(true);
 		else if (directive == "endreq")
 			return parse_req(false);
+		else if (directive == "lookup")
+			return parse_bits(true);
+		else if (directive == "bits")
+			return parse_bits(false);
 		else
 			return r.internal_error();
 	}
