@@ -1,10 +1,10 @@
 #! /usr/bin/env jbit
 
-.define PUTCHAR 2:0
-.define REQPTRLO 2:4
-.define REQPTRHI 2:5
-.define FRMDRAW 2:18
-.define REQ_SLEEP 13
+.device "xv65"
+
+; Computing request sizes by hand can be error prone.
+; You can use the req/endreq directives below to compute a request size.
+
 
 	ldx #0
 l1:	lda msg,x
@@ -25,4 +25,7 @@ done:
 
 msg: "Hello, World!\n" 0
 
-sleep: 0:2 REQ_SLEEP 1
+sleep: .req
+	REQ_SLEEP
+	1
+.endreq

@@ -1,6 +1,6 @@
 #! /usr/bin/env jbit
 
-; setting a device defines its standard symbols
+; Setting a device defines its standard symbols.
 .device "xv65"
 
 
@@ -25,4 +25,4 @@ done:
 
 msg: "Hello, World!\n" 0
 
-sleep: 2 0 REQ_SLEEP 1
+sleep: 0:2 REQ_SLEEP 1

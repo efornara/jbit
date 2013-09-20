@@ -271,6 +271,8 @@ const char *directives[] = {
 	"code",
 	"data",
 	"define",
+	"req",
+	"endreq",
 	0
 };
 
@@ -679,7 +681,8 @@ public:
 	bool is_size_set() { return size != -1; }
 	void set_n_of_pages(int n) { size = n << 8; }
 	int get_n_of_pages() { return size >> 8; }
-	int get_cursor() { return base + cursor; }
+	int get_cursor() { return cursor; }
+	int get_current_address() { return base + cursor; }
 	void compute_size() {
 		if (size != -1)
 			return;
@@ -725,16 +728,18 @@ struct Operand {
 };
 
 struct Binary {
+private:
 	LineReader &r;
 	Buffer storage;
 	Symbol *symbols;
+public:
+	Buffer reqs;
 	Program *prg;
 	String device;
 	Segment code;
 	Segment data;
 	Segment *segment;
-	int n_of_labels;
-	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code), n_of_labels(0) {
+	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
 		code.set_base(0x300);
 		symbols = new Symbol();
 		symbols->type = SYM_LABEL;
@@ -773,6 +778,9 @@ protected:
 	Binary &bin;
 public:
 	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {}
+	int get_symbol_size(const char *s) {
+		return bin.get_symbol(s)->size;
+	}
 	const ParseError *switch_segment(const char *s) {
 		if (!strcmp(s, "code"))
 			bin.segment = &bin.code;
@@ -787,13 +795,18 @@ public:
 	virtual const ParseError *put(int value) { return 0; }
 	virtual const ParseError *label(const char *s, TokenArg a) { return 0; }
 	virtual const ParseError *instruction(const OpcodeList *op, int am, Operand operand) { return 0; }
+	virtual const ParseError *req(bool start) { return 0; }
 	virtual const ParseError *end() { return 0; }
 	virtual ~Pass() {}
 };
 
 class Pass1 : public Pass {
+private:
+	Segment *req_segment;
+	int req_start_cursor;
+	int req_size;
 public:
-	Pass1(LineReader &r_, Binary &bin_) : Pass(r_, bin_) {}
+	Pass1(LineReader &r_, Binary &bin_) : Pass(r_, bin_), req_segment(0) {}
 	const ParseError *set_device(const char *s) {
 		Token t;
 		t.set_string(TK_STRING, &bin.prg->metadata_storage, s);
@@ -868,6 +881,23 @@ public:
 				return &parse_error;
 		return 0;
 	}
+	const ParseError *req(bool start) {
+		if (start) {
+			if (req_segment)
+				return r.error("previuos req not ended");
+			req_segment = bin.segment;
+			req_start_cursor = req_segment->get_cursor();
+			req_segment->put_word(0);
+		} else {
+			if (!req_segment)
+				return r.error("req not started");
+			if (req_segment != bin.segment)
+				return r.error("req cannot cross segments");
+			int *size = (int *)bin.reqs.append_raw(sizeof(int));
+			*size = bin.segment->get_cursor() - req_start_cursor - 2;
+		}
+		return 0;
+	}
 	const ParseError *end() {
 		bin.code.compute_size();
 		bin.data.compute_size();
@@ -879,8 +909,10 @@ public:
 #define VALUE_GUARD 100000
 
 class Pass2 : public Pass {
+private:
+	int req_id;
 public:
-	Pass2(LineReader &r_, Binary &bin_) : Pass(r_, bin_) {}
+	Pass2(LineReader &r_, Binary &bin_) : Pass(r_, bin_), req_id(0) {}
 	const ParseError *begin() {
 		bin.code.rewind();
 		bin.data.rewind();
@@ -928,7 +960,7 @@ public:
 			else
 				return bin.segment->put_word(value);
 		case ARG_REL: {
-			int offset = value - (bin.segment->get_cursor() + 1);
+			int offset = value - (bin.segment->get_current_address() + 1);
 			if (offset > 127 || offset < -128)
 				return r.error("address is too far");
 			return bin.segment->put(offset);
@@ -954,6 +986,13 @@ public:
 		} else if (n == 3) {
 			if (bin.segment->put_word(operand.value))
 				return &parse_error;
+		}
+		return 0;
+	}
+	const ParseError *req(bool start) {
+		if (start) {
+			int *size = (int *)bin.reqs.get_data();
+			bin.segment->put_word(size[req_id++]);
 		}
 		return 0;
 	}
@@ -1012,7 +1051,7 @@ private:
 			return r.error("unexpected token");
 		return pass->set_size(code_pages.i_value, data_pages.i_value);
 	}
-	const ParseError *parse_codedata(Token &directive) {
+	const ParseError *parse_segment(Token &directive) {
 		if (tokenizer.get().type != TK_EOL)
 			return r.error("unexpected token");
 		return pass->switch_segment(directive.s_value);
@@ -1041,15 +1080,24 @@ private:
 		}
 		return pass->define_symbol(s, value.i_value, size);
 	}
+	const ParseError *parse_req(bool start) {
+		if (tokenizer.get().type != TK_EOL)
+			return r.error("unexpected token");
+		return pass->req(start);
+	}
 	const ParseError *parse_directive(Token directive) {
 		if (directive == "device")
 			return parse_device();
 		else if (directive == "size")
 			return parse_size();
 		else if (directive == "code" || directive == "data")
-			return parse_codedata(directive);
+			return parse_segment(directive);
 		else if (directive == "define")
 			return parse_define();
+		else if (directive == "req")
+			return parse_req(true);
+		else if (directive == "endreq")
+			return parse_req(false);
 		else
 			return r.internal_error();
 	}
@@ -1070,7 +1118,7 @@ private:
 		case TK_LABEL:
 			switch (token->arg) {
 			case ARG_NONE:
-				*size = 2;
+				*size = pass->get_symbol_size(token->get_string().get_s());
 				break;
 			case ARG_HI:
 			case ARG_LO:

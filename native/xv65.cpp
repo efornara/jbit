@@ -597,7 +597,7 @@ private:
 		v_REQRES = ret;
 		if (ret != 0) {
 			v_REQERRNO = ret;
-			if (v_TRCLEVEL <= 1 || v_ERREXIT)
+			if (v_TRCLEVEL == 1 || v_ERREXIT)
 				dump_request();
 			if (v_TRCLEVEL || v_ERREXIT)
 				fprintf(stderr, "xv65: failed %d:%s.\n", ret, errno_to_string(ret));
@@ -615,6 +615,8 @@ private:
 		req_buf.reset();
 		for (int i = 0; i < len; i++)
 			req_buf.append_char(m_get_uint8(addr++));
+		if (!len)
+			req_buf.append_char(0);
 		request();
 	}
 	void put_FRMDRAW() {

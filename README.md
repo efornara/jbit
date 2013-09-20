@@ -131,9 +131,16 @@ directory.
 xv65
 ----
 
-The device xv65 maps a subset of the traditonal Unix V6 API (fork, exec,
-pipe, etc...).  It was inspired by the beautiful
-[xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).
+The device xv65 maps an extended subset of the traditonal Unix V6 API
+(fork, exec, pipe, dup, write etc...) and it was inspired by the
+beautiful [xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).
+
+xv65 is quite a complex device. For an example of use, look at the
+xtermpal.asm in samples. xtermpal just prints out some escape characters
+to produce a color palette, and could have been written for the stdout
+device.  However, since sending escape characters might confuse dumb
+terminals, xtermpal uses the ENV request to query the environment
+variable TERM and guard against running on a non-xterm terminal.
 
 microio
 -------

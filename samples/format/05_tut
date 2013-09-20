@@ -25,4 +25,4 @@ done:
 ; You can type strings; they are NOT zero terminated.
 msg: "Hello, World!\n" 0
 
-sleep: 2 0 13 1
+sleep: 0:2 13 1
