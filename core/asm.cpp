@@ -895,6 +895,7 @@ public:
 				return r.error("req cannot cross segments");
 			int *size = (int *)bin.reqs.append_raw(sizeof(int));
 			*size = bin.segment->get_cursor() - req_start_cursor - 2;
+			req_segment = 0;
 		}
 		return 0;
 	}
