@@ -29,23 +29,6 @@
 
 /****************************************************************************
  ****************************************************************************
- JBit Core Import
- ****************************************************************************
- ****************************************************************************/
-
-JBIT = {};
-
-JBIT.core_parse = Module.cwrap('core_parse', 'number', ['string']);
-JBIT.core_get_prg_data = Module.cwrap('core_get_prg_data', 'number', []);
-JBIT.core_get_prg_length = Module.cwrap('core_get_prg_length', 'number', []);
-JBIT.core_get_error_lineno = Module.cwrap('core_get_error_lineno', 'number', []);
-JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
-JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
-
-
-
-/****************************************************************************
- ****************************************************************************
  CPU
  ****************************************************************************
  ****************************************************************************/
@@ -1088,20 +1071,6 @@ function VM(io_, skin_) {
 			m[i] = 0;
 	}
 	
-	function loadProgramFromText(text) {
-		var ret = JBIT.core_parse(text);
-		if (ret == 0) {
-			var	p = JBIT.core_get_prg_data(),
-				n = JBIT.core_get_prg_length(),
-				i = 0,
-				org = 0x300;
-			for (i = 0; i < n; i++)
-				m[org + i] = Module.getValue(p + i, "i8") & 0xff;
-		} else {
-			console.log(JBIT.core_get_error_lineno() + ":" + JBIT.core_get_error_colno() + ": " + JBIT.core_get_error_msg());
-		}
-	}
-
 	function advanceImpl() {
 		if (!running) {
 			skin.setVMStatus("HALTED");
@@ -1167,7 +1136,7 @@ function VM(io_, skin_) {
 		return io.getWait();
 	};
 
-	// CPU INTERFACE
+	// CPU (AND LOADER) INTERFACE
 	
 	this.get = function(address) {
 		if (address >= 512 && address < 768)

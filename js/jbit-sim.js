@@ -26,6 +26,15 @@
  * SUCH DAMAGE.
  */
 
+JBIT = {};
+
+JBIT.core_parse = Module.cwrap('core_parse', 'number', ['string']);
+JBIT.core_get_prg_data = Module.cwrap('core_get_prg_data', 'number', []);
+JBIT.core_get_prg_length = Module.cwrap('core_get_prg_length', 'number', []);
+JBIT.core_get_error_lineno = Module.cwrap('core_get_error_lineno', 'number', []);
+JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
+JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
+
 var UI = function() {
 	return {
 	
@@ -348,15 +357,25 @@ function Simulator(vm_) {
 
 	window.vmTimeoutHandler = timeoutHandler;
 
-	this.load = function(prog) {
+	this.run = function(prog) {
+		var msg = document.getElementById("jb_msg");
 		vm.reset();
-		vm.load(prog);
-	}
-
-	this.start = function() {
-		vm.start();
-		pendingTimeouts = 1;
-		timeoutHandler();
+		if (JBIT.core_parse(prog) == 0) {
+			var	p = JBIT.core_get_prg_data(),
+				n = JBIT.core_get_prg_length(),
+				i = 0,
+				org = 0x300;
+			for (i = 0; i < n; i++) {
+				vm.put(org + i, Module.getValue(p + i, "i8") & 0xff);
+				// make browser happy
+			}
+			msg.innerHTML = "OK";
+			vm.start();
+			pendingTimeouts = 1;
+			timeoutHandler();
+		} else {
+			msg.innerHTML = JBIT.core_get_error_lineno() + ":" + JBIT.core_get_error_colno() + ": " + JBIT.core_get_error_msg();
+		}
 	}
 }
 
@@ -375,9 +394,15 @@ window.onload = function() {
 
 	vmPage.setCore(vm, io);
 
-	var sim = new Simulator(vm);
+	document.getElementById("jb_source").value = jbProgram;
 
-	sim.load(jbProgram);
+	var sim = new Simulator(vm);
 	UI.switchToPage("vm");
-	sim.start();
+
+	document.getElementById("jb_run").onclick = function() {
+		var prog = document.getElementById("jb_source").value;
+		sim.run(prog);
+		return false;
+	};
 };
+
