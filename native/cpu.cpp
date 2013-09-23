@@ -26,9 +26,9 @@
  * SUCH DAMAGE.
  */
 
-// vm.cpp
+// cpu.cpp
 
-#include "core.h"
+#include "jbit.h"
 
 #include <string.h>
 

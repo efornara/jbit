@@ -29,6 +29,23 @@
 
 /****************************************************************************
  ****************************************************************************
+ JBit Core Import
+ ****************************************************************************
+ ****************************************************************************/
+
+JBIT = {};
+
+JBIT.core_parse = Module.cwrap('core_parse', 'number', ['string']);
+JBIT.core_get_prg_data = Module.cwrap('core_get_prg_data', 'number', []);
+JBIT.core_get_prg_length = Module.cwrap('core_get_prg_length', 'number', []);
+JBIT.core_get_error_lineno = Module.cwrap('core_get_error_lineno', 'number', []);
+JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
+JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
+
+
+
+/****************************************************************************
+ ****************************************************************************
  CPU
  ****************************************************************************
  ****************************************************************************/
@@ -1072,42 +1089,16 @@ function VM(io_, skin_) {
 	}
 	
 	function loadProgramFromText(text) {
-		var pattern, code = -1, data, page, exc;
-		var lines = text.split("\n");
-		for (var i in lines) {
-			var line = lines[i];
-			var c0 = line.charAt(0);
-			switch (c0) {
-			case 'S':
-				pattern = /^Size: (\d+) code pages?, (\d+) data pages?./;
-				if (exc = pattern.exec(line)) {
-					code = parseInt(exc[1], 10);
-					data = parseInt(exc[2], 10);
-					page = -1;
-				}
-				break;
-			case 'C':
-			case 'D':
-				pattern = /^[CD] (\d+)/;
-				if (code != -1 && (exc = pattern.exec(line))) {
-					page = parseInt(exc[1], 10) * 256;
-				}
-				break;
-			case '0':
-			case '1':
-			case '2':
-				pattern = /^(\d\d\d): /;
-				if (page != -1 && (exc = pattern.exec(line))) {
-					var address = page + parseInt(exc[1], 10);
-					var fields = line.split(" ");
-					for (var j = 1; j < fields.length; j++) {
-						value = parseInt(fields[j], 10);
-						m[address] = value;
-						address++;
-					}
-				}
-				break;
-			}
+		var ret = JBIT.core_parse(text);
+		if (ret == 0) {
+			var	p = JBIT.core_get_prg_data(),
+				n = JBIT.core_get_prg_length(),
+				i = 0,
+				org = 0x300;
+			for (i = 0; i < n; i++)
+				m[org + i] = Module.getValue(p + i, "i8") & 0xff;
+		} else {
+			console.log(JBIT.core_get_error_lineno() + ":" + JBIT.core_get_error_colno() + ": " + JBIT.core_get_error_msg());
 		}
 	}
 

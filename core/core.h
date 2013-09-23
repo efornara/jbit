@@ -73,30 +73,6 @@ struct ParseError {
 
 const ParseError *parse_asm(const Buffer *src, Program *prg);
 
-class AddressSpace {
-public:
-	virtual void put(int address, int value) = 0;
-	virtual int get(int address) = 0;
-	virtual ~AddressSpace() {}
-};
-
-class IO : public AddressSpace {
-public:
-	virtual void set_address_space(AddressSpace *dma) = 0;
-	virtual void reset() = 0;
-	virtual ~IO() {}
-};
-
-class VM {
-public:
-	virtual void reset() = 0;
-	virtual void load(const Program *prg) = 0;
-	virtual int step() = 0;
-	virtual ~VM() {}
-};
-
-extern VM *new_VM(IO *io);
-
 extern const char *get_jbit_version();
 
 struct SymDef {

@@ -34,77 +34,39 @@
 
 namespace {
 
-Buffer *src = 0;
-IO *io = 0;
-VM *vm = 0;
-
-class IOImpl : public IO {
-	void set_address_space(AddressSpace *dma) {
-	}
-	void reset() {
-		asm("JBIT.io_reset();"
-		    : /* output */
-		    : /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	void put(int address, int value) {
-		asm("JBIT.io_put(%0, %1);"
-		    : /* output */
-		    : "n"(address), "n"(value) /* input */
-		    : /* clobbered registers */
-		    );
-	}
-	int get(int address) {
-		int value;
-		asm("%1 = JBIT.io_get(%0);"
-		    : "=r"(value) /* output */
-		    : "n"(address) /* input */
-		    : /* clobbered registers */
-		    );
-		return value;
-	}
-};
+Program prg;
+const ParseError *err;
 
 } // namespace
 
 extern "C" {
 
-void vm_reset() {
-	if (!src)
-		src = new Buffer();
-	if (!io)
-		io = new IOImpl();
-	if (!vm)
-		vm = new_VM(io);
-	vm->reset();
+int core_parse(const char *text) {
+	Buffer src;
+	src.append_string(text);
+	prg.reset();
+	err = parse_asm(&src, &prg);
+	return (err == 0) ? 0 : -1;
 }
 
-void vm_load_begin() {
-	if (src)
-		src->reset();
+long core_get_prg_data() {
+	return (long)prg.get_data();
 }
 
-void vm_load_line(const char *line) {
-	if (src)
-		src->append_line(line);
+int core_get_prg_length() {
+	return prg.get_length();
 }
 
-void vm_load_end() {
-	if (src && vm) {
-		Program prg;
-		Parser parser(src);
-		const ParseError *e = parser.parse(&prg);
-		if (e)
-			return; // TODO report error
-		vm->load(&prg);
-	}
+int core_get_error_lineno() {
+	return err->lineno;
 }
 
-int vm_step() {
-	if (vm)
-		return vm->step();
-	return 0;
+int core_get_error_colno() {
+	return err->colno;
+}
+
+const char *core_get_error_msg() {
+	return err->msg;
 }
 
 } // extern "C"

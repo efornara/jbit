@@ -219,7 +219,7 @@ class String {
 private:
 	Buffer *b;
 	int i;
-	friend class Token;
+	friend struct Token;
 public:
 	String() : b(0), i(-1) {}
 	String(Buffer *b_, const char *s) : b(b_) {
@@ -731,7 +731,6 @@ struct Operand {
 
 struct Binary {
 private:
-	LineReader &r;
 	Buffer storage;
 	Symbol *symbols;
 public:
@@ -741,7 +740,7 @@ public:
 	Segment code;
 	Segment data;
 	Segment *segment;
-	Binary(LineReader &r_, Program *prg_) : r(r_), prg(prg_), code(r_), data(r_), segment(&code) {
+	Binary(LineReader &r_, Program *prg_) : prg(prg_), code(r_), data(r_), segment(&code) {
 		code.set_base(0x300);
 		symbols = new Symbol();
 		symbols->type = SYM_LABEL;
@@ -860,7 +859,6 @@ class Pass1 : public Pass {
 private:
 	Segment *req_segment;
 	int req_start_cursor;
-	int req_size;
 public:
 	Pass1(LineReader &r_, Binary &bin_) : Pass(r_, bin_), req_segment(0) {}
 	const ParseError *set_device(const char *s) {
