@@ -274,7 +274,7 @@ function VMPage() {
 					e = document.createElement("div");
 					e.id = "jb_vm_lcd_" + i;
 					e.className = "cell";
-					e.style.backgroundImage = "url(../webapp/vga.png)";
+					e.style.backgroundImage = "url(vga.png)";
 					e.style.backgroundPosition = "0px 0px";
 					glass.appendChild(e);
 					cells[i] = e;
