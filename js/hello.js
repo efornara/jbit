@@ -1,20 +1,20 @@
 var jbProgram = '' +
 '; "Hello, World!" for MicroIO\n' +
 '\n' +
-' .device "microio"\n' +
+'\t.device "microio"\n' +
 '\n' +
-' ldx #0\n' +
+'\tldx #0\n' +
 'loop:\n' +
-' lda msg,x\n' +
-' beq quit\n' +
-' sta 2:52,x\n' +
-' inx\n' +
-' bne loop\n' +
+'\tlda msg,x\n' +
+'\tbeq quit\n' +
+'\tsta 2:52,x\n' +
+'\tinx\n' +
+'\tbne loop\n' +
 '\n' +
 'quit:\n' +
-' brk\n' +
+'\tbrk\n' +
 '\n' +
 '.data\n' +
 'msg:\n' +
-' "Hello,    World!" 0\n' +
+'\t"Hello,    World!" 0\n' +
 '';

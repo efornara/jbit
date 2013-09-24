@@ -1,34 +1,40 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <title>JBit</title>
-<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width" />
 <meta name="HandheldFriendly" content="true" />
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-<style type="text/css">
-body { font-family: sans-serif; }
-</style>
 <link rel="stylesheet" type="text/css" href="jbit-sim.css" />
 </head>
 <body>
 
-<div id="jb_float">
+<div style="position: absolute; margin: 0; top: 14px; right: 10px;" id="header">
+<a href="http://sourceforge.net/projects/jbit"><img src="vga.png" width="80" height="15" border="0" alt="Get JBit at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a>
+</div>
+
+<div id="jb_sim">
 <div id="jb_top">
 </div>
 </div>
 
-<pre id="jb_msg">
--
+<div id="jb_actionbar">
+<button id="jb_run" class="button">RUN</button>
+</div>
+<div id="jb_msg">jbit 1.2</div>
+
+<div id="jb_source">
+</div>
+
+<pre id="jb_toolbox">
+TODO:
+- scratch
+- demos
 </pre>
 
-<form>
-<button id="jb_run">Run</button><br />
-<textarea id="jb_source" cols="80" rows="24">
-</textarea>
-</form>
-
-<script type="text/javascript" src="jbit-core.js"></script>
+<script type="text/javascript" src="./libs/ace/1.1.01/ace.js" charset="utf-8"></script> <!-- replaced with http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js -->
+<script type="text/javascript" src="jbit-core.js"></script> <!-- use jbit-core-ie.js for IE without typed arrays -->
 <script type="text/javascript" src="jbit-vm.js"></script>
 <script type="text/javascript" src="jbit-microio.js"></script>
 <script type="text/javascript" src="hello.js"></script>

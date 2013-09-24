@@ -373,8 +373,11 @@ function Simulator(vm_) {
 			vm.start();
 			pendingTimeouts = 1;
 			timeoutHandler();
+			return -1;
 		} else {
-			msg.innerHTML = JBIT.core_get_error_lineno() + ":" + JBIT.core_get_error_colno() + ": " + JBIT.core_get_error_msg();
+			var lineno = JBIT.core_get_error_lineno();
+			msg.innerHTML = lineno + ":" + JBIT.core_get_error_colno() + ": " + JBIT.core_get_error_msg();
+			return lineno;
 		}
 	}
 }
@@ -394,14 +397,21 @@ window.onload = function() {
 
 	vmPage.setCore(vm, io);
 
-	document.getElementById("jb_source").value = jbProgram;
+	var editor = ace.edit("jb_source");
+	editor.setTheme("ace/theme/monokai");
+	editor.setShowPrintMargin(true);
+	editor.getSession().setTabSize(8);
+	editor.setValue(jbProgram, 1);
+	document.getElementById('jb_source').style.fontSize='14px';
 
 	var sim = new Simulator(vm);
 	UI.switchToPage("vm");
 
 	document.getElementById("jb_run").onclick = function() {
-		var prog = document.getElementById("jb_source").value;
-		sim.run(prog);
+		var prog = editor.getValue();
+		var lineno = sim.run(prog);
+		if (lineno > 0)
+			editor.gotoLine(lineno);
 		return false;
 	};
 };

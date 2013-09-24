@@ -32,8 +32,9 @@ div {
  border: 0;
 }
 
-#jb_float {
- position: fixed;
+#jb_sim {
+ position: absolute;
+ top: 42px;
  right: 10px;
  width: 180px;
  height: 240px;
@@ -43,8 +44,41 @@ div {
  border-radius: 6px;
 }
 
+#jb_source {
+ position: absolute;
+ margin-left: 150px;
+ margin-right: 200px;
+ top: 42px;
+ right: 0;
+ bottom: 0;
+ left: 0;
+}
+
 #jb_top {
  position: relative;
+}
+
+#jb_actionbar {
+ position: absolute;
+ top: 10px;
+ margin-left: 150px;
+}
+
+#jb_actionbar .button {
+ padding: 5px 20px;
+}
+
+#jb_msg {
+ position: absolute;
+ top: 16px;
+ margin-left: 250px;
+ font-size: 14px;
+ font-family: monospace;
+}
+
+#jb_toolbox {
+ position: absolute;
+ top: 42px;
 }
 
 .page {
