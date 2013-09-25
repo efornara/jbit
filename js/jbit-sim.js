@@ -335,7 +335,7 @@ function VMPage() {
 function Simulator(vm_) {
 
 	var vm = vm_;
-	var pendingTimeouts;
+	var pendingTimeouts = 0;
 
 	function timeoutHandler() {
 		pendingTimeouts--;
@@ -364,7 +364,7 @@ function Simulator(vm_) {
 			}
 			msg.innerHTML = "OK";
 			vm.start();
-			pendingTimeouts = 1;
+			pendingTimeouts++;
 			timeoutHandler();
 			return -1;
 		} else {
