@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+/* from ace/monokai: color: #F8F8F2; background-color: #272822; */
+
 div {
  margin: 0;
  padding: 0;
@@ -38,7 +40,7 @@ div {
  right: 10px;
  width: 180px;
  height: 240px;
- background-color: #222;
+ background-color: #272822;
  -webkit-border-radius: 6px;
  -moz-border-radius: 6px;
  border-radius: 6px;
@@ -78,7 +80,31 @@ div {
 
 #jb_toolbox {
  position: absolute;
+ left: 0px;
  top: 42px;
+ width: 150px;
+}
+
+#jb_toolbox ul {
+ padding: 0px 20px 0px 20px;
+ margin-top: 0px;
+ margin-bottom: 20px;
+}
+
+#jb_toolbox li {
+ list-style-type: none;
+ font-family: monospace;
+ font-size: 12px;
+ padding: 4px;
+ text-align: center;
+ -webkit-border-radius: 4px;
+ -moz-border-radius: 4px;
+ border-radius: 4px;
+}
+
+.jb_current_file {
+ color: #F8F8F2;
+ background-color: #272822;
 }
 
 .page {

@@ -28,13 +28,6 @@
 
 JBIT = {};
 
-JBIT.core_parse = Module.cwrap('core_parse', 'number', ['string']);
-JBIT.core_get_prg_data = Module.cwrap('core_get_prg_data', 'number', []);
-JBIT.core_get_prg_length = Module.cwrap('core_get_prg_length', 'number', []);
-JBIT.core_get_error_lineno = Module.cwrap('core_get_error_lineno', 'number', []);
-JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
-JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
-
 var UI = function() {
 	return {
 	
@@ -382,7 +375,16 @@ function Simulator(vm_) {
 	}
 }
 
-window.onload = function() {
+JBIT.program_id = "";
+
+JBIT.start = function() {
+
+	JBIT.core_parse = Module.cwrap('core_parse', 'number', ['string']);
+	JBIT.core_get_prg_data = Module.cwrap('core_get_prg_data', 'number', []);
+	JBIT.core_get_prg_length = Module.cwrap('core_get_prg_length', 'number', []);
+	JBIT.core_get_error_lineno = Module.cwrap('core_get_error_lineno', 'number', []);
+	JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
+	JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
 
 	var vmPage;
 	var editPage;
@@ -401,8 +403,40 @@ window.onload = function() {
 	editor.setTheme("ace/theme/monokai");
 	editor.setShowPrintMargin(true);
 	editor.getSession().setTabSize(8);
-	editor.setValue(jbProgram, 1);
 	document.getElementById('jb_source').style.fontSize='14px';
+
+	function selectPlayground() {
+		JBIT.program_id = "playground";
+		editor.setValue(JBIT.playground, -1);
+		editor.setReadOnly(false);
+		$("#jb_toolbox li").removeClass("jb_current_file");
+		$("#jb_playground").addClass("jb_current_file");
+	}
+
+	function selectProgram(e) {
+		var	el = e.target,
+			id = $(el).text();
+		if (JBIT.program_id === "playground")
+			JBIT.playground = editor.getValue();
+		if (id === "playground") {
+			selectPlayground();
+		} else {
+			$.get("res/" + id + ".asm", function(prg) {
+				JBIT.program_id = id;
+				editor.setValue(prg, -1);
+				editor.setReadOnly(true);
+				$("#jb_toolbox li").removeClass("jb_current_file");
+				$(el).addClass("jb_current_file");
+			});
+		}
+	}
+
+	$.get("res/playground.asm", function(prg) {
+		JBIT.playground = prg;
+		selectPlayground();
+	});
+
+	$("#jb_toolbox li").click(selectProgram);
 
 	var sim = new Simulator(vm);
 	UI.switchToPage("vm");
@@ -415,4 +449,3 @@ window.onload = function() {
 		return false;
 	};
 };
-

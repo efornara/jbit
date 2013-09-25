@@ -1469,5 +1469,5 @@ const ParseError *parse_asm(const Buffer *src, Program *prg) {
 };
 
 const char *get_jbit_version() {
-	return "1.1";
+	return "1.2";
 }

@@ -27,17 +27,42 @@
 <div id="jb_source">
 </div>
 
-<pre id="jb_toolbox">
-TODO:
-- scratch
-- demos
-</pre>
+<div id="jb_toolbox">
 
-<script type="text/javascript" src="./libs/ace/1.1.01/ace.js" charset="utf-8"></script> <!-- replaced with http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js -->
-<script type="text/javascript" src="jbit-core.js"></script> <!-- use jbit-core-ie.js for IE without typed arrays -->
+<ul>
+<li id="jb_playground">playground</li>
+</ul>
+
+<ul>
+<li>ciao</li>
+<li>loop1</li>
+<li>fill1</li>
+<li>fill2</li>
+<li>loop2</li>
+<li>loop3</li>
+<li>keypad</li>
+<li>random</li>
+<li>charset</li>
+</ul>
+
+<ul>
+<li>e1</li>
+</ul>
+
+</div>
+
+<script type="text/javascript" src="./libs/jquery-1.10.2.js"></script> <!-- replaced with  http://cdnjs.cloudflare.com/ajax/libs/jquery/1.10.2/jquery.min.js -->
+<script type="text/javascript" src="./libs/ace-builds-1.1.01/src/ace.js" charset="utf-8"></script> <!-- replaced with http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/ace.js -->
 <script type="text/javascript" src="jbit-vm.js"></script>
 <script type="text/javascript" src="jbit-microio.js"></script>
-<script type="text/javascript" src="hello.js"></script>
 <script type="text/javascript" src="jbit-sim.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	var	core = (typeof Int32Array === "undefined") ? "jbit-core-ie.js" : "jbit-core.js";
+	$.ajaxSetup({ cache: true });
+	$.getScript(core, JBIT.start);
+});
+</script>
 
 </body></html>

@@ -14,15 +14,14 @@ jbit-core.js: $(OBJS)
 
 fetch:
 	mkdir -p libs
-	( cd libs; wget -c https://github.com/ajaxorg/ace-builds/archive/v1.1.01.tar.gz )
-	( cd libs; tar xzf v1.1.01.tar.gz )
-	( cd libs ; mkdir -p ace )
-	( cd libs ; ln -sf `pwd`/ace-builds-1.1.01/src-noconflict/ ace/1.1.01 )
+	( cd libs ; wget -c https://github.com/ajaxorg/ace-builds/archive/v1.1.01.tar.gz )
+	( cd libs ; tar xzf v1.1.01.tar.gz ace-builds-1.1.01/src )
+	( cd libs ; wget -c http://code.jquery.com/jquery-1.10.2.js )
 
 copy_res:
 	mkdir -p res
 	( cd res ; cp ../../samples/6502/*.asm . )
-	( cd res ; cp ../../samples/e1.asm . )
+	( cd res ; cp ../../samples/js/*.asm . )
 
 clean:
 	$(RM) jbit-core.js jbit-core-ie.js *.o

@@ -1,4 +1,4 @@
-; This a simulation of a digital clock.
+; This is a simulation of a digital clock.
 ;
 ; When the application starts, 12 AM is shown. You can change this value
 ; by pressing '9' and confirm it by pressing '3'. You can then change the
