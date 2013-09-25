@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv='content-type' value='text/html;charset=utf8'>
+  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
+  <title>jbit(1) - 6502 Assembler and Simulator</title>
+  <style type='text/css' media='all'>
+  /* style: man */
+  body#manpage {margin:0}
+  .mp {max-width:100ex;padding:0 9ex 1ex 4ex}
+  .mp p,.mp pre,.mp ul,.mp ol,.mp dl {margin:0 0 20px 0}
+  .mp h2 {margin:10px 0 0 0}
+  .mp > p,.mp > pre,.mp > ul,.mp > ol,.mp > dl {margin-left:8ex}
+  .mp h3 {margin:0 0 0 4ex}
+  .mp dt {margin:0;clear:left}
+  .mp dt.flush {float:left;width:8ex}
+  .mp dd {margin:0 0 0 9ex}
+  .mp h1,.mp h2,.mp h3,.mp h4 {clear:left}
+  .mp pre {margin-bottom:20px}
+  .mp pre+h2,.mp pre+h3 {margin-top:22px}
+  .mp h2+pre,.mp h3+pre {margin-top:5px}
+  .mp img {display:block;margin:auto}
+  .mp h1.man-title {display:none}
+  .mp,.mp code,.mp pre,.mp tt,.mp kbd,.mp samp,.mp h3,.mp h4 {font-family:monospace;font-size:14px;line-height:1.42857142857143}
+  .mp h2 {font-size:16px;line-height:1.25}
+  .mp h1 {font-size:20px;line-height:2}
+  .mp {text-align:justify;background:#fff}
+  .mp,.mp code,.mp pre,.mp pre code,.mp tt,.mp kbd,.mp samp {color:#131211}
+  .mp h1,.mp h2,.mp h3,.mp h4 {color:#030201}
+  .mp u {text-decoration:underline}
+  .mp code,.mp strong,.mp b {font-weight:bold;color:#131211}
+  .mp em,.mp var {font-style:italic;color:#232221;text-decoration:none}
+  .mp a,.mp a:link,.mp a:hover,.mp a code,.mp a pre,.mp a tt,.mp a kbd,.mp a samp {color:#0000ff}
+  .mp b.man-ref {font-weight:normal;color:#434241}
+  .mp pre {padding:0 4ex}
+  .mp pre code {font-weight:normal;color:#434241}
+  .mp h2+pre,h3+pre {padding-left:0}
+  ol.man-decor,ol.man-decor li {margin:3px 0 10px 0;padding:0;float:left;width:33%;list-style-type:none;text-transform:uppercase;color:#999;letter-spacing:1px}
+  ol.man-decor {width:100%}
+  ol.man-decor li.tl {text-align:left}
+  ol.man-decor li.tc {text-align:center;letter-spacing:4px}
+  ol.man-decor li.tr {text-align:right;float:right}
+  </style>
+</head>
+<!--
+  The following styles are deprecated and will be removed at some point:
+  div#man, div#man ol.man, div#man ol.head, div#man ol.man.
+
+  The .man-page, .man-decor, .man-head, .man-foot, .man-title, and
+  .man-navigation should be used instead.
+-->
+<body id='manpage'>
+  <div class='mp' id='man'>
+
+  <div class='man-navigation' style='display:none'>
+    <a href="#NAME">NAME</a>
+    <a href="#SYNOPSIS">SYNOPSIS</a>
+    <a href="#DESCRIPTION">DESCRIPTION</a>
+    <a href="#GETTING-STARTED">GETTING STARTED</a>
+    <a href="#OPTIONS">OPTIONS</a>
+    <a href="#STDOUT">STDOUT</a>
+    <a href="#MICROIO">MICROIO</a>
+    <a href="#REQUESTS">REQUESTS</a>
+    <a href="#XV65">XV65</a>
+    <a href="#IO2">IO2</a>
+    <a href="#EXAMPLES">EXAMPLES</a>
+    <a href="#FILES">FILES</a>
+    <a href="#ENVIRONMENT">ENVIRONMENT</a>
+    <a href="#BUGS">BUGS</a>
+    <a href="#AUTHOR">AUTHOR</a>
+    <a href="#SEE-ALSO">SEE ALSO</a>
+  </div>
+
+  <ol class='man-decor man-head man head'>
+    <li class='tl'>jbit(1)</li>
+    <li class='tc'></li>
+    <li class='tr'>jbit(1)</li>
+  </ol>
+
+  <h2 id="NAME">NAME</h2>
+<p class="man-name">
+  <code>jbit</code> - <span class="man-whatis">6502 Assembler and Simulator</span>
+</p>
+
+<h2 id="SYNOPSIS">SYNOPSIS</h2>
+
+<p><code>jbit</code> [<var>options</var>...] <var>file</var></p>
+
+<p><code>jbit</code> [<var>options</var>...] -a <var>file</var> [<var>arg</var>...]</p>
+
+<h2 id="DESCRIPTION">DESCRIPTION</h2>
+
+<p><code>jbit</code> simulates a fictional 8-bit processor. The emulated CPU is
+similar to a regular 6502. The main difference is that it lacks BCD mode
+and interrupts. <span class="man-ref">BRK<span class="s">(0)</span></span> terminates the processor. Almost the full 64K of
+addressable memory is available: only page 2 is shadowed by the IO chip
+and therefore inaccessible to the programmer. Code is loaded from page 3
+and can be provided either in binary (jb) or in assembly (asm) form.</p>
+
+<p>When the processor starts, it is attached to a device that defines and
+limits its ability to interact with the environment. For example, the
+<em>stdout</em> device can only write characters to its standard output. On the
+other hand, the <em>xv65</em> device can spawn other processes, modify the file
+system, and, if tools like <span class="man-ref">nc<span class="s">(1)</span></span> are installed, access the network. The
+list of devices available depends on the system and can be found by
+invoking jbit with the option <var>-d ?</var>.</p>
+
+<p>jbit is the native version of <em>JBit</em>. JBit is also available for
+feature phones or as a web application.</p>
+
+<h2 id="GETTING-STARTED">GETTING STARTED</h2>
+
+<p>This section is an informal introduction on how to use <code>jbit</code>.  You can
+find plenty of information on the
+<a href="http://en.wikipedia.org/wiki/MOS_Technology_6502">6502</a> on the
+Internet.  There is a also a <a href="http://jbit.sourceforge.net//doc/tutorial_en.html">Beginner's
+Tutorial</a> on how to
+start 6502 programming with JBit (J2ME). Here I assume that you are
+already familiar with 6502 assembly and new to JBit.</p>
+
+<p>Create a new file (e.g. <em>a.asm</em>):</p>
+
+<pre><code>$a9 'A' $8d $00 $02
+</code></pre>
+
+<p>and run it:</p>
+
+<pre><code>jbit a.asm
+</code></pre>
+
+<p>JBit has a binary format too, although it is mostly used on the J2ME
+version of JBit (see <a href="#IO2" title="IO2" data-bare-link="true">IO2</a>).</p>
+
+<pre><code>jbit -c jb a.asm &gt;a.jb
+jbit a.jb
+</code></pre>
+
+<p>Let's have a look at the program.</p>
+
+<p>Register $0200 is PUTCHAR, and when you write a character into it, that
+character is sent to stdout.</p>
+
+<p>Since its roots in feature phones, the preferred notation in JBit is
+<em>decimal</em>. This is the same program:</p>
+
+<pre><code>169 'A' 141 0 2
+</code></pre>
+
+<p>To work around clean numbers ($C000) becoming magic numbers (49152),
+JBit uses the non-standard notation <em>page:offset</em> for decimal words:</p>
+
+<pre><code>169 'A' 141 2:0
+</code></pre>
+
+<p>You don't need to remember the location of the IO registers. If you
+select a device, you get some symbols defined:</p>
+
+<pre><code>.device "stdout"
+169 'A' 141 PUTCHAR
+</code></pre>
+
+<p>To see the list of the symbols defined for a particular device, type:</p>
+
+<pre><code>jbit -s stdout
+</code></pre>
+
+<p>You can of course write the same program in assembly:</p>
+
+<pre><code>.device "stdout"
+lda #'A'
+sta PUTCHAR
+</code></pre>
+
+<p>Check in the samples directories (in particular the format subdirectory)
+for more information about the assembly format.</p>
+
+<h2 id="OPTIONS">OPTIONS</h2>
+
+<dl>
+<dt class="flush"><code>-v</code></dt><dd><p>Show the program version and exit.</p></dd>
+<dt><code>-d</code> <var>device</var></dt><dd><p>Override the device used by the simulator. If <var>device</var> is <var>?</var>,
+show the list of the available devices and exit.</p></dd>
+<dt><code>-s</code> <var>device</var></dt><dd><p>Show the symbols defined by the assembler for a given device.
+If <var>device</var> is <var>?</var>, show the list of the devices with symbols
+available.</p></dd>
+<dt><code>-c</code> jb|asm</dt><dd><p>Convert the program to a sequence of bytes, writing them to stdout.
+WARNING: the <em>jb</em> format is a binary format!</p></dd>
+</dl>
+
+
+<h2 id="STDOUT">STDOUT</h2>
+
+<p>This is a very simple device and is the only one that can be emulated on
+Windows.</p>
+
+<p>Registers:</p>
+
+<dl>
+<dt><code>PUTCHAR</code> (W)</dt><dd><p> Mapped to <span class="man-ref">putchar<span class="s">(3)</span></span>.</p></dd>
+<dt><code>PUTUINT8</code> (W)</dt><dd><p> Send the decimal representation of a byte (0-255) to stdout.</p></dd>
+<dt><code>FRMDRAW</code> (W)</dt><dd><p> Mapped to <span class="man-ref">fflush<span class="s">(3)</span></span>. The value written doesn't matter, FRMDRAW
+ always refer to stdout. If FRMFPS is != 0, also wait to keep
+ the desired refresh rate.</p></dd>
+<dt><code>FRMFPS</code> (RW)</dt><dd><p> The desired refresh rate in frames per seconds * 4. For example, 40
+ means 10 frames per seconds.</p></dd>
+</dl>
+
+
+<h2 id="MICROIO">MICROIO</h2>
+
+<p>This device provides a display with a 10x4 matrix of characters (also
+called console), a keypad similar to the ones found on classic phones
+(keys 0-9, * and #) and two random number generators.</p>
+
+<p>Registers:</p>
+
+<dl>
+<dt><code>FRMDRAW</code> (W)</dt><dd><p> Update the 10x4 display. The value written doesn't matter, FRMDRAW
+ always refer to stdout. If FRMFPS is != 0, also wait to keep
+ the desired refresh rate.</p></dd>
+<dt><code>FRMFPS</code> (RW)</dt><dd><p> The desired refresh rate in frames per seconds * 4. For example, 40
+ means 10 frames per seconds.</p></dd>
+<dt><code>RANDOM</code> (RW)</dt><dd><p> On read: get a random number &lt;= n (255 by default). On write: set n
+ (if > 0), or swap the number generator (if == 0). There are two
+ number generators: one (used by default) is initialized using the
+ time at the start of the program, the other is initialized with
+ a constant.</p></dd>
+<dt><code>KEYBUF</code> (8 bytes, RW)</dt><dd><p> The standard KeyPresses (the ones that can be represented by ASCII
+ codes; usually only 0-9, # and *) are enqueued starting from KEYBUF;
+ the rest of the buffer is filled with 0s. Write into KEYBUF[0] to
+ consume a KeyPress. If the buffer is full when a new key is pressed,
+ that KeyPress is lost.</p></dd>
+<dt><code>CONVIDEO</code> (40 bytes, RW)</dt><dd><p> Direct access to the 10x4 display matrix, disposed in row-major
+ order: first the top row, then the second row, etc...</p></dd>
+</dl>
+
+
+<p>Simple programs aimed at 6502 beginner programmers are available in the
+6502 subdirectory of the samples directory.</p>
+
+<h2 id="REQUESTS">REQUESTS</h2>
+
+<p>The two major devices in JBit are <em>xv65</em> and <em>io2</em>. The underlying
+systems they expose are completely different, but they share the same
+basic communication mechanism: the request. A request is essentially a
+function call to the host environment.</p>
+
+<p>This is a xv65 request that makes the calling process sleep for 10
+seconds:</p>
+
+<pre><code>13 10
+</code></pre>
+
+<p>This is a io2 request that set the background color of the canvas to
+pure blue:</p>
+
+<pre><code>17 0 0 255
+</code></pre>
+
+<p>There are two mechanisms to issue a request.</p>
+
+<p>You can write each byte of the request to REQPUT, and then signal the
+end of the request by writing any value into REQEND.</p>
+
+<pre><code>lda #13
+sta REQPUT
+lda #10
+sta REQPUT
+sta REQEND
+</code></pre>
+
+<p>For longer requests, you can store somewhere in memory the request
+preceded by a 2-bytes word stating its length. You can then put the
+address (including the length) into the REQPTRHI / REQPTRLO register
+pairs.</p>
+
+<pre><code>lda #&gt;blue
+sta REQPTRHI
+lda #&gt;blue
+sta REQPTRLO
+
+.data
+blue: 5 0 17 0 0 255
+</code></pre>
+
+<p>The order is important! The request is issued when REQPTRLO is written.
+This allows to put multiple requests on the same page and to issue them
+by writing only to REQPTRLO.</p>
+
+<p>Counting the number of bytes of a requested might be error prone, so the
+assembler provides a pair of directives to auto-compute the length of a
+request:</p>
+
+<pre><code>.data
+blue: .req
+17 0 0 255
+.endreq
+</code></pre>
+
+<h2 id="XV65">XV65</h2>
+
+<p>The device <em>xv65</em> maps an extended subset of the traditonal Unix V6 API
+(fork, exec, pipe, dup, write etc...) and it was inspired by the
+beautiful <a href="http://pdos.csail.mit.edu/6.828/2012/xv6.html">xv6</a>.  Chapter
+0 of their
+<a href="http://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf">textbook/comentary</a>
+is  especially relevant.</p>
+
+<p>xv65 is quite a complex device. For an example of use, look at
+xtermpal.asm in samples. xtermpal just prints out some xterm escape
+characters to produce a color palette, and could have been written for
+the stdout device.  However, since sending escape characters might
+confuse other terminals, xtermpal uses the ENV request to query the
+environment variable TERM and guard against running on a non-xterm
+terminal.</p>
+
+<p>At the moment, the best source of documentation for the xv65 device is
+the code that was used to test it:</p>
+
+<p><a href="https://github.com/efornara/cc65/blob/master/samples/xv65" data-bare-link="true">https://github.com/efornara/cc65/blob/master/samples/xv65</a></p>
+
+<p>In particular, the following code shows the "syntax" of the requests:</p>
+
+<p><a href="https://github.com/efornara/cc65/blob/master/samples/xv65/sys.c" data-bare-link="true">https://github.com/efornara/cc65/blob/master/samples/xv65/sys.c</a></p>
+
+<h2 id="IO2">IO2</h2>
+
+<p>The device <em>io2</em> maps a significant subset of the MIDP2 API (including
+sprites and tiled layers) and includes a PNG encoder to allow the
+generation of images. It cannot be simulated by jbit, but you can still
+use jbit to write programs for it. And if you have <em>java</em> installed, you
+can run the J2ME version of JBit using
+<a href="http://www.microemu.org/">microemulator</a> to test them.  Here are the
+instructions on how to do that.</p>
+
+<p>I assume that every file will be placed in a new directory and you are
+working in it.</p>
+
+<p>Get a io2 source file (for example, <em>smile.asm</em> in the samples
+directory).</p>
+
+<p>Download <em>microemulator-2.0.4.zip</em> from here:</p>
+
+<p><a href="http://code.google.com/p/microemu/downloads/list" data-bare-link="true">http://code.google.com/p/microemu/downloads/list</a></p>
+
+<p>Extract <em>microemulator.jar</em> from the archive.</p>
+
+<p>Check that it runs fine and the close it:</p>
+
+<pre><code>java -jar microemulator.jar
+</code></pre>
+
+<p>Download <em>JBit2_microemulator.zip</em>:</p>
+
+<p><a href="http://sourceforge.net/projects/jbit/files/jbit/Resources/JBit2_microemulator.zip/download" data-bare-link="true">http://sourceforge.net/projects/jbit/files/jbit/Resources/JBit2_microemulator.zip/download</a></p>
+
+<p>Extract the content of the archive (<em>JBit2_me.jad</em> and <em>JBit2_me.jar</em>).</p>
+
+<p>Convert the assembly source to the <em>jb</em> binary format. The resulting
+file <em>must</em> be named <em>out.jb</em> for this setup to work. If everything goes
+well, the command is silent. Conversion errors are sent to stderr.</p>
+
+<pre><code>jbit -c jb smile.asm &gt;out.jb
+</code></pre>
+
+<p>The directory should now look like this:</p>
+
+<pre><code>JBit2_me.jad
+JBit2_me.jar
+microemulator.jar
+out.jb
+smile.asm
+</code></pre>
+
+<p>Run the emulator typing the following command (on Windows replace <code>:</code>
+with <code>;</code>):</p>
+
+<pre><code>java -jar microemulator.jar --appclasspath JBit2_me.jar:.  --propertiesjad JBit2_me.jad JBit
+</code></pre>
+
+<p>If you press a menu button (one of the two big buttons on either side of
+the joypad), you can stop the program. Select <em>Menu</em> and then select
+<em>Debug</em> to debug the program.</p>
+
+<p>A fair amount of documentation for the io2 device is available here:</p>
+
+<p><a href="http://jbit.sourceforge.net/doc/jbdoc.html" data-bare-link="true">http://jbit.sourceforge.net/doc/jbdoc.html</a></p>
+
+<h2 id="EXAMPLES">EXAMPLES</h2>
+
+<p>Find constants for IPNGGEN:</p>
+
+<pre><code>jbit -s io2 | grep IPNGGEN
+</code></pre>
+
+<p>Clear the screen:</p>
+
+<pre><code>.device "xv65"
+lda #ESC_CLEAR
+sta CONESC
+lda #ESC_HOME
+sta CONESC
+</code></pre>
+
+<p>Sleep for 10 seconds:</p>
+
+<pre><code>.device "xv65"
+lda #REQ_SLEEP
+sta REQPUT
+lda #10
+sta REQPUT
+sta REQEND
+</code></pre>
+
+<p>Fork a new process:</p>
+
+<pre><code>.device "xv65"
+lda #REQ_FORK
+sta REQPUT
+sta REQEND
+; the pid returned by fork() is stored starting from REQDAT
+</code></pre>
+
+<h2 id="FILES">FILES</h2>
+
+<dl>
+<dt><code>/usr/share/jbit/samples</code></dt><dd>Sample programs.</dd>
+</dl>
+
+
+<h2 id="ENVIRONMENT">ENVIRONMENT</h2>
+
+<dl>
+<dt><code>JBIT_PATH</code></dt><dd>List of one of more directory names separated by colon (:)
+characters used to search for the files to load.</dd>
+</dl>
+
+
+<h2 id="BUGS">BUGS</h2>
+
+<p>The parser is too permissive, and programs that rely on it, might not
+load in future versions of jbit.</p>
+
+<p>The parser does not always provide contextual information. For example,
+if a symbol is redefined, the location of the first definition is not
+reported.</p>
+
+<h2 id="AUTHOR">AUTHOR</h2>
+
+<p>Emanuele Fornara <a href="&#109;&#x61;&#105;&#108;&#x74;&#x6f;&#58;&#x65;&#x66;&#x6f;&#x72;&#110;&#97;&#x72;&#x61;&#x40;&#117;&#115;&#101;&#x72;&#115;&#x2e;&#x73;&#111;&#117;&#114;&#99;&#101;&#x66;&#x6f;&#114;&#x67;&#101;&#46;&#x6e;&#101;&#116;" data-bare-link="true">&#101;&#x66;&#x6f;&#x72;&#110;&#97;&#114;&#97;&#x40;&#x75;&#115;&#x65;&#x72;&#x73;&#x2e;&#115;&#x6f;&#x75;&#x72;&#x63;&#x65;&#x66;&#111;&#114;&#x67;&#x65;&#x2e;&#x6e;&#x65;&#x74;</a></p>
+
+<h2 id="SEE-ALSO">SEE ALSO</h2>
+
+<p><a href="http://github.com/efornara/jbit/wiki">Wiki for <code>jbit</code></a>,
+<a href="http://jbit.sourceforge.net/">JBit - J2ME Version</a>,
+<a href="http://jbit.sourceforge.net/webapp">JBit - Web Application</a></p>
+
+
+  <ol class='man-decor man-foot man foot'>
+    <li class='tl'></li>
+    <li class='tc'>September 2013</li>
+    <li class='tr'>jbit(1)</li>
+  </ol>
+
+  </div>
+</body>
+</html>
