@@ -22,6 +22,7 @@ fetch:
 copy_res:
 	mkdir -p res
 	( cd res ; cp ../../samples/6502/*.asm . )
+	( cd res ; cp ../../samples/e1.asm . )
 
 clean:
 	$(RM) jbit-core.js jbit-core-ie.js *.o
