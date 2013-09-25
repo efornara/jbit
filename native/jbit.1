@@ -1,0 +1,497 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "JBIT" "1" "September 2013" "" ""
+.
+.SH "NAME"
+\fBjbit\fR \- 6502 Assembler and Simulator
+.
+.SH "SYNOPSIS"
+\fBjbit\fR [\fIoptions\fR\.\.\.] \fIfile\fR
+.
+.P
+\fBjbit\fR [\fIoptions\fR\.\.\.] \-a \fIfile\fR [\fIarg\fR\.\.\.]
+.
+.SH "DESCRIPTION"
+\fBjbit\fR simulates a fictional 8\-bit processor\. The emulated CPU is similar to a regular 6502\. The main difference is that it lacks BCD mode and interrupts\. BRK(0) terminates the processor\. Almost the full 64K of addressable memory is available: only page 2 is shadowed by the IO chip and therefore inaccessible to the programmer\. Code is loaded from page 3 and can be provided either in binary (jb) or in assembly (asm) form\.
+.
+.P
+When the processor starts, it is attached to a device that defines and limits its ability to interact with the environment\. For example, the \fIstdout\fR device can only write characters to its standard output\. On the other hand, the \fIxv65\fR device can spawn other processes, modify the file system, and, if tools like nc(1) are installed, access the network\. The list of devices available depends on the system and can be found by invoking jbit with the option \fI\-d ?\fR\.
+.
+.P
+jbit is the native version of \fIJBit\fR\. JBit is also available for feature phones or as a web application\.
+.
+.SH "GETTING STARTED"
+This section is an informal introduction on how to use \fBjbit\fR\. You can find plenty of information on the 6502 \fIhttp://en\.wikipedia\.org/wiki/MOS_Technology_6502\fR on the Internet\. There is a also a Beginner\'s Tutorial \fIhttp://jbit\.sourceforge\.net//doc/tutorial_en\.html\fR on how to start 6502 programming with JBit (J2ME)\. Here I assume that you are already familiar with 6502 assembly and new to JBit\.
+.
+.P
+Create a new file (e\.g\. \fIa\.asm\fR):
+.
+.IP "" 4
+.
+.nf
+
+$a9 \'A\' $8d $00 $02
+.
+.fi
+.
+.IP "" 0
+.
+.P
+and run it:
+.
+.IP "" 4
+.
+.nf
+
+jbit a\.asm
+.
+.fi
+.
+.IP "" 0
+.
+.P
+JBit has a binary format too, although it is mostly used on the J2ME version of JBit (see \fIIO2\fR)\.
+.
+.IP "" 4
+.
+.nf
+
+jbit \-c jb a\.asm >a\.jb
+jbit a\.jb
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Let\'s have a look at the program\.
+.
+.P
+Register $0200 is PUTCHAR, and when you write a character into it, that character is sent to stdout\.
+.
+.P
+Since its roots in feature phones, the preferred notation in JBit is \fIdecimal\fR\. This is the same program:
+.
+.IP "" 4
+.
+.nf
+
+169 \'A\' 141 0 2
+.
+.fi
+.
+.IP "" 0
+.
+.P
+To work around clean numbers ($C000) becoming magic numbers (49152), JBit uses the non\-standard notation \fIpage:offset\fR for decimal words:
+.
+.IP "" 4
+.
+.nf
+
+169 \'A\' 141 2:0
+.
+.fi
+.
+.IP "" 0
+.
+.P
+You don\'t need to remember the location of the IO registers\. If you select a device, you get some symbols defined:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "stdout"
+169 \'A\' 141 PUTCHAR
+.
+.fi
+.
+.IP "" 0
+.
+.P
+To see the list of the symbols defined for a particular device, type:
+.
+.IP "" 4
+.
+.nf
+
+jbit \-s stdout
+.
+.fi
+.
+.IP "" 0
+.
+.P
+You can of course write the same program in assembly:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "stdout"
+lda #\'A\'
+sta PUTCHAR
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Check in the samples directories (in particular the format subdirectory) for more information about the assembly format\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-v\fR
+Show the program version and exit\.
+.
+.TP
+\fB\-d\fR \fIdevice\fR
+Override the device used by the simulator\. If \fIdevice\fR is \fI?\fR, show the list of the available devices and exit\.
+.
+.TP
+\fB\-s\fR \fIdevice\fR
+Show the symbols defined by the assembler for a given device\. If \fIdevice\fR is \fI?\fR, show the list of the devices with symbols available\.
+.
+.TP
+\fB\-c\fR jb|asm
+Convert the program to a sequence of bytes, writing them to stdout\. WARNING: the \fIjb\fR format is a binary format!
+.
+.SH "STDOUT"
+This is a very simple device and is the only one that can be emulated on Windows\.
+.
+.P
+Registers:
+.
+.TP
+\fBPUTCHAR\fR (W)
+Mapped to putchar(3)\.
+.
+.TP
+\fBPUTUINT8\fR (W)
+Send the decimal representation of a byte (0\-255) to stdout\.
+.
+.TP
+\fBFRMDRAW\fR (W)
+Mapped to fflush(3)\. The value written doesn\'t matter, FRMDRAW always refer to stdout\. If FRMFPS is != 0, also wait to keep the desired refresh rate\.
+.
+.TP
+\fBFRMFPS\fR (RW)
+The desired refresh rate in frames per seconds * 4\. For example, 40 means 10 frames per seconds\.
+.
+.SH "MICROIO"
+This device provides a display with a 10x4 matrix of characters (also called console), a keypad similar to the ones found on classic phones (keys 0\-9, * and #) and two random number generators\.
+.
+.P
+Registers:
+.
+.TP
+\fBFRMDRAW\fR (W)
+Update the 10x4 display\. The value written doesn\'t matter, FRMDRAW always refer to stdout\. If FRMFPS is != 0, also wait to keep the desired refresh rate\.
+.
+.TP
+\fBFRMFPS\fR (RW)
+The desired refresh rate in frames per seconds * 4\. For example, 40 means 10 frames per seconds\.
+.
+.TP
+\fBRANDOM\fR (RW)
+On read: get a random number <= n (255 by default)\. On write: set n (if > 0), or swap the number generator (if == 0)\. There are two number generators: one (used by default) is initialized using the time at the start of the program, the other is initialized with a constant\.
+.
+.TP
+\fBKEYBUF\fR (8 bytes, RW)
+The standard KeyPresses (the ones that can be represented by ASCII codes; usually only 0\-9, # and *) are enqueued starting from KEYBUF; the rest of the buffer is filled with 0s\. Write into KEYBUF[0] to consume a KeyPress\. If the buffer is full when a new key is pressed, that KeyPress is lost\.
+.
+.TP
+\fBCONVIDEO\fR (40 bytes, RW)
+Direct access to the 10x4 display matrix, disposed in row\-major order: first the top row, then the second row, etc\.\.\.
+.
+.P
+Simple programs aimed at 6502 beginner programmers are available in the 6502 subdirectory of the samples directory\.
+.
+.SH "REQUESTS"
+The two major devices in JBit are \fIxv65\fR and \fIio2\fR\. The underlying systems they expose are completely different, but they share the same basic communication mechanism: the request\. A request is essentially a function call to the host environment\.
+.
+.P
+This is a xv65 request that makes the calling process sleep for 10 seconds:
+.
+.IP "" 4
+.
+.nf
+
+13 10
+.
+.fi
+.
+.IP "" 0
+.
+.P
+This is a io2 request that set the background color of the canvas to pure blue:
+.
+.IP "" 4
+.
+.nf
+
+17 0 0 255
+.
+.fi
+.
+.IP "" 0
+.
+.P
+There are two mechanisms to issue a request\.
+.
+.P
+You can write each byte of the request to REQPUT, and then signal the end of the request by writing any value into REQEND\.
+.
+.IP "" 4
+.
+.nf
+
+lda #13
+sta REQPUT
+lda #10
+sta REQPUT
+sta REQEND
+.
+.fi
+.
+.IP "" 0
+.
+.P
+For longer requests, you can store somewhere in memory the request preceded by a 2\-bytes word stating its length\. You can then put the address (including the length) into the REQPTRHI / REQPTRLO register pairs\.
+.
+.IP "" 4
+.
+.nf
+
+lda #>blue
+sta REQPTRHI
+lda #>blue
+sta REQPTRLO
+
+\.data
+blue: 5 0 17 0 0 255
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The order is important! The request is issued when REQPTRLO is written\. This allows to put multiple requests on the same page and to issue them by writing only to REQPTRLO\.
+.
+.P
+Counting the number of bytes of a requested might be error prone, so the assembler provides a pair of directives to auto\-compute the length of a request:
+.
+.IP "" 4
+.
+.nf
+
+\&\.data
+blue: \.req
+17 0 0 255
+\.endreq
+.
+.fi
+.
+.IP "" 0
+.
+.SH "XV65"
+The device \fIxv65\fR maps an extended subset of the traditonal Unix V6 API (fork, exec, pipe, dup, write etc\.\.\.) and it was inspired by the beautiful xv6 \fIhttp://pdos\.csail\.mit\.edu/6\.828/2012/xv6\.html\fR\. Chapter 0 of their textbook/comentary \fIhttp://pdos\.csail\.mit\.edu/6\.828/2012/xv6/book\-rev7\.pdf\fR is especially relevant\.
+.
+.P
+xv65 is quite a complex device\. For an example of use, look at xtermpal\.asm in samples\. xtermpal just prints out some xterm escape characters to produce a color palette, and could have been written for the stdout device\. However, since sending escape characters might confuse other terminals, xtermpal uses the ENV request to query the environment variable TERM and guard against running on a non\-xterm terminal\.
+.
+.P
+At the moment, the best source of documentation for the xv65 device is the code that was used to test it:
+.
+.P
+\fIhttps://github\.com/efornara/cc65/blob/master/samples/xv65\fR
+.
+.P
+In particular, the following code shows the "syntax" of the requests:
+.
+.P
+\fIhttps://github\.com/efornara/cc65/blob/master/samples/xv65/sys\.c\fR
+.
+.SH "IO2"
+The device \fIio2\fR maps a significant subset of the MIDP2 API (including sprites and tiled layers) and includes a PNG encoder to allow the generation of images\. It cannot be simulated by jbit, but you can still use jbit to write programs for it\. And if you have \fIjava\fR installed, you can run the J2ME version of JBit using microemulator \fIhttp://www\.microemu\.org/\fR to test them\. Here are the instructions on how to do that\.
+.
+.P
+I assume that every file will be placed in a new directory and you are working in it\.
+.
+.P
+Get a io2 source file (for example, \fIsmile\.asm\fR in the samples directory)\.
+.
+.P
+Download \fImicroemulator\-2\.0\.4\.zip\fR from here:
+.
+.P
+\fIhttp://code\.google\.com/p/microemu/downloads/list\fR
+.
+.P
+Extract \fImicroemulator\.jar\fR from the archive\.
+.
+.P
+Check that it runs fine and the close it:
+.
+.IP "" 4
+.
+.nf
+
+java \-jar microemulator\.jar
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Download \fIJBit2_microemulator\.zip\fR:
+.
+.P
+\fIhttp://sourceforge\.net/projects/jbit/files/jbit/Resources/JBit2_microemulator\.zip/download\fR
+.
+.P
+Extract the content of the archive (\fIJBit2_me\.jad\fR and \fIJBit2_me\.jar\fR)\.
+.
+.P
+Convert the assembly source to the \fIjb\fR binary format\. The resulting file \fImust\fR be named \fIout\.jb\fR for this setup to work\. If everything goes well, the command is silent\. Conversion errors are sent to stderr\.
+.
+.IP "" 4
+.
+.nf
+
+jbit \-c jb smile\.asm >out\.jb
+.
+.fi
+.
+.IP "" 0
+.
+.P
+The directory should now look like this:
+.
+.IP "" 4
+.
+.nf
+
+JBit2_me\.jad
+JBit2_me\.jar
+microemulator\.jar
+out\.jb
+smile\.asm
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Run the emulator typing the following command (on Windows replace \fB:\fR with \fB;\fR):
+.
+.IP "" 4
+.
+.nf
+
+java \-jar microemulator\.jar \-\-appclasspath JBit2_me\.jar:\.  \-\-propertiesjad JBit2_me\.jad JBit
+.
+.fi
+.
+.IP "" 0
+.
+.P
+If you press a menu button (one of the two big buttons on either side of the joypad), you can stop the program\. Select \fIMenu\fR and then select \fIDebug\fR to debug the program\.
+.
+.P
+A fair amount of documentation for the io2 device is available here:
+.
+.P
+\fIhttp://jbit\.sourceforge\.net/doc/jbdoc\.html\fR
+.
+.SH "EXAMPLES"
+Find constants for IPNGGEN:
+.
+.IP "" 4
+.
+.nf
+
+jbit \-s io2 | grep IPNGGEN
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Clear the screen:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "xv65"
+lda #ESC_CLEAR
+sta CONESC
+lda #ESC_HOME
+sta CONESC
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Sleep for 10 seconds:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "xv65"
+lda #REQ_SLEEP
+sta REQPUT
+lda #10
+sta REQPUT
+sta REQEND
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Fork a new process:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "xv65"
+lda #REQ_FORK
+sta REQPUT
+sta REQEND
+; the pid returned by fork() is stored starting from REQDAT
+.
+.fi
+.
+.IP "" 0
+.
+.SH "FILES"
+.
+.TP
+\fB/usr/share/jbit/samples\fR
+Sample programs\.
+.
+.SH "ENVIRONMENT"
+.
+.TP
+\fBJBIT_PATH\fR
+List of one of more directory names separated by colon (:) characters used to search for the files to load\.
+.
+.SH "BUGS"
+The parser is too permissive, and programs that rely on it, might not load in future versions of jbit\.
+.
+.P
+The parser does not always provide contextual information\. For example, if a symbol is redefined, the location of the first definition is not reported\.
+.
+.SH "AUTHOR"
+Emanuele Fornara \fIefornara@users\.sourceforge\.net\fR
+.
+.SH "SEE ALSO"
+Wiki for \fBjbit\fR \fIhttp://github\.com/efornara/jbit/wiki\fR, JBit \- J2ME Version \fIhttp://jbit\.sourceforge\.net/\fR, JBit \- Web Application \fIhttp://jbit\.sourceforge\.net/webapp\fR

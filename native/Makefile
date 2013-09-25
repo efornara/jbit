@@ -33,13 +33,19 @@ OBJS += xv65.o
 # RULES
 #
 
-all: $(EXE)
+all: $(EXE) jbit.1
 
 $(EXE): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
+
+jbit.1: jbit.1.ronn
+	ronn --roff jbit.1.ronn
 
 stdout.o: _xv65.h
 xv65.o: _xv65.h
 
 clean:
 	rm -f jbit jbit.exe windows.zip *.o
+
+distclean: clean
+	rm -f jbit.1

@@ -1,0 +1,362 @@
+jbit(1) -- 6502 Assembler and Simulator
+=======================================
+
+## SYNOPSIS
+
+`jbit` [<options>...] <file>
+
+`jbit` [<options>...] -a <file> [<arg>...]
+
+## DESCRIPTION
+
+`jbit` simulates a fictional 8-bit processor. The emulated CPU is
+similar to a regular 6502. The main difference is that it lacks BCD mode
+and interrupts. BRK(0) terminates the processor. Almost the full 64K of
+addressable memory is available: only page 2 is shadowed by the IO chip
+and therefore inaccessible to the programmer. Code is loaded from page 3
+and can be provided either in binary (jb) or in assembly (asm) form.
+
+When the processor starts, it is attached to a device that defines and
+limits its ability to interact with the environment. For example, the
+_stdout_ device can only write characters to its standard output. On the
+other hand, the _xv65_ device can spawn other processes, modify the file
+system, and, if tools like nc(1) are installed, access the network. The
+list of devices available depends on the system and can be found by
+invoking jbit with the option <-d ?>.
+
+jbit is the native version of _JBit_. JBit is also available for
+feature phones or as a web application.
+
+## GETTING STARTED
+
+This section is an informal introduction on how to use `jbit`.  You can
+find plenty of information on the
+[6502](http://en.wikipedia.org/wiki/MOS_Technology_6502) on the
+Internet.  There is a also a [Beginner's
+Tutorial](http://jbit.sourceforge.net//doc/tutorial_en.html) on how to
+start 6502 programming with JBit (J2ME). Here I assume that you are
+already familiar with 6502 assembly and new to JBit.
+
+Create a new file (e.g. _a.asm_):
+
+    $a9 'A' $8d $00 $02
+
+and run it:
+
+    jbit a.asm
+
+JBit has a binary format too, although it is mostly used on the J2ME
+version of JBit (see [IO2][]).
+
+    jbit -c jb a.asm >a.jb
+    jbit a.jb
+
+Let's have a look at the program.
+
+Register $0200 is PUTCHAR, and when you write a character into it, that
+character is sent to stdout.
+
+Since its roots in feature phones, the preferred notation in JBit is
+_decimal_. This is the same program:
+
+    169 'A' 141 0 2
+
+To work around clean numbers ($C000) becoming magic numbers (49152),
+JBit uses the non-standard notation _page:offset_ for decimal words:
+
+    169 'A' 141 2:0
+
+You don't need to remember the location of the IO registers. If you
+select a device, you get some symbols defined:
+
+    .device "stdout"
+    169 'A' 141 PUTCHAR
+
+To see the list of the symbols defined for a particular device, type:
+
+    jbit -s stdout
+
+You can of course write the same program in assembly:
+    .device "stdout"
+    lda #'A'
+    sta PUTCHAR
+
+Check in the samples directories (in particular the format subdirectory)
+for more information about the assembly format.
+
+## OPTIONS
+
+  * `-v`:
+    Show the program version and exit.
+
+  * `-d` <device>:
+    Override the device used by the simulator. If <device> is <?>,
+    show the list of the available devices and exit.
+
+  * `-s` <device>:
+    Show the symbols defined by the assembler for a given device.
+    If <device> is <?>, show the list of the devices with symbols
+    available.
+
+  * `-c` jb|asm:
+    Convert the program to a sequence of bytes, writing them to stdout.
+    WARNING: the _jb_ format is a binary format!
+
+## STDOUT
+
+This is a very simple device and is the only one that can be emulated on
+Windows.
+
+Registers:
+
+  * `PUTCHAR` (W):
+     Mapped to putchar(3).
+
+  * `PUTUINT8` (W):
+     Send the decimal representation of a byte (0-255) to stdout.
+
+  * `FRMDRAW` (W):
+     Mapped to fflush(3). The value written doesn't matter, FRMDRAW
+     always refer to stdout. If FRMFPS is != 0, also wait to keep
+     the desired refresh rate.
+
+  * `FRMFPS` (RW):
+     The desired refresh rate in frames per seconds * 4. For example, 40
+     means 10 frames per seconds.
+
+## MICROIO
+
+This device provides a display with a 10x4 matrix of characters (also
+called console), a keypad similar to the ones found on classic phones
+(keys 0-9, * and #) and two random number generators.
+
+Registers:
+
+  * `FRMDRAW` (W):
+     Update the 10x4 display. The value written doesn't matter, FRMDRAW
+     always refer to stdout. If FRMFPS is != 0, also wait to keep
+     the desired refresh rate.
+
+  * `FRMFPS` (RW):
+     The desired refresh rate in frames per seconds * 4. For example, 40
+     means 10 frames per seconds.
+
+  * `RANDOM` (RW):
+     On read: get a random number <= n (255 by default). On write: set n
+     (if > 0), or swap the number generator (if == 0). There are two
+     number generators: one (used by default) is initialized using the
+     time at the start of the program, the other is initialized with
+     a constant.
+
+  * `KEYBUF` (8 bytes, RW):
+     The standard KeyPresses (the ones that can be represented by ASCII
+     codes; usually only 0-9, # and *) are enqueued starting from KEYBUF;
+     the rest of the buffer is filled with 0s. Write into KEYBUF[0] to
+     consume a KeyPress. If the buffer is full when a new key is pressed,
+     that KeyPress is lost.
+
+  * `CONVIDEO` (40 bytes, RW):
+     Direct access to the 10x4 display matrix, disposed in row-major
+     order: first the top row, then the second row, etc...
+
+Simple programs aimed at 6502 beginner programmers are available in the
+6502 subdirectory of the samples directory.
+
+## REQUESTS
+
+The two major devices in JBit are _xv65_ and _io2_. The underlying
+systems they expose are completely different, but they share the same
+basic communication mechanism: the request. A request is essentially a
+function call to the host environment.
+
+This is a xv65 request that makes the calling process sleep for 10
+seconds:
+
+    13 10
+
+This is a io2 request that set the background color of the canvas to
+pure blue:
+
+    17 0 0 255
+
+There are two mechanisms to issue a request.
+
+You can write each byte of the request to REQPUT, and then signal the
+end of the request by writing any value into REQEND.
+
+    lda #13
+    sta REQPUT
+    lda #10
+    sta REQPUT
+    sta REQEND
+
+For longer requests, you can store somewhere in memory the request
+preceded by a 2-bytes word stating its length. You can then put the
+address (including the length) into the REQPTRHI / REQPTRLO register
+pairs.
+
+    lda #>blue
+    sta REQPTRHI
+    lda #>blue
+    sta REQPTRLO
+
+    .data
+    blue: 5 0 17 0 0 255
+
+The order is important! The request is issued when REQPTRLO is written.
+This allows to put multiple requests on the same page and to issue them
+by writing only to REQPTRLO.
+
+Counting the number of bytes of a requested might be error prone, so the
+assembler provides a pair of directives to auto-compute the length of a
+request:
+
+    .data
+    blue: .req
+    17 0 0 255
+    .endreq
+
+## XV65
+
+The device _xv65_ maps an extended subset of the traditonal Unix V6 API
+(fork, exec, pipe, dup, write etc...) and it was inspired by the
+beautiful [xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).  Chapter
+0 of their
+[textbook/comentary](http://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)
+is  especially relevant.
+
+xv65 is quite a complex device. For an example of use, look at
+xtermpal.asm in samples. xtermpal just prints out some xterm escape
+characters to produce a color palette, and could have been written for
+the stdout device.  However, since sending escape characters might
+confuse other terminals, xtermpal uses the ENV request to query the
+environment variable TERM and guard against running on a non-xterm
+terminal.
+
+At the moment, the best source of documentation for the xv65 device is
+the code that was used to test it:
+
+<https://github.com/efornara/cc65/blob/master/samples/xv65>
+
+In particular, the following code shows the "syntax" of the requests:
+
+<https://github.com/efornara/cc65/blob/master/samples/xv65/sys.c>
+
+## IO2
+
+The device _io2_ maps a significant subset of the MIDP2 API (including
+sprites and tiled layers) and includes a PNG encoder to allow the
+generation of images. It cannot be simulated by jbit, but you can still
+use jbit to write programs for it. And if you have _java_ installed, you
+can run the J2ME version of JBit using
+[microemulator](http://www.microemu.org/) to test them.  Here are the
+instructions on how to do that.
+
+I assume that every file will be placed in a new directory and you are
+working in it.
+
+Get a io2 source file (for example, _smile.asm_ in the samples
+directory).
+
+Download _microemulator-2.0.4.zip_ from here:
+
+<http://code.google.com/p/microemu/downloads/list>
+
+Extract _microemulator.jar_ from the archive.
+
+Check that it runs fine and the close it:
+
+    java -jar microemulator.jar
+
+Download _JBit2_microemulator.zip_:
+
+<http://sourceforge.net/projects/jbit/files/jbit/Resources/JBit2_microemulator.zip/download>
+
+Extract the content of the archive (_JBit2_me.jad_ and _JBit2_me.jar_).
+
+Convert the assembly source to the *jb* binary format. The resulting
+file _must_ be named _out.jb_ for this setup to work. If everything goes
+well, the command is silent. Conversion errors are sent to stderr.
+
+    jbit -c jb smile.asm >out.jb
+
+The directory should now look like this:
+
+    JBit2_me.jad
+    JBit2_me.jar
+    microemulator.jar
+    out.jb
+    smile.asm
+
+Run the emulator typing the following command (on Windows replace `:`
+with `;`):
+
+    java -jar microemulator.jar --appclasspath JBit2_me.jar:.  --propertiesjad JBit2_me.jad JBit
+
+If you press a menu button (one of the two big buttons on either side of
+the joypad), you can stop the program. Select _Menu_ and then select
+_Debug_ to debug the program.
+
+A fair amount of documentation for the io2 device is available here:
+
+<http://jbit.sourceforge.net/doc/jbdoc.html>
+
+## EXAMPLES
+
+Find constants for IPNGGEN:
+
+    jbit -s io2 | grep IPNGGEN
+
+Clear the screen:
+
+    .device "xv65"
+    lda #ESC_CLEAR
+    sta CONESC
+    lda #ESC_HOME
+    sta CONESC
+
+Sleep for 10 seconds:
+
+    .device "xv65"
+    lda #REQ_SLEEP
+    sta REQPUT
+    lda #10
+    sta REQPUT
+    sta REQEND
+
+Fork a new process:
+
+    .device "xv65"
+    lda #REQ_FORK
+    sta REQPUT
+    sta REQEND
+    ; the pid returned by fork() is stored starting from REQDAT
+
+## FILES
+  * `/usr/share/jbit/samples`:
+    Sample programs.
+
+## ENVIRONMENT
+
+  * `JBIT_PATH`:
+    List of one of more directory names separated by colon (:)
+    characters used to search for the files to load.
+
+## BUGS
+
+The parser is too permissive, and programs that rely on it, might not
+load in future versions of jbit.
+
+The parser does not always provide contextual information. For example,
+if a symbol is redefined, the location of the first definition is not
+reported.
+
+## AUTHOR
+
+Emanuele Fornara <efornara@users.sourceforge.net>
+
+## SEE ALSO
+
+[Wiki for `jbit`](http://github.com/efornara/jbit/wiki),
+[JBit - J2ME Version](http://jbit.sourceforge.net/),
+[JBit - Web Application](http://jbit.sourceforge.net/webapp)
