@@ -7,7 +7,7 @@
 ; Style: Even if in JBit the registers are always 0 at the beginning, \
 ; it is suggested to clear them anyway.
 
-	.include "jbit.inc"
+	.device "microio"
 
 .code
 

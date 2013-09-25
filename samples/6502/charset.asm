@@ -6,7 +6,7 @@
 ; to understand how it works. A few tricks have also been \
 ; used to keep it in 64 bytes (BCC/BCS instead of JMP).
 
-	.include "jbit.inc"
+	.device "microio"
 
 .code
 

@@ -5,13 +5,15 @@
 ; Puzzle: Not Equal in BNE really means "Not Zero" \
 ; and CPX really means "subtract discarding the result".
 
-	.include "jbit.inc"
+	.device "microio"
+
+.define CONVIDEO_MINUS_1 2:39 ; CONVIDEO - 1
 
 .code
 
 	ldx	#40
 	lda	#'X'
-L1:	sta	CONVIDEO-1,x
+L1:	sta	CONVIDEO_MINUS_1,x
 	dex
 	bne	L1
 	brk

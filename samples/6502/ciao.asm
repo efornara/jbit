@@ -6,18 +6,21 @@
 ; 2nd row starts at 2:50 and so on for a 10x4 matrix of Latin1 \
 ; (extended ASCII) characters.
 
-	.include "jbit.inc"
+	.device "microio"
 
-START = CONVIDEO + 10*1 + 3
+.define START0 2:53 ; CONVIDEO + 10*1 + 3
+.define START1 2:54
+.define START2 2:55
+.define START3 2:56
 
 .code
 
 	lda	#'C'
-	sta	START
+	sta	START0
 	lda	#'I'
-	sta	START+1
+	sta	START1
 	lda	#'A'
-	sta	START+2
+	sta	START2
 	lda	#'O'
-	sta	START+3
+	sta	START3
 	brk

@@ -1,7 +1,7 @@
 ; Bouncing letters (finite loop A-F). \
 ; More of the same.
 
-	.include "jbit.inc"
+	.device "microio"
 
 .code
 

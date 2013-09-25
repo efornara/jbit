@@ -5,7 +5,10 @@
 ; Write into 2:23 to set maxrand (default 255).
 
 
-	.include "jbit.inc"
+	.device "microio"
+
+.define DIE1POS 2:53 ; CONROW1 + 0 + 3
+.define DIE2POS 2:56 ; CONROW1 + 9 - 3
 
 .code
 
@@ -14,11 +17,11 @@
 next:	lda	RANDOM
 	clc
 	adc	#'1'
-	sta	CONROW1 + 0 + 3
+	sta	DIE1POS
 	lda	RANDOM
 	clc
 	adc	#'1'
-	sta	CONROW1 + 9 - 3
+	sta	DIE2POS
 wait:	sta	FRMDRAW
 	lda	KEYBUF
 	beq	wait

@@ -3,7 +3,7 @@
 ; (Transfer/copy Accumulator to X register).
 ; IO: Write the desired FPS * 4 into 2:17 (e.g. 4 = 1 FPS).
 
-	.include "jbit.inc"
+	.device "microio"
 
 .code
 

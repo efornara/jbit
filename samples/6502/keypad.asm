@@ -8,7 +8,7 @@
 ; At most 8 unacknowledged keys are kept, the others are lost.
 
 
-	.include "jbit.inc"
+	.device "microio"
 
 .code
 
