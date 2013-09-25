@@ -19,5 +19,9 @@ fetch:
 	( cd libs ; mkdir -p ace )
 	( cd libs ; ln -sf `pwd`/ace-builds-1.1.01/src-noconflict/ ace/1.1.01 )
 
+copy_res:
+	mkdir -p res
+	( cd res ; cp ../../samples/6502/*.asm . )
+
 clean:
 	$(RM) jbit-core.js jbit-core-ie.js *.o

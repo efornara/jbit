@@ -1,5 +1,6 @@
 *.o
 js/jbit-core*.js
 js/libs
+js/res
 native/jbit
 native/jbit.exe
