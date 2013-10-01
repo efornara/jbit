@@ -215,7 +215,7 @@ function VMPage() {
 			height = Math.floor((UI.height - y - (UI.space * 4)) / 4);
 			column = 0;
 			x = UI.space;
-			for (i in buttons) {
+			for (i = 0; i < buttons.length; i++) {
 				b = buttons[i];
 				id = "k_" + (b.hasOwnProperty('id') ? b.id : b.label);
 				e = document.getElementById("jb_btn_" + id);
@@ -289,7 +289,7 @@ function VMPage() {
 		
 		function createKeypad() {
 			var i, b, id, e;
-			for (i in buttons) {
+			for (i = 0; i < buttons.length; i++) {
 				b = buttons[i];
 				id = "k_" + (b.hasOwnProperty('id') ? b.id : b.label); 
 				e = UI.createButton(page, id, b.label);
