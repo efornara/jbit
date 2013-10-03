@@ -488,8 +488,10 @@ private:
 		if (n - i != 0)
 			return ERR;
 		const char *value = getenv(name);
-		if (!value)
-			return XV65_ENOENT;
+		if (!value) {
+			put_value(v_REQDAT, 8, 0);
+			return 0;
+		}
 		return put_string(addr, size, value);
 	}
 	int req_TIME() {
