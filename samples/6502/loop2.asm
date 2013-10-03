@@ -8,19 +8,19 @@
 .code
 
 	lda	#4
-	sta	FRMFPS
+	sta	2:17
 	lda	#'A'
-	sta	CONVIDEO
-	sta	FRMDRAW
+	sta	2:40
+	sta	2:18
 	lda	#25
-L3:	tax
-L1:	inc	CONVIDEO
-	sta	FRMDRAW
+l3:	tax
+l1:	inc	2:40
+	sta	2:18
 	dex
-	bne	L1
+	bne	l1
 	tax
-L2:	dec	CONVIDEO
-	sta	FRMDRAW
+l2:	dec	2:40
+	sta	2:18
 	dex
-	bne	L2
-	jmp	L3
+	bne	l2
+	jmp	l3

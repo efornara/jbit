@@ -13,23 +13,23 @@
 .code
 
 start:	lda	#0
-next:	sta	FRMDRAW
-	lda	KEYBUF
+next:	sta	2:40
+	lda	2:24
 	beq	next
 	cmp	#'*'
 	beq	quit
 	ldx	#0
-L1:	sta	CONVIDEO,x
+l1:	sta	2:40,x
 	tay
 	lda	#0
-	sta	FRMDRAW
+	sta	2:18
 	lda	#' '
-	sta	CONVIDEO,x
+	sta	2:40,x
 	tya
 	inx
 	cpx	#10
-	bne	L1
+	bne	l1
 	lda	#1
-	sta	KEYBUF
+	sta	2:24
 	jmp	start
 quit:	brk

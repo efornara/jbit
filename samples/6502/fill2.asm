@@ -7,13 +7,11 @@
 
 	.device "microio"
 
-.define CONVIDEO_MINUS_1 2:39 ; CONVIDEO - 1
-
 .code
 
 	ldx	#40
 	lda	#'X'
-L1:	sta	CONVIDEO_MINUS_1,x
+l1:	sta	2:39,x
 	dex
-	bne	L1
+	bne	l1
 	brk

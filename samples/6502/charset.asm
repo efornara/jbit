@@ -13,15 +13,15 @@
 	lda	#0
 show:	tax
 	ldy	#0
-L1:	sta	CONVIDEO,y
+l1:	sta	2:40,y
 	clc
 	adc	#1
 	iny
 	cpy	#40
-	bne	L1
+	bne	l1
 	txa
-wait:	sta	FRMDRAW
-	ldy	KEYBUF
+wait:	sta	2:18
+	ldy	2:24
 	beq	wait
 	cpy	#'2'
 	beq	up
@@ -30,7 +30,7 @@ wait:	sta	FRMDRAW
 	cpy	#'0'
 	beq	quit
 next:	ldy	#1
-	sty	KEYBUF
+	sty	2:24
 	bne	show
 up:	cmp	#0
 	beq	next

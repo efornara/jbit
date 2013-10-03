@@ -13,8 +13,8 @@
 
 	ldx	#0
 	lda	#'X'
-L1:	sta	CONVIDEO,x
+l1:	sta	2:40,x
 	inx
 	cpx	#40
-	bne	L1
+	bne	l1
 	brk

@@ -9,7 +9,7 @@
 
 .code
 
-L1:	inc	CONVIDEO
-	sta	FRMDRAW
+l1:	inc	2:40
+	sta	2:18
 	nop
-	jmp	L1
+	jmp	l1

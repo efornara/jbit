@@ -6,26 +6,26 @@
 .code
 
 	ldy	#'A'
-L3:	ldx	#0
-L1:	lda	#' '
-	sta	CONVIDEO,x
+l3:	ldx	#0
+l1:	lda	#' '
+	sta	2:40,x
 	inx
 	tya
-	sta	CONVIDEO,x
-	sta	FRMDRAW
+	sta	2:40,x
+	sta	2:18
 	cpx	#9
-	bne	L1
-L2:	lda	#' '
-	sta	CONVIDEO,x
+	bne	l1
+l2:	lda	#' '
+	sta	2:40,x
 	dex
 	tya
-	sta	CONVIDEO,x
-	sta	FRMDRAW
+	sta	2:40,x
+	sta	2:18
 	cpx	#0
-	bne	L2
+	bne	l2
 	iny
 	cpy	#'G'
-	bne	L3
+	bne	l3
 	lda	#' '
-	sta	CONVIDEO,x
+	sta	2:40,x
 	brk

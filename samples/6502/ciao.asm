@@ -8,19 +8,14 @@
 
 	.device "microio"
 
-.define START0 2:53 ; CONVIDEO + 10*1 + 3
-.define START1 2:54
-.define START2 2:55
-.define START3 2:56
-
 .code
 
-	lda	#'C'
-	sta	START0
-	lda	#'I'
-	sta	START1
+	lda	#67 ; ASCII code: A is 65, B is 66, etc...
+	sta	2:53 ; 2nd row (2:50), 4th column (+3)
+	lda	#'I' ; you can use this notation
+	sta	2:54 ; 5th column (+4)
 	lda	#'A'
-	sta	START2
+	sta	2:55 ; 6th column (+5)
 	lda	#'O'
-	sta	START3
+	sta	2:56 ; 7th column (+6)
 	brk

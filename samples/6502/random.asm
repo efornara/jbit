@@ -7,26 +7,23 @@
 
 	.device "microio"
 
-.define DIE1POS 2:53 ; CONROW1 + 0 + 3
-.define DIE2POS 2:56 ; CONROW1 + 9 - 3
-
 .code
 
 	lda	#5
-	sta	RANDOM
-next:	lda	RANDOM
+	sta	2:23
+next:	lda	2:23
 	clc
 	adc	#'1'
-	sta	DIE1POS
-	lda	RANDOM
+	sta	2:53 ; 2nd row (2:50), 4th column (+3)
+	lda	2:23
 	clc
 	adc	#'1'
-	sta	DIE2POS
-wait:	sta	FRMDRAW
-	lda	KEYBUF
+	sta	2:56 ; 2nd row (2:50), 7th column (+6)
+wait:	sta	2:18
+	lda	2:24
 	beq	wait
 	ldx	#1
-	stx	KEYBUF
+	stx	2:24
 	cmp	#'*'
 	bne	next
 	brk
