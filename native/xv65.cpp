@@ -452,15 +452,15 @@ private:
 		put_value(v_REQDAT, 8, argc);
 		return 0;
 	}
-	int put_string(int addr, int len, const char *s) {
-		if (addr + len > top_memory)
+	int put_string(int addr, int size, const char *s) {
+		if (addr + size > top_memory)
 			return ERR;
-		int str_len = strlen(s) + 1;
-		put_value(v_REQDAT, 8, str_len);
-		if (len >= str_len) {
+		int str_size = strlen(s) + 1;
+		put_value(v_REQDAT, 8, str_size);
+		if (size >= str_size) {
 			for (int i = 0; s[i]; i++)
 				m->put(addr + i, s[i]);
-			m->put(addr + str_len, 0);
+			m->put(addr + str_size, 0);
 		}
 		return 0;
 	}
@@ -468,19 +468,19 @@ private:
 		if (n < 5)
 			return ERR;
 		int addr = r_get_uint16(1);
-		int len = r_get_uint16(3);
+		int size = r_get_uint16(3);
 		int i;
 		if (!r_get_trailing_int(5, &i))
 			return ERR;
 		if (i < 0 || i >= argc)
 			return XV65_EDOM;
-		return put_string(addr, len, argv[i]);
+		return put_string(addr, size, argv[i]);
 	}
 	int req_ENV() {
 		if (n <= 5)
 			return ERR;
 		int addr = r_get_uint16(1);
-		int len = r_get_uint16(3);
+		int size = r_get_uint16(3);
 		int i = r_parse_string(5);
 		if (i == -1)
 			return ERR;
@@ -489,8 +489,8 @@ private:
 			return ERR;
 		const char *value = getenv(name);
 		if (!value)
-			value = "";
-		return put_string(addr, len, value);
+			return XV65_ENOENT;
+		return put_string(addr, size, value);
 	}
 	int req_TIME() {
 		if (n != 1)
