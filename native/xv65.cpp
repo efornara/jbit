@@ -458,9 +458,10 @@ private:
 		int str_size = strlen(s) + 1;
 		put_value(v_REQDAT, 8, str_size);
 		if (size >= str_size) {
-			for (int i = 0; s[i]; i++)
+			int i;
+			for (i = 0; s[i]; i++)
 				m->put(addr + i, s[i]);
-			m->put(addr + str_size, 0);
+			m->put(addr + i, 0);
 		}
 		return 0;
 	}
