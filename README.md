@@ -66,7 +66,8 @@ Enter the js directory:
 
     cd js
 
-Fetch some additional libraries (ace and jquery):
+Fetch some additional libraries (ace and jquery) and some images (not kept
+in the git repository):
 
     make fetch
 

@@ -12,11 +12,18 @@ jbit-core.js: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o jbit-core.js $(OBJS) -s $(EXPORTS)
 	$(CXX) $(CXXFLAGS) -o jbit-core-ie.js $(OBJS) -s $(EXPORTS) -s USE_TYPED_ARRAYS=0
 
-fetch:
+fetch: fetch_libs fetch_images
+
+fetch_libs:
 	mkdir -p libs
 	( cd libs ; wget -c https://github.com/ajaxorg/ace-builds/archive/v1.1.01.tar.gz )
 	( cd libs ; tar xzf v1.1.01.tar.gz ace-builds-1.1.01/src )
 	( cd libs ; wget -c http://code.jquery.com/jquery-1.10.2.js )
+
+fetch_images:
+	mkdir -p images
+	( cd images ; wget -c http://jbit.sourceforge.net/webapp/1.2/images/microio.png )
+	( cd images ; wget -c http://jbit.sourceforge.net/webapp/1.2/images/vga14_x2.png )
 
 copy_res:
 	mkdir -p res

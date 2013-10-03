@@ -28,75 +28,6 @@
 
 JBIT = {};
 
-var UI = function() {
-	return {
-	
-		space: 5,
-		
-		width: 180,
-		
-		height: 240,
-		
-		createPage: function(id) {
-			var e;
-			e = document.createElement("div");
-			e.className = "page";
-			e.id = "jb_page_" + id;
-			document.getElementById("jb_top").appendChild(e);
-			return e;
-		},	
-		
-		getPage: function(id) {
-			return document.getElementById("jb_page_" + id);
-		},
-		
-		switchToPage: function(id) {
-			var c, i;
-			c = document.getElementById("jb_top").children;
-			for (i in c) {
-				if (c[i].nodeName != "DIV")
-					continue;
-				if (c[i].id == "jb_page_" + id)
-					c[i].style.display = "block";
-				else
-					c[i].style.display = "none";
-			}
-		},
-		
-		createButton: function(parent, id, title, callback) {
-			var e;
-			e = document.createElement("input");
-			e.id = "jb_btn_" + id;
-			e.className = "button";
-			e.type = "button";
-			e.style.position = "absolute";
-			if (title)
-				e.value = title;
-			if (callback)
-				e.onclick = function() {
-					try {
-						callback();
-					} catch(e) {
-					}
-					return false;
-				};
-			parent.appendChild(e);
-			return e;
-		},
-		
-		createTextArea: function(parent, id, callback) {
-			var e;
-			e = document.createElement("textarea");
-			e.id = "jb_txt_" + id;
-			e.className = "text";
-			e.setAttribute("wrap", "off");
-			parent.appendChild(e);
-			return e;
-		}
-		
-	};
-}();
-
 function VMPage() {
 
 	var video;
@@ -118,6 +49,26 @@ function VMPage() {
 		{ keys:'1', label:'0' },
 		{ keys:'#', id:'SHARP', label:'#' }
 	];
+
+	function createKey(parent, id, title, callback) {
+		var e;
+		e = document.createElement("div");
+		e.id = "jb_btn_" + id;
+		e.className = "key";
+		e.style.position = "absolute";
+		e.style.width = "10px";
+		e.style.height = "10px";
+		if (callback)
+			e.onclick = function() {
+				try {
+					callback();
+				} catch(e) {
+				}
+				return false;
+			};
+		parent.appendChild(e);
+		return e;
+	}
 
 	function onclickHandler() {
 		var id, key;
@@ -152,159 +103,87 @@ function VMPage() {
 		vm.halt();
 	}
 	
-	function reflow() {
-	
-		var y;
-	
-		function reflowHeader() {
-			var width, e;
-			width = 60;
-			y += UI.space;
-			e = document.getElementById("jb_btn_halt");
-			e.style.left = (UI.width - width - UI.space) + "px";
-			e.style.top = y + "px";
-			e.style.width = width + "px";
-			e.style.fontSize = "10px";
-			e.style.height = "18px";
-			y += 18;
-			y += UI.space;
-		}
-		
-		function reflowLCD() {
-		
-			var width, height, e;
-			
-			function reflowGlass() {
-				width = UI.width - UI.space * 2;
-				height = 16 * 4 + 12;
-				e = document.getElementById("jb_vm_lcd");
-				e.style.left = UI.space + "px";
-				e.style.top = y + "px";
-				e.style.width = (width - 4) + "px";
-				e.style.height = (height - 3) + "px";
-				y += height;
-				y += UI.space;
-			}
-			
-			function reflowCells() {
-				var ox, i, row, column, y, x;
-				ox = (width - 10 * 8) / 2;
-				i = 0;
-				y = 5; // TODO
-				for (row = 0; row < 4; row++) {
-					x = ox;
-					for (col = 0; col < 10; col++) {
-						e = cells[i++];
-						e.style.left = x + "px";
-						e.style.top = y + "px";
-						e.style.width = 8 + "px";
-						e.style.height = 16 + "px";
-						x += 8;
-					}
-					y += 16;
-				}
-			}
-
-			reflowGlass();
-			reflowCells();
-		}
-		
-		function reflowKeypad() {
-			var width, height, column, x, i, b, id, e;
-			width = Math.floor((UI.width - (UI.space * 4)) / 3);
-			height = Math.floor((UI.height - y - (UI.space * 4)) / 4);
-			column = 0;
-			x = UI.space;
-			for (i = 0; i < buttons.length; i++) {
-				b = buttons[i];
-				id = "k_" + (b.hasOwnProperty('id') ? b.id : b.label);
-				e = document.getElementById("jb_btn_" + id);
-				e.style.left = x + "px";
-				e.style.top = y + "px";
-				e.style.width = width + "px";
-				e.style.height = height + "px";
-				x += width + UI.space;
-				column++;
-				if (column == 3) {
-					column = 0;
-					x = UI.space;
-					y += height + UI.space;
-				}
-			}
-		}
-		
-		y = 0;
-		reflowHeader();
-		reflowLCD();
-		reflowKeypad();
-	}
-	
 	function create() {
 	
-		var page;
+		var top;
 		
 		function createHeader() {
 			var e;
-			UI.createButton(page, "halt", "BREAK", halt);
+			e = createKey(top, "halt", "BREAK", halt);
+			e.style.left = "134px";
+			e.style.top = "7px";
+			e.style.width = "56px";
+			e.style.height = "28px";
 			e = document.createElement("div");
 			e.id = "jb_vm_status";
 			e.style.position = "absolute";
-			e.style.left = UI.space + "px";
-			e.style.top = UI.space + "px";
-			e.style.width = "6px";
-			e.style.height = "18px";
-			page.appendChild(e);
+			e.style.left = "15px";
+			e.style.top = "15px";
+			e.style.width = "12px";
+			e.style.height = "16px";
+			top.appendChild(e);
 			updateStatus("HALTED");
 		}
 		
 		function createLCD() {
 		
-			var glass;
-			
-			function createGlass() {
-				var e;
-				e = document.createElement("div");
-				e.id = "jb_vm_lcd";
-				e.className = "lcd";
-				page.appendChild(e);
-				return e;
-			}
-		
 			function createCells() {
-				var i, e;
+				var i, e, ox = 16, oy = 45, x = 0, y = 0;
 				for (i = 0; i < 40; i++) {
 					e = document.createElement("div");
 					e.id = "jb_vm_lcd_" + i;
 					e.className = "cell";
-					e.style.backgroundImage = "url(vga.png)";
+					e.style.left = ox + x + "px";
+					e.style.top = oy + y + "px";
+					e.style.width = 16 + "px";
+					e.style.height = 28 + "px";
+					e.style.backgroundImage = "url(images/vga14_x2.png)";
 					e.style.backgroundPosition = "0px 0px";
-					glass.appendChild(e);
+					top.appendChild(e);
 					cells[i] = e;
+					if (i % 10 == 9) {
+						x = 0;
+						y += 29;
+					} else {
+						x += 17;
+					}
 				}
 			}
 
-			glass = createGlass();
 			createCells();
 		}
 		
 		function createKeypad() {
-			var i, b, id, e;
+			var width = 56, height = 40, column, x, y, i, b, id, e;
+			column = 0;
+			x = 10;
+			y = 170;
 			for (i = 0; i < buttons.length; i++) {
 				b = buttons[i];
 				id = "k_" + (b.hasOwnProperty('id') ? b.id : b.label); 
-				e = UI.createButton(page, id, b.label);
+				e = createKey(top, id, b.label);
+				e.style.left = x + "px";
+				e.style.top = y + "px";
+				e.style.width = width + "px";
+				e.style.height = height + "px";
+				x += width + 5;
+				column++;
+				if (column == 3) {
+					column = 0;
+					x = 10
+					y += height + 5;
+				}
 				e.onclick = onclickHandler;
 			}
 		}
 
-		page = UI.createPage("vm");
+		top = document.getElementById("jb_top");
 		createHeader();
 		createLCD();
 		createKeypad();
 	}
 
 	create();
-	reflow();
 	
 	this.setCore = function(vm_, io) {
 		vm = vm_;
@@ -317,18 +196,14 @@ function VMPage() {
 		for (i = 0; i < 40; i++) {
 			c = video[i];
 			col = c % 16;
-			x = -8 * col;
-			y = -16 * ((c - col) / 16);
+			x = -16 * col;
+			y = -28 * ((c - col) / 16);
 			cells[i].style.backgroundPosition = x + "px " + y + "px";
 		}
 	};
 	
 	this.setVMStatus = function(status) {
 		updateStatus(status);
-	};
-	
-	this.resize = function() {
-		reflow();
 	};
 }
 
@@ -439,7 +314,6 @@ JBIT.start = function() {
 	$("#jb_toolbox li").click(selectProgram);
 
 	var sim = new Simulator(vm);
-	UI.switchToPage("vm");
 
 	document.getElementById("jb_run").onclick = function() {
 		var prog = editor.getValue();
