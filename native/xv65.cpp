@@ -152,6 +152,7 @@ private:
 	int v_FRMFPS;
 	int v_TRCLEVEL;
 	int v_ERREXIT;
+	FILE *putfp;
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
@@ -693,6 +694,7 @@ public:
 		v_FRMFPS = 0;
 		v_TRCLEVEL = 0;
 		v_ERREXIT = 0;
+		putfp = stdout;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
@@ -700,7 +702,7 @@ public:
 		value &= 0xff;
 		switch (address) {
 		case PUTCHAR:
-			putchar(value);
+			fputc(value, putfp);
 			microio = false;
 			break;
 		case REQPUT:
@@ -725,7 +727,7 @@ public:
 			put_FRMDRAW();
 			break;
 		case PUTUINT8:
-			printf("%d", value);
+			fprintf(putfp, "%d", value);
 			microio = false;
 			break;
 		case RANDOM:
@@ -740,6 +742,12 @@ public:
 			break;
 		case ERREXIT:
 			v_ERREXIT = value ? 0xff : 0;
+			break;
+		case REDIRPUT:
+			if (value == 1)
+				putfp = stdout;
+			else if (value == 2)
+				putfp = stderr;
 			break;
 		default:
 			if (address >= REQDAT && address < REQDAT + 16) {
@@ -779,6 +787,11 @@ public:
 			return v_TRCLEVEL;
 		case ERREXIT:
 			return v_ERREXIT;
+		case REDIRPUT:
+			if (putfp == stdout)
+				return 1;
+			else
+				return 2;
 		default:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];

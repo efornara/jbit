@@ -59,6 +59,7 @@
 #define PIDSIZE 0x0251
 #define TRCLEVEL 0x0252
 #define ERREXIT 0x0253
+#define REDIRPUT 0x0254
 
 #define REQDAT 0x0260
 #define REQDAT2 0x0268
