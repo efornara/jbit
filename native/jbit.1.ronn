@@ -327,6 +327,9 @@ Fork a new process:
   * `/usr/share/jbit/samples`:
     Sample programs.
 
+  * `/usr/share/doc/jbit/copyright`:
+    License.
+
 ## ENVIRONMENT
 
   * `JBIT_PATH`:
@@ -342,9 +345,11 @@ The parser does not always provide contextual information. For example,
 if a symbol is redefined, the location of the first definition is not
 reported.
 
-## AUTHOR
+## COPYRIGHT
 
-Emanuele Fornara <efornara@users.sourceforge.net>
+Copyright (C) 2012-2013  Emanuele Fornara
+
+Released under the BSD 2-Clause License.
 
 ## SEE ALSO
 
