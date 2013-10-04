@@ -67,7 +67,7 @@
     <a href="#FILES">FILES</a>
     <a href="#ENVIRONMENT">ENVIRONMENT</a>
     <a href="#BUGS">BUGS</a>
-    <a href="#AUTHOR">AUTHOR</a>
+    <a href="#COPYRIGHT">COPYRIGHT</a>
     <a href="#SEE-ALSO">SEE ALSO</a>
   </div>
 
@@ -198,11 +198,6 @@ Windows.</p>
 <dl>
 <dt><code>PUTCHAR</code> (W)</dt><dd><p> Mapped to <span class="man-ref">putchar<span class="s">(3)</span></span>.</p></dd>
 <dt><code>PUTUINT8</code> (W)</dt><dd><p> Send the decimal representation of a byte (0-255) to stdout.</p></dd>
-<dt><code>FRMDRAW</code> (W)</dt><dd><p> Mapped to <span class="man-ref">fflush<span class="s">(3)</span></span>. The value written doesn't matter, FRMDRAW
- always refer to stdout. If FRMFPS is != 0, also wait to keep
- the desired refresh rate.</p></dd>
-<dt><code>FRMFPS</code> (RW)</dt><dd><p> The desired refresh rate in frames per seconds * 4. For example, 40
- means 10 frames per seconds.</p></dd>
 </dl>
 
 
@@ -424,7 +419,8 @@ sta REQEND
 <h2 id="FILES">FILES</h2>
 
 <dl>
-<dt><code>/usr/share/jbit/samples</code></dt><dd>Sample programs.</dd>
+<dt><code>/usr/share/jbit/samples</code></dt><dd><p>Sample programs.</p></dd>
+<dt><code>/usr/share/doc/jbit/copyright</code></dt><dd><p>License.</p></dd>
 </dl>
 
 
@@ -445,9 +441,11 @@ load in future versions of jbit.</p>
 if a symbol is redefined, the location of the first definition is not
 reported.</p>
 
-<h2 id="AUTHOR">AUTHOR</h2>
+<h2 id="COPYRIGHT">COPYRIGHT</h2>
 
-<p>Emanuele Fornara <a href="&#109;&#x61;&#105;&#108;&#x74;&#x6f;&#58;&#x65;&#x66;&#x6f;&#x72;&#110;&#97;&#x72;&#x61;&#x40;&#117;&#115;&#101;&#x72;&#115;&#x2e;&#x73;&#111;&#117;&#114;&#99;&#101;&#x66;&#x6f;&#114;&#x67;&#101;&#46;&#x6e;&#101;&#116;" data-bare-link="true">&#101;&#x66;&#x6f;&#x72;&#110;&#97;&#114;&#97;&#x40;&#x75;&#115;&#x65;&#x72;&#x73;&#x2e;&#115;&#x6f;&#x75;&#x72;&#x63;&#x65;&#x66;&#111;&#114;&#x67;&#x65;&#x2e;&#x6e;&#x65;&#x74;</a></p>
+<p>Copyright (C) 2012-2013  Emanuele Fornara</p>
+
+<p>Released under the BSD 2-Clause License.</p>
 
 <h2 id="SEE-ALSO">SEE ALSO</h2>
 
@@ -458,7 +456,7 @@ reported.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>September 2013</li>
+    <li class='tc'>October 2013</li>
     <li class='tr'>jbit(1)</li>
   </ol>
 
