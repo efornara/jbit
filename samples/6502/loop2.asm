@@ -7,20 +7,20 @@
 
 .code
 
-	lda	#4
-	sta	2:17
-	lda	#'A'
-	sta	2:40
-	sta	2:18
-	lda	#25
-l3:	tax
-l1:	inc	2:40
-	sta	2:18
-	dex
-	bne	l1
-	tax
-l2:	dec	2:40
-	sta	2:18
-	dex
-	bne	l2
-	jmp	l3
+	LDA	#4
+	STA	2:17
+	LDA	#65 ; A
+	STA	2:40
+	STA	2:18
+	LDA	#25
+L3:	TAX
+L1:	INC	2:40
+	STA	2:18
+	DEX
+	BNE	L1
+	TAX
+L2:	DEC	2:40
+	STA	2:18
+	DEX
+	BNE	L2
+	JMP	L3

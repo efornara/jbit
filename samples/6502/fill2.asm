@@ -9,9 +9,9 @@
 
 .code
 
-	ldx	#40
-	lda	#'X'
-l1:	sta	2:39,x
-	dex
-	bne	l1
-	brk
+	LDX	#40
+	LDA	#88
+L1:	STA	2:39,X
+	DEX
+	BNE	L1
+	BRK

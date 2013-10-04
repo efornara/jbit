@@ -11,10 +11,10 @@
 
 .code
 
-	ldx	#0
-	lda	#'X'
-l1:	sta	2:40,x
-	inx
-	cpx	#40
-	bne	l1
-	brk
+	LDX	#0
+	LDA	#88
+L1:	STA	2:40,X
+	INX
+	CPX	#40
+	BNE	L1
+	BRK

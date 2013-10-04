@@ -10,12 +10,12 @@
 
 .code
 
-	lda	#67 ; ASCII code: A is 65, B is 66, etc...
-	sta	2:53 ; 2nd row (2:50), 4th column (+3)
-	lda	#'I' ; you can use this notation
-	sta	2:54 ; 5th column (+4)
-	lda	#'A'
-	sta	2:55 ; 6th column (+5)
-	lda	#'O'
-	sta	2:56 ; 7th column (+6)
-	brk
+	LDA	#67 ; ASCII CODE: A IS 65, B IS 66, ETC...
+	STA	2:53 ; 2ND ROW (2:50), 4TH COLUMN (+3)
+	LDA	#73
+	STA	2:54 ; 5TH COLUMN (+4)
+	LDA	#65
+	STA	2:55 ; 6TH COLUMN (+5)
+	LDA	#79
+	STA	2:56 ; 7TH COLUMN (+6)
+	BRK

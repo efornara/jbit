@@ -5,27 +5,27 @@
 
 .code
 
-	ldy	#'A'
-l3:	ldx	#0
-l1:	lda	#' '
-	sta	2:40,x
-	inx
-	tya
-	sta	2:40,x
-	sta	2:18
-	cpx	#9
-	bne	l1
-l2:	lda	#' '
-	sta	2:40,x
-	dex
-	tya
-	sta	2:40,x
-	sta	2:18
-	cpx	#0
-	bne	l2
-	iny
-	cpy	#'G'
-	bne	l3
-	lda	#' '
-	sta	2:40,x
-	brk
+	LDY	#65 ; A
+L3:	LDX	#0
+L1:	LDA	#32 ; SPACE
+	STA	2:40,X
+	INX
+	TYA
+	STA	2:40,X
+	STA	2:18
+	CPX	#9
+	BNE	L1
+L2:	LDA	#32 ; SPACE
+	STA	2:40,X
+	DEX
+	TYA
+	STA	2:40,X
+	STA	2:18
+	CPX	#0
+	BNE	L2
+	INY
+	CPY	#71 ; G (LETTER AFTER F)
+	BNE	L3
+	LDA	#32 ; SPACE
+	STA	2:40,X
+	BRK

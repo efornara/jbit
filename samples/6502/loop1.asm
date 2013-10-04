@@ -9,7 +9,7 @@
 
 .code
 
-l1:	inc	2:40
-	sta	2:18
-	nop
-	jmp	l1
+L1:	INC	2:40
+	STA	2:18
+	NOP
+	JMP	L1

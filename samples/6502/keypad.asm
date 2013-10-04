@@ -12,24 +12,24 @@
 
 .code
 
-start:	lda	#0
-next:	sta	2:40
-	lda	2:24
-	beq	next
-	cmp	#'*'
-	beq	quit
-	ldx	#0
-l1:	sta	2:40,x
-	tay
-	lda	#0
-	sta	2:18
-	lda	#' '
-	sta	2:40,x
-	tya
-	inx
-	cpx	#10
-	bne	l1
-	lda	#1
-	sta	2:24
-	jmp	start
-quit:	brk
+START:	LDA	#0
+NEXT:	STA	2:40
+	LDA	2:24
+	BEQ	NEXT
+	CMP	#42 ; *
+	BEQ	QUIT
+	LDX	#0
+L1:	STA	2:40,X
+	TAY
+	LDA	#0
+	STA	2:18
+	LDA	#32 ; SPACE
+	STA	2:40,X
+	TYA
+	INX
+	CPX	#10
+	BNE	L1
+	LDA	#1
+	STA	2:24
+	JMP	START
+QUIT:	BRK
