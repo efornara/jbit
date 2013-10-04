@@ -62,6 +62,8 @@ public:
 		if (i >= len)
 			return EOL;
 		char c = d[i];
+		while (i < len && c == '\r')
+			c = d[++i];
 		if (c == 0 || c == '\n' || c == '\r')
 			return EOL;
 		i++;
@@ -75,8 +77,6 @@ public:
 		while (get() != EOL)
 			;
 		i++;
-		while (i < len && d[i] == '\r')
-			i++;
 		if (i >= len)
 			return false;
 		start = i;
