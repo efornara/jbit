@@ -1,7 +1,7 @@
 VPATH = .:../core
 
 CXX = i586-mingw32msvc-g++
-CXXFLAGS = -I../core -std=gnu++98 -fno-exceptions -fno-rtti -Wall -O2 -s
+CXXFLAGS = -I../core -std=gnu++98 -fno-exceptions -fno-rtti -Wall -O2 -fomit-frame-pointer -s
 
 OBJS = main.o stdout.o cpu.o asm.o symdefs.o
 EXE = jbit.exe

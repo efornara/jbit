@@ -5,12 +5,24 @@
 VPATH = .:../core
 
 CXX = g++
-CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -ggdb
+CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall
 LDFLAGS =
 LIBS =
 
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
 EXE = jbit
+
+
+#
+# COMPILATION FLAGS
+#
+
+# development
+#CXXFLAGS += -ggdb
+
+# release
+CXXFLAGS += -O2 -fomit-frame-pointer
+LDFLAGS += -s
 
 
 #
