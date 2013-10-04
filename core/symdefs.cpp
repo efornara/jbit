@@ -36,8 +36,6 @@ namespace {
 
 const SymDef stdout_symdefs[] = {
 {"PUTCHAR",0x0200},
-{"FRMFPS",0x0211},
-{"FRMDRAW",0x0212},
 {"PUTUINT8",0x0216},
 {0,0},
 }; 

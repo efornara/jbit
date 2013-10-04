@@ -115,15 +115,6 @@ Registers:
   * `PUTUINT8` (W):
      Send the decimal representation of a byte (0-255) to stdout.
 
-  * `FRMDRAW` (W):
-     Mapped to fflush(3). The value written doesn't matter, FRMDRAW
-     always refer to stdout. If FRMFPS is != 0, also wait to keep
-     the desired refresh rate.
-
-  * `FRMFPS` (RW):
-     The desired refresh rate in frames per seconds * 4. For example, 40
-     means 10 frames per seconds.
-
 ## MICROIO
 
 This device provides a display with a 10x4 matrix of characters (also

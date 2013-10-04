@@ -29,49 +29,21 @@
 // stdout.cpp
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
-#include <ctype.h>
-
-#ifdef __WIN32__
-#include <windows.h>
-#endif
 
 #include "jbit.h"
 
 #include "_xv65.h"
 
 #define IO_BASE 0x200
-#define ERR XV65_EINVAL
 
 namespace {
 
 class StdoutDevice : public Device {
-private:
-	int v_FRMFPS;
-	void put_FRMDRAW() {
-		fflush(stdout);
-		if (v_FRMFPS) {
-			double fps = v_FRMFPS / 4.0;
-			int ms = (int)(1000 / fps);
-#ifdef __WIN32__
-			Sleep(ms);
-#else
-			struct timespec ts;
-			ts.tv_sec = ms / 1000;
-			ts.tv_nsec = 1000000 * (ms % 1000);
-			nanosleep(&ts, NULL);
-#endif
-		}
-	}
 public:
 	// IO
 	void set_address_space(AddressSpace *dma) {
 	}
 	void reset() {
-		v_FRMFPS = 0;
 	}
 	void put(int address, int value) {
 		address += IO_BASE;
@@ -79,12 +51,6 @@ public:
 		switch (address) {
 		case PUTCHAR:
 			putchar(value);
-			break;
-		case FRMFPS:
-			v_FRMFPS = value;
-			break;
-		case FRMDRAW:
-			put_FRMDRAW();
 			break;
 		case PUTUINT8:
 			printf("%d", value);
@@ -94,8 +60,6 @@ public:
 	int get(int address) {
 		address += IO_BASE;
 		switch (address) {
-		case FRMFPS:
-			return v_FRMFPS;
 		default:
 			return 0;
 		}

@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JBIT" "1" "September 2013" "" ""
+.TH "JBIT" "1" "October 2013" "" ""
 .
 .SH "NAME"
 \fBjbit\fR \- 6502 Assembler and Simulator
@@ -172,14 +172,6 @@ Mapped to putchar(3)\.
 .TP
 \fBPUTUINT8\fR (W)
 Send the decimal representation of a byte (0\-255) to stdout\.
-.
-.TP
-\fBFRMDRAW\fR (W)
-Mapped to fflush(3)\. The value written doesn\'t matter, FRMDRAW always refer to stdout\. If FRMFPS is != 0, also wait to keep the desired refresh rate\.
-.
-.TP
-\fBFRMFPS\fR (RW)
-The desired refresh rate in frames per seconds * 4\. For example, 40 means 10 frames per seconds\.
 .
 .SH "MICROIO"
 This device provides a display with a 10x4 matrix of characters (also called console), a keypad similar to the ones found on classic phones (keys 0\-9, * and #) and two random number generators\.
