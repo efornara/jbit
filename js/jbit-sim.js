@@ -315,11 +315,19 @@ JBIT.start = function() {
 
 	var sim = new Simulator(vm);
 
-	document.getElementById("jb_run").onclick = function() {
+	function runProgram() {
 		var prog = editor.getValue();
 		var lineno = sim.run(prog);
 		if (lineno > 0)
 			editor.gotoLine(lineno);
 		return false;
-	};
+	}
+
+	document.getElementById("jb_run").onclick = runProgram;
+	editor.commands.addCommand({
+		name: 'run',
+		bindKey: {win: 'Ctrl-M',  mac: 'Command-M'},
+		exec: runProgram,
+		readOnly: true
+	});
 };

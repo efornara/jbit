@@ -8,6 +8,9 @@
 ; If you need to keep a copy of your program, select all the text (Ctrl-A)
 ; and copy and paste it somewhere.
 ;
+; To run a program without the editor losing focus, press Ctrl-M
+; (or Command-M on Macs).
+;
 
 	.device "microio"
 
