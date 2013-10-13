@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+
+<project name="JBit" default="build" basedir=".">
+
+	<taskdef resource="antenna.properties"/>
+
+	<fail message="Please set the WTK properties."/>
+
+	<property name="wtk.home" value="WTK_HOME_DIRECTORY"/>
+	<property name="wtk.midp.version" value="2.0"/>
+	<property name="wtk.cldc.version" value="1.0"/>	
+	<property name="device" value="Generic/PlainMidp2"/>
+	
+	<fail message="Please uncomment Standard or RunTime."/>
+
+	<!-- Standard
+
+	<property name="midlet.name" value="JBit"/>
+	<property name="midlet.vendor" value="Emanuele Fornara"/>
+	<property name="midlet.version" value="1.4.1"/>
+	<property name="demos_6502" value="ciao.jb,loop1.jb,fill1.jb,fill2.jb,loop2.jb,loop3.jb,keypad.jb,random.jb,charset.jb"/>
+	<property name="demos_IO1" value="resize.jb,stdpal.jb,bgcol1.jb,bgcol2.jb,setpal.jb,iload.jb,idummy.jb,ipnggen1.jb,ipnggen2.jb"/>
+	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,template.jb,effects.jb"/>
+	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
+	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>
+	<property name="preproc.symbols" value=""/>
+	
+	-->
+	
+	<!-- RunTime
+
+	<property name="midlet.name" value="JBitRT"/>
+	<property name="midlet.vendor" value="Anonymous"/>
+	<property name="midlet.version" value="1.0.0"/>
+	<property name="jbitrt" value="true"/>
+	<property name="autorun" value="charset.jb"/>
+	<property name="preproc.symbols" value="JBIT_RUNTIME=1"/>
+	
+	-->
+
+	<target name="build">
+		
+		<delete failonerror="false" dir="tmpsrc"/>
+		<delete failonerror="false" dir="tmpclasses"/>
+		<mkdir dir="tmpsrc"/>
+		<mkdir dir="tmpclasses"/>
+		<mkdir dir="midlets"/>
+	
+		<property name="midlet.base" value="midlets/${midlet.name}"/>
+
+		<wtkjad jadfile="${midlet.base}.jad"
+		  name="${midlet.name}"
+		  vendor="${midlet.vendor}"
+		  version="${midlet.version}">
+			<midlet name="${midlet.name}" icon="/icon.png" class="JBit"/>
+			<attribute name="MIDlet-Icon" value="/icon.png"/>
+			<attribute name="MIDlet-Info-URL" value="http://jbit.sourceforge.net/m" unless="jbitrt"/>
+			<attribute name="JBit-URL" value="http://jbit.sourceforge.net/"/>
+			<attribute name="JBit-License" value="GNU LGPL 2.1"/>
+			<attribute name="JBit-AutoRun" value="${autorun}" if="jbitrt"/>
+			<attribute name="JBit-Module-1" value="CPU" unless="jbitrt"/>
+			<attribute name="JBit-Module-2" value="VM" unless="jbitrt"/>
+			<attribute name="JBit-Module-3" value="Touch" unless="jbitrt"/>
+			<attribute name="JBit-Module-4" value="Monitor" unless="jbitrt"/>
+			<attribute name="JBit-Module-5" value="Store" unless="jbitrt"/>
+			<attribute name="JBit-Module-6" value="Editor" unless="jbitrt"/>
+			<attribute name="JBit-Module-7" value="Demos" unless="jbitrt"/>
+		</wtkjad>
+	
+		<wtkpreprocess
+		  srcdir="src"
+		  destdir="tmpsrc"
+		  device="${device}"
+		  symbols="${preproc.symbols}"/>
+	
+	        <wtkbuild srcdir="tmpsrc" destdir="tmpclasses" preverify="false"/>
+		
+		<condition
+		  property="demos_src"
+		  value="demos1.txt"
+		  else="demos2.txt">
+			<equals arg1="${wtk.midp.version}" arg2="1.0"/>
+		</condition>		
+		<copy
+		  file="res/${demos_src}"
+		  tofile="res/demos.txt"
+		  overwrite="yes"/>
+		<condition
+		  property="demos"
+		  value="${demos1}"
+		  else="${demos2}">
+			<equals arg1="${wtk.midp.version}" arg2="1.0"/>
+		</condition>
+		<condition
+		  property="res"
+		  value="${autorun}"
+		  else="${demos},about.txt">
+			<isset property="jbitrt"/>
+		</condition>
+	
+		<wtkpackage
+		  jarfile="${midlet.base}.jar"
+		  jadfile="${midlet.base}.jad"
+		  obfuscate="false"
+		  autoversion="false">
+			<fileset dir="tmpclasses"/>
+			<fileset dir="res" includes="${res}"/>
+			<fileset file="res/icon.png"/>
+		</wtkpackage>
+	
+		<wtkobfuscate
+		  jarfile="${midlet.base}.jar"
+		  jadfile="${midlet.base}.jad">	
+			<argument value="'-overloadaggressively'"/>
+			<argument value="'-allowaccessmodification'"/>
+			<argument value="'-keep public class * extends javax.microedition.midlet.MIDlet'"/>
+			<argument value="'-keep class VM'"/>
+			<argument value="'-keep class CPU'"/>
+			<argument value="'-keepclasseswithmembers public class Module { &lt;methods&gt;; }'"/>
+			<argument value="'-keep class * implements Module'"/>
+			<argument value="'-keep class Lib*'"/>
+		</wtkobfuscate>
+	
+		<wtkpreverify jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad"/>
+	
+		<delete failonerror="false" dir="tmpsrc"/>
+		<delete failonerror="false" dir="tmpclasses"/>
+	
+	</target>
+
+</project>

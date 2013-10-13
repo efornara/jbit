@@ -1,0 +1,67 @@
+#/#6502
+Short snippets of code to help you get started with 6502 programming.
+#ciao.jb
+Show the word "CIAO".
+CPU Instructions: LDA (LoaD Accumulator), STA (STore Accumulator) and BRK (BReaK).
+CPU Addressing Modes: Immediate [#n], absolute [n:n] and implied [].
+IO: Video memory is at 40-79 in page 2; 1st row starts at 2:40, 2nd row starts at 2:50 and so on for a 10x4 matrix of Latin1 (extended ASCII) characters.
+#loop1.jb
+Keep updating a character on the screen (infinite loop). To stop the program press a soft key.
+CPU Instructions: INC (INCrement memory), NOP (No OPeration) and JMP (JuMP).
+IO: Writing into 2:18 suspends the CPU until the screen has been redrawn (refresh rate is 10 frames per second).
+#fill1.jb
+Fill the display with Xs.
+CPU Instructions: LDX (LoaD X register), INX (INcrement X register), CPX (ComPare X register) and BNE (Branch on Not Equal)
+CPU Addressing Modes: Absolute indexed [n:n,X] and relative [r]; relative mode is used in branches and looks like absolute mode in the monitor.
+Style: Even if in JBit the registers are always 0 at the beginning, it is suggested to clear them anyway.
+#fill2.jb
+Same as fill1, but faster.
+Note that X ranges from 40 to 1 inside the loop (in fill1 the range was 0 to 39).
+CPU Instructions: DEX (DEcrement X register).
+Puzzle: Not Equal in BNE really means "Not Zero" and CPX really means "subtract discarding the result".
+#loop2.jb
+Changing letters (infinite loop).
+CPU Instructions: DEC (DECrement memory), LDY, STY and TAX (Transfer/copy Accumulator to X register).
+IO: Write the desired FPS * 4 into 2:17 (e.g. 4 = 1 FPS).
+#loop3.jb
+Bouncing letters (finite loop A-F). More of the same.
+#keypad.jb
+Firing characters (press any key except * to fire a character, use * to stop firing).
+CPU: BEQ (Banch if EQual) and CMP (CoMPare accumulator).
+IO: Read from 2:24; if the value is 0 no key has been pressed; a value different than 0 is the ASCII code of the key that has been pressed (e.g. '0' is 48). Writing into 2:24 acknowledges the key and removes it from 2:24. At most 8 unacknowledged keys are kept, the others are lost.
+#random.jb
+Random numbers (press any key except * to roll two dice, use * to exit).
+CPU: CLC (CLear Carry) and ADC (ADd with Carry).
+IO: Read from 2:23 to get a random number <= maxrand. Write into 2:23 to set maxrand (default 255).
+#charset.jb
+Browse the charset (2=Up, 8=Down and 0=Exit).
+CPU: SEC (SEt Carry), SBC (SuBtract with Carry), BCS (Branch on Carry Set), BCC (Branch on Carry Clear).
+Style: This is "spaghetti" code; note how difficult it is to understand how it works. A few tricks have also been used to keep it in 64 bytes (BCC/BCS instead of JMP).
+#/#IO (1)
+Advanced usage of the IO chip (MIDP1 features).
+#resize.jb
+Resize the console.
+#stdpal.jb
+Show the standard palette.
+#bgcol1.jb
+Set the background color.
+Requests can be sent to the IO chip by streaming them into 2:1 and then terminating them by putting any value into 2:2.
+The console is disabled using the register 2:16.
+#bgcol2.jb
+Same as bgcol1, but using DMA.
+Requests can also be sent to the IO chip by putting the address of the request in 2:5 (HI) and 2:4 (LO); the request starts with 2 bytes storing the length of the data to be sent. The DMA request is synchronous and starts when a value is written to 2:4.
+#setpal.jb
+Define a custom palette (press any key except * to switch palette, use * to exit).
+#iload.jb
+Load the image "/icon.png" from the jar and show it.
+#idummy.jb
+Create and show some dummies (press any key to go to the next one).
+Dummies let you quickly create sample images to be used as sprites or tiles.
+Known bug: the size of a tile might be too small for its content to be readable.
+#ipnggen1.jb
+Show an image stored inside the program.
+Color is at 4:13; bitmap starts at 4:14 (24px x 21px = 63bytes).
+#ipnggen2.jb
+Generate an RGBA image and show it.
+The image is "foggy" because of the blending with the background.
+How you see the image depends on how well your phone supports semi-transparent pixels; the pixel at the top-left corner should be clearly visible on any phone.
