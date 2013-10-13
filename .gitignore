@@ -1,3 +1,7 @@
+*.jad
+*.jar
+*.dat
+*.class
 *.o
 js/jbit-core*.js
 js/libs
@@ -5,4 +9,4 @@ js/images
 js/res
 native/jbit
 native/jbit.exe
-deb/*.deb
+private
