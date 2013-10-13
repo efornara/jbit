@@ -1,17 +1,6 @@
 JBit
 ====
 
-If you are looking for the mobile (J2ME) version of JBit, you can find
-it here:
-
-<http://jbit.sourceforge.net> (XHTML site, optimized for feature phones)
-
-or here:
-
-<http://jbit.sourceforge.net/m> (WAP site, for old phones / very low bandwidth)
-
-This version of JBit targets desktops and browsers.
-
 ## Native Version
 
 The following should work (tested mostly on debian, but occasionally on
@@ -26,7 +15,7 @@ for the microio device, and, unless you are coming from the mobile
 version of JBit, you are unlikely to need it.
 
 A precompiled EXE for Windows is available here:
-<http://sourceforge.net/projects/jbit/files/jbit/Native/v1.2/jbit.exe/download>.
+[jbit.exe](http://sourceforge.net/projects/jbit/files/jbit/Native/v1.2/jbit.exe/download).
 
 The resulting binary (jbit) is self-contained, so you should be able to
 run it from anywhere.  From now on, I assume that you have it in your
@@ -36,8 +25,7 @@ Switch to the sample directory and type:
 
 	jbit hello.asm
 
-You should get back the
-[usual message](http://en.wikipedia.org/wiki/Hello_world_program):
+You should get back the usual message:
 
 	Hello, World!
 
@@ -84,3 +72,32 @@ The resulting directory can now be copied into a web server.
 A live version is available here:
 
 <http://jbit.sourceforge.net/webapp/>
+
+## J2ME Version
+
+To compile the J2ME Version from source you will need:
+
+* [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
+ads/index.html).
+  I use version 1.6.0; any version should be fine.
+* [Sun Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-13
+5801.html).
+  I use versions 1.0.4 and 2.5; again, any version should be fine.
+* [Ant](http://ant.apache.org/).
+  I use versions 1.6.5 and 1.7.0; I have no idea if you can use other versions.
+* [Antenna](http://antenna.sourceforge.net/).
+  I use version 1.2.1beta; older versions should work.
+* [ProGuard](http://proguard.sourceforge.net/).
+  I use version 4.4; older versions should work.
+
+If your environment is setup correctly, you should be able to
+compile JBit by entering j2me/jbit, editing build.xml and running ant.
+
+## Links
+
+* [JBit XHTML Site](http://jbit.sourceforge.net/)
+  (optimized for feature phones).
+* [JBit WAP Site](http://jbit.sourceforge.net/m)
+  (for old phones / very low bandwidth).
+* [JBit Wiki](https://github.com/efornara/jbit/wiki)
+  (too heavy for most feature phones).
