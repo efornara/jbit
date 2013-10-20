@@ -865,6 +865,14 @@ public final class Paint extends Canvas implements Module, CommandListener {
 		repaint();
 	}
 	
+	public int getGameAction(int keyCode) {
+		try {
+			return super.getGameAction(keyCode);
+		} catch (Throwable e) {
+			return 0;
+		}
+	}
+
 	protected void keyPressed(int keyCode) {
 		if (status != EDIT)
 			return;

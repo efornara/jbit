@@ -1228,8 +1228,7 @@ public class Editor extends LibView implements Module, CommandListener {
 				showOpcodesDialog();
 			updateInputValue();
 			repaint();
-		} else if (keyCode != TouchSvc.SOFT_KEY_BREAK
-				&& getGameAction(keyCode) == FIRE) {
+		} else if (getGameAction(keyCode) == FIRE) {
 			nextCell();
 		}
 	}

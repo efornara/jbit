@@ -645,6 +645,14 @@ protected static final int opcDefinitionTable[] = {
 		return fmtByteWidth;
 	}	
 
+	public int getGameAction(int keyCode) {
+		try {
+			return super.getGameAction(keyCode);
+		} catch (Throwable e) {
+			return 0;
+		}
+	}
+
 	protected int getJBitGameAction(int keyCode) {
 		switch (keyCode) {
 		case '2':

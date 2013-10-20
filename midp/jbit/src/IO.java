@@ -2381,13 +2381,16 @@ public static final byte CH_CROSS = (byte)0x8F;
 			// We choose to skip only the most important ones,
 			// hoping for the best.
 			// #if ENABLE_GAMEAPI
-			switch (getGameAction(keyCode)) {
-			case FIRE:
-			case UP:
-			case DOWN:
-			case LEFT:
-			case RIGHT:
-				return;
+			try {
+				switch (getGameAction(keyCode)) {
+				case FIRE:
+				case UP:
+				case DOWN:
+				case LEFT:
+				case RIGHT:
+					return;
+				}
+			} catch (Throwable e) {
 			}
 			// #endif
 			signalUserBreak = true;
