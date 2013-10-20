@@ -9,6 +9,7 @@
 	<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
 	<property name="wtk.midp.version" value="2.0"/>
 	<property name="wtk.cldc.version" value="1.0"/>	
+	<property name="wtk.optionalpda.enabled" value="true"/>
 	<property name="device" value="Generic/PlainMidp2"/>
 	
 	<property name="midlet.name" value="JBit"/>
@@ -58,9 +59,17 @@
 			<attribute name="JBit-Module-4" value="Monitor" unless="jbitrt"/>
 			<attribute name="JBit-Module-5" value="Store" unless="jbitrt"/>
 			<attribute name="JBit-Module-6" value="Editor" unless="jbitrt"/>
-			<attribute name="JBit-Module-7" value="Demos" unless="jbitrt"/>
+			<attribute name="JBit-Module-7" value="Paint" unless="jbitrt"/>
+			<attribute name="JBit-Module-8" value="FileIE" unless="jbitrt"/>
+			<attribute name="JBit-Module-9" value="Demos" unless="jbitrt"/>
 		</wtkjad>
 	
+		<copy
+		  file="modules/Paint.java"
+		  todir="tmpsrc"/>
+		<copy
+		  file="modules/FileIE.java"
+		  todir="tmpsrc"/>
 		<wtkpreprocess
 		  srcdir="src"
 		  destdir="tmpsrc"
