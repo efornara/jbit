@@ -797,13 +797,13 @@ public final class Paint extends Canvas implements Module, CommandListener {
 			blue = value & 0xFF;
 			switch (keyCode) {
 			case '1':
-				red += 0x20;
+				red += 0x10;
 				break;
 			case '2':
-				green += 0x20;
+				green += 0x10;
 				break;
 			case '3':
-				blue += 0x20;
+				blue += 0x10;
 				break;
 			case '4':
 				handleColorGameAction(LEFT, 0);
@@ -814,17 +814,17 @@ public final class Paint extends Canvas implements Module, CommandListener {
 			case '7':
 				if (red == 0xFF)
 					red = 0x100;
-				red -= 0x20;
+				red -= 0x10;
 				break;
 			case '8':
 				if (green == 0xFF)
 					green = 0x100;
-				green -= 0x20;
+				green -= 0x10;
 				break;
 			case '9':
 				if (blue == 0xFF)
 					blue = 0x100;
-				blue -= 0x20;
+				blue -= 0x10;
 				break;
 			default:
 				handleColorGameAction(getGameAction(keyCode), value);
