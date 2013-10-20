@@ -2,6 +2,8 @@
 
 <project name="JBDoc" default="build" basedir=".">
 
+	<property file="../../Env.defs"/>
+
 	<taskdef resource="antenna.properties" />
 
 	<target name="clean">
@@ -9,7 +11,6 @@
 		<delete failonerror="false" dir="tmpjava" />
 		<delete failonerror="false" dir="tmpsrc" />
 		<delete failonerror="false" dir="tmpclasses" />
-		<delete failonerror="false" dir="tmpmidlets" />
 
 	</target>
 
@@ -17,8 +18,9 @@
 
 		<property name="midlet.name" value="JBDoc" />
 		<property name="midlet.vendor" value="Emanuele Fornara" />
-		<property name="midlet.version" value="1.1.0" />
+		<property name="midlet.version" value="2.0.0" />
 
+		<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
 		<property name="wtk.midp.version" value="1.0" />
 		<property name="wtk.cldc.version" value="1.0" />
 		<property name="profile" value="Midp1" />

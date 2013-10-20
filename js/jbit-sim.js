@@ -261,6 +261,8 @@ JBIT.start = function() {
 	JBIT.core_get_error_colno = Module.cwrap('core_get_error_colno', 'number', []);
 	JBIT.core_get_error_msg = Module.cwrap('core_get_error_msg', 'string', []);
 
+	document.getElementById("jb_msg").innerHTML = "jbit " + Module.ccall('core_get_jbit_version', 'string', [], []);
+
 	var vmPage;
 	var editPage;
 	var demoPage;

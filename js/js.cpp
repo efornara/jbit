@@ -41,6 +41,10 @@ const ParseError *err;
 
 extern "C" {
 
+const char *core_get_jbit_version() {
+	return get_jbit_version();
+}
+
 int core_parse(const char *text) {
 	Buffer src;
 	src.append_string(text);

@@ -75,7 +75,7 @@ A live version is available here:
 
 ## J2ME Version
 
-To compile the J2ME Version from source you will need:
+To compile the J2ME Version from source you need:
 
 * [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
 ads/index.html).
@@ -91,7 +91,7 @@ ads/index.html).
   I use version 4.4; older versions should work.
 
 If your environment is setup correctly, you should be able to
-compile JBit by entering j2me/jbit, editing build.xml and running ant.
+compile JBit by editing Env.defs, entering midp/jbit and running ant.
 
 ## Links
 
