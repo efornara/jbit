@@ -168,17 +168,14 @@ public final class Paint extends Canvas implements Module, CommandListener {
 		status = ERROR;
 	}
 
-	private Alert confirmDlg;
+	private Form confirmDlg;
 	private int confirmImage;
 	
 	private void showConfirmDialog(int image) {
 		confirmImage = image;
-		confirmDlg = new Alert("Delete");
-		confirmDlg.setString("Do you really want to delete image "
+		confirmDlg = new Form("Delete");
+		confirmDlg.append("Do you really want to delete image "
 				+ getImageTag(image, false) + "?");
-		confirmDlg.setType(AlertType.WARNING);
-		confirmDlg.setTimeout(Alert.FOREVER);
-		confirmDlg.setCommandListener(this);
 		confirmDlg.addCommand(okCmd);
 		confirmDlg.addCommand(cancelCmd);
 		confirmDlg.setCommandListener(this);
