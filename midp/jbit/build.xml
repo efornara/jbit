@@ -16,8 +16,6 @@
 	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,template.jb,effects.jb"/>
 	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
 	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>
-	<property name="autorun" value="charset.jb"/>
-
 	
 	<target name="build">
 		
@@ -70,7 +68,7 @@
 			<attribute name="MIDlet-Info-URL" value="http://jbit.sourceforge.net/m" unless="jbitrt"/>
 			<attribute name="JBit-URL" value="http://jbit.sourceforge.net/"/>
 			<attribute name="JBit-License" value="GNU LGPL 2.1"/>
-			<attribute name="JBit-AutoRun" value="${autorun}" if="jbitrt"/>
+			<attribute name="JBit-AutoRun" value="${autorun}" if="autorun"/>
 			<attribute name="JBit-Module-1" value="CPU" unless="jbitrt"/>
 			<attribute name="JBit-Module-2" value="VM" unless="jbitrt"/>
 			<attribute name="JBit-Module-3" value="Touch" unless="jbitrt"/>
@@ -84,7 +82,7 @@
 	
 		<copy todir="tmpjava">
 			<fileset dir="src">
-				<exclude name="Touch.java" if="microio"/>
+				<exclude name="Touch.java" if="skiptouch"/>
 				<exclude name="Demos.java" unless="demos"/>
 			</fileset>
 			<fileset dir="modules">
@@ -156,8 +154,9 @@
 			<param name="midlet.file" value="JBitRT1"/>
 			<param name="midp1" value="yes"/>
 			<param name="jbitrt" value="true"/>
+			<param name="autorun" value="ipnggen2.jb"/>
 			<param name="preproc.symbols" value="JBIT_RUNTIME=1"/>
-			<param name="res.includes" value="${autorun}"/>
+			<param name="res.includes" value="ipnggen2.jb"/>
 		</antcall>
 	</target>
 		
@@ -167,8 +166,9 @@
 			<param name="midlet.file" value="JBitRT2"/>
 			<param name="midp2" value="yes"/>
 			<param name="jbitrt" value="true"/>
+			<param name="autorun" value="maze.jb"/>
 			<param name="preproc.symbols" value="JBIT_RUNTIME=1"/>
-			<param name="res.includes" value="${autorun}"/>
+			<param name="res.includes" value="maze.jb"/>
 		</antcall>
 	</target>
 		
@@ -178,6 +178,7 @@
 			<param name="midlet.file" value="JBit1M"/>
 			<param name="midp1" value="yes"/>
 			<param name="microio" value="yes"/>
+			<param name="skiptouch" value="yes"/>
 			<param name="skipdemos" value="yes"/>
 			<param name="preproc.symbols" value="JBIT_MICRO=1"/>
 			<param name="res.includes" value="about.txt"/>
@@ -194,6 +195,18 @@
 			<param name="res.includes" value="about.txt"/>
 		</antcall>
 	</target>
+
+	<target name="jbitme" description="IO2(MICROEMULATOR), +Paint, +FileIE">
+		<antcall target="build"> 
+			<param name="midlet.name" value="JBit"/>
+			<param name="midlet.file" value="JBitME"/>
+			<param name="midp2" value="yes"/>
+			<param name="skiptouch" value="yes"/>
+			<param name="modules" value="yes"/>
+			<param name="preproc.symbols" value="MICROEMULATOR=1"/>
+			<param name="res.includes" value="${demos2},cga.rom,about.txt"/>
+		</antcall>
+	</target>
 		
 	<target name="jbit" description="IO2, +Paint, +FileIE">
 		<antcall target="build"> 
@@ -207,7 +220,7 @@
 	</target>
 
 	<target name="all" description="Build every jad/jar (slow process)"
-	  depends="jbitrt1,jbitrt2,jbit1m,jbit2m,jbit">
+	  depends="jbitrt1,jbitrt2,jbit1m,jbit2m,jbitme,jbit">
 	</target>
 		
 </project>
