@@ -1,38 +1,24 @@
 <?xml version="1.0"?>
 
-<project name="JBit" default="build" basedir=".">
+<project name="JBit" default="jbit" basedir=".">
+
+	<property name="jbit.version" value="2.0.0"/>
 
 	<property file="../../Env.defs"/>
 
 	<taskdef resource="antenna.properties"/>
 
 	<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
-	<property name="wtk.midp.version" value="2.0"/>
 	<property name="wtk.cldc.version" value="1.0"/>	
-	<property name="wtk.optionalpda.enabled" value="true"/>
-	<property name="device" value="Generic/PlainMidp2"/>
 	
-	<property name="midlet.name" value="JBit"/>
-	<property name="midlet.vendor" value="Emanuele Fornara"/>
-	<property name="midlet.version" value="2.0.0"/>
 	<property name="demos_6502" value="ciao.jb,loop1.jb,fill1.jb,fill2.jb,loop2.jb,loop3.jb,keypad.jb,random.jb,charset.jb"/>
 	<property name="demos_IO1" value="resize.jb,stdpal.jb,bgcol1.jb,bgcol2.jb,setpal.jb,iload.jb,idummy.jb,ipnggen1.jb,ipnggen2.jb"/>
 	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,template.jb,effects.jb"/>
 	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
 	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>
-	<property name="preproc.symbols" value=""/>
-	
-	<!-- RunTime
-
-	<property name="midlet.name" value="JBitRT"/>
-	<property name="midlet.vendor" value="Anonymous"/>
-	<property name="midlet.version" value="1.0.0"/>
-	<property name="jbitrt" value="true"/>
 	<property name="autorun" value="charset.jb"/>
-	<property name="preproc.symbols" value="JBIT_RUNTIME=1"/>
-	
-	-->
 
+	
 	<target name="build">
 		
 		<delete failonerror="false" dir="tmpsrc"/>
@@ -40,8 +26,30 @@
 		<mkdir dir="tmpsrc"/>
 		<mkdir dir="tmpclasses"/>
 		<mkdir dir="bin"/>
+
+		<property name="midlet.base" value="bin/${midlet.file}"/>
 	
-		<property name="midlet.base" value="bin/${midlet.name}"/>
+		<condition property="midlet.vendor"
+		  value="Anonymous"
+		  else="Emanuele Fornara">
+			<isset property="jbitrt"/>
+		</condition>
+
+		<condition property="midlet.version" value="1.0.0" else="${jbit.version}">
+			<isset property="jbitrt"/>
+		</condition>
+
+		<condition property="wtk.midp.version" value="2.0" else="1.0">
+			<isset property="midp2"/>
+		</condition>
+		<condition property="profile" value="Midp2" else="Midp1">
+			<isset property="midp2"/>
+		</condition>
+		<property name="device" value="Generic/Plain${profile}"/>
+
+		<condition property="wtk.optionalpda.enabled" value="false" else="true">
+			<isset property="jbitrt"/>
+		</condition>
 
 		<wtkjad jadfile="${midlet.base}.jad"
 		  name="${midlet.name}"
@@ -64,12 +72,12 @@
 			<attribute name="JBit-Module-9" value="Demos" unless="jbitrt"/>
 		</wtkjad>
 	
-		<copy
-		  file="modules/Paint.java"
-		  todir="tmpsrc"/>
-		<copy
-		  file="modules/FileIE.java"
-		  todir="tmpsrc"/>
+		<copy todir="tmpsrc">
+			<fileset dir="modules">
+				<include name="Paint.java" unless="jbitrt"/>
+				<include name="FileIE.java" unless="jbitrt"/>
+			</fileset>
+		</copy>
 		<wtkpreprocess
 		  srcdir="src"
 		  destdir="tmpsrc"
@@ -94,20 +102,16 @@
 		  else="${demos2}">
 			<equals arg1="${wtk.midp.version}" arg2="1.0"/>
 		</condition>
-		<condition
-		  property="res"
-		  value="${autorun}"
-		  else="${demos},about.txt">
-			<isset property="jbitrt"/>
-		</condition>
-	
+
+		<echo message="res.includes: ${res.includes}"/>
+
 		<wtkpackage
 		  jarfile="${midlet.base}.jar"
 		  jadfile="${midlet.base}.jad"
 		  obfuscate="false"
 		  autoversion="false">
 			<fileset dir="tmpclasses"/>
-			<fileset dir="res" includes="${res}"/>
+			<fileset dir="res" includes="${res.includes}"/>
 			<fileset file="res/icon.png"/>
 		</wtkpackage>
 	
@@ -126,9 +130,42 @@
 	
 		<wtkpreverify jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad"/>
 	
+		<delete failonerror="false" file="res/demos.txt"/>
 		<delete failonerror="false" dir="tmpsrc"/>
 		<delete failonerror="false" dir="tmpclasses"/>
 	
 	</target>
 
+	<target name="jbitrt1" description="Runtime (MIDP1)">
+		<antcall target="build">
+			<param name="midlet.name" value="JBitRT"/>
+			<param name="midlet.file" value="JBitRT1"/>
+			<param name="midp1" value="yes"/>
+			<param name="jbitrt" value="true"/>
+			<param name="preproc.symbols" value="JBIT_RUNTIME=1"/>
+			<param name="res.includes" value="${autorun}"/>
+		</antcall>
+	</target>
+		
+	<target name="jbitrt2" description="Runtime (MIDP2)">
+		<antcall target="build">
+			<param name="midlet.name" value="JBitRT"/>
+			<param name="midlet.file" value="JBitRT2"/>
+			<param name="midp2" value="yes"/>
+			<param name="jbitrt" value="true"/>
+			<param name="preproc.symbols" value="JBIT_RUNTIME=1"/>
+			<param name="res.includes" value="${autorun}"/>
+		</antcall>
+	</target>
+		
+	<target name="jbit" description="Everything">
+		<antcall target="build"> 
+			<param name="midlet.name" value="JBit"/>
+			<param name="midlet.file" value="JBit"/>
+			<param name="midp2" value="yes"/>
+			<param name="preproc.symbols" value=""/>
+			<param name="res.includes" value="${demos2},cga.rom,about.txt"/>
+		</antcall>
+	</target>
+		
 </project>
