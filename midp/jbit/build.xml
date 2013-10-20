@@ -23,6 +23,7 @@
 		
 		<delete failonerror="false" dir="tmpsrc"/>
 		<delete failonerror="false" dir="tmpclasses"/>
+		<mkdir dir="tmpjava"/>
 		<mkdir dir="tmpsrc"/>
 		<mkdir dir="tmpclasses"/>
 		<mkdir dir="bin"/>
@@ -47,8 +48,17 @@
 		</condition>
 		<property name="device" value="Generic/Plain${profile}"/>
 
-		<condition property="wtk.optionalpda.enabled" value="false" else="true">
-			<isset property="jbitrt"/>
+		<condition property="wtk.optionalpda.enabled" value="true" else="false">
+			<isset property="modules"/>
+		</condition>
+
+		<condition property="demos">
+			<or>
+				<isset property="skipdemos"/>
+				<not>
+					<isset property="jbitrt"/>
+				</not>
+			</or>
 		</condition>
 
 		<wtkjad jadfile="${midlet.base}.jad"
@@ -67,19 +77,28 @@
 			<attribute name="JBit-Module-4" value="Monitor" unless="jbitrt"/>
 			<attribute name="JBit-Module-5" value="Store" unless="jbitrt"/>
 			<attribute name="JBit-Module-6" value="Editor" unless="jbitrt"/>
-			<attribute name="JBit-Module-7" value="Paint" unless="jbitrt"/>
-			<attribute name="JBit-Module-8" value="FileIE" unless="jbitrt"/>
-			<attribute name="JBit-Module-9" value="Demos" unless="jbitrt"/>
+			<attribute name="JBit-Module-7" value="Demos" if="demos"/>
+			<attribute name="JBit-Module-8" value="Paint" if="modules"/>
+			<attribute name="JBit-Module-9" value="FileIE" if="modules"/>
 		</wtkjad>
 	
-		<copy todir="tmpsrc">
+		<copy todir="tmpjava">
+			<fileset dir="src">
+				<exclude name="Touch.java" if="microio"/>
+				<exclude name="Demos.java" unless="demos"/>
+			</fileset>
 			<fileset dir="modules">
-				<include name="Paint.java" unless="jbitrt"/>
-				<include name="FileIE.java" unless="jbitrt"/>
+				<include name="Paint.java" if="modules"/>
+				<include name="FileIE.java" if="modules"/>
+			</fileset>
+		</copy>
+		<copy todir="tmpjava" overwrite="true">
+			<fileset dir="modules">
+				<include name="IO.java" if="microio"/>
 			</fileset>
 		</copy>
 		<wtkpreprocess
-		  srcdir="src"
+		  srcdir="tmpjava"
 		  destdir="tmpsrc"
 		  device="${device}"
 		  symbols="${preproc.symbols}"/>
@@ -96,12 +115,6 @@
 		  file="res/${demos_src}"
 		  tofile="res/demos.txt"
 		  overwrite="yes"/>
-		<condition
-		  property="demos"
-		  value="${demos1}"
-		  else="${demos2}">
-			<equals arg1="${wtk.midp.version}" arg2="1.0"/>
-		</condition>
 
 		<echo message="res.includes: ${res.includes}"/>
 
@@ -131,6 +144,7 @@
 		<wtkpreverify jarfile="${midlet.base}.jar" jadfile="${midlet.base}.jad"/>
 	
 		<delete failonerror="false" file="res/demos.txt"/>
+		<delete failonerror="false" dir="tmpjava"/>
 		<delete failonerror="false" dir="tmpsrc"/>
 		<delete failonerror="false" dir="tmpclasses"/>
 	
@@ -158,14 +172,42 @@
 		</antcall>
 	</target>
 		
-	<target name="jbit" description="Everything">
+	<target name="jbit1m" description="MicroIO, -Demos">
+		<antcall target="build"> 
+			<param name="midlet.name" value="JBit"/>
+			<param name="midlet.file" value="JBit1M"/>
+			<param name="midp1" value="yes"/>
+			<param name="microio" value="yes"/>
+			<param name="skipdemos" value="yes"/>
+			<param name="preproc.symbols" value="JBIT_MICRO=1"/>
+			<param name="res.includes" value="about.txt"/>
+		</antcall>
+	</target>
+		
+	<target name="jbit2m" description="IO2(IO_DISABLE_DUMMY), -Demos">
+		<antcall target="build"> 
+			<param name="midlet.name" value="JBit"/>
+			<param name="midlet.file" value="JBit2M"/>
+			<param name="midp2" value="yes"/>
+			<param name="skipdemos" value="yes"/>
+			<param name="preproc.symbols" value="IO_DISABLE_DUMMY=1"/>
+			<param name="res.includes" value="about.txt"/>
+		</antcall>
+	</target>
+		
+	<target name="jbit" description="IO2, +Paint, +FileIE">
 		<antcall target="build"> 
 			<param name="midlet.name" value="JBit"/>
 			<param name="midlet.file" value="JBit"/>
 			<param name="midp2" value="yes"/>
+			<param name="modules" value="yes"/>
 			<param name="preproc.symbols" value=""/>
 			<param name="res.includes" value="${demos2},cga.rom,about.txt"/>
 		</antcall>
+	</target>
+
+	<target name="all" description="Build every jad/jar (slow process)"
+	  depends="jbitrt1,jbitrt2,jbit1m,jbit2m,jbit">
 	</target>
 		
 </project>
