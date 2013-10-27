@@ -92,6 +92,7 @@
 
 #define REQ_TIME 48
 #define REQ_RMDIR 49
+#define REQ_LSEEK 50
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
@@ -178,4 +179,8 @@
 #define XV65_T_LNK 16
 #define XV65_T_REG 32
 #define XV65_T_SOCK 64
+
+#define XV65_SEEK_SET 0
+#define XV65_SEEK_CUR 1
+#define XV65_SEEK_END 2
 

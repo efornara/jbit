@@ -90,6 +90,7 @@ REQ_ENV    = 34
 
 REQ_TIME   = 48
 REQ_RMDIR  = 49
+REQ_LSEEK  = 50
 
 ESC_HOME       =   1
 ESC_CLEAR      =   2
@@ -177,6 +178,10 @@ T_FIFO =  8
 T_LNK  = 16
 T_REG  = 32
 T_SOCK = 64
+
+SEEK_SET = 0
+SEEK_CUR = 1
+SEEK_END = 2
 
 ; ASM ONLY
 

@@ -28,6 +28,9 @@
 
 // xv65.cpp
 
+#define _FILE_OFFSET_BITS 64
+#define _LARGE_FILES 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -86,6 +89,7 @@ const char *req_id_to_string(int id) {
 	case 34: return "REQ_ENV";
 	case 48: return "REQ_TIME";
 	case 49: return "REQ_RMDIR";
+	case 50: return "REQ_LSEEK";
 	default: return "?";
 	}
 }
@@ -183,7 +187,22 @@ private:
 	int r_get_uint16(int i) {
 		return (r_get_uint8(i + 1) << 8) | r_get_uint8(i);
 	}
-	bool r_get_trailing_int(int i, int *value) {
+	bool r_get_trailing_int64(int i, int64_t *value) {
+		int len = n - i;
+		if (len < 0 || len > 8)
+			return false;
+		int64_t v = 0;
+		if (len > 0)
+			v = r[i + len - 1] & 0x80 ? -1 : 0; 
+		while (len > 0) {
+			v <<= 8;
+			v |= r[i + len - 1] & 0xff;
+			len--;
+		}
+		*value = v;
+		return true;
+	}
+	bool r_get_trailing_uint(int i, unsigned int *value) {
 		int len = n - i;
 		if (len < 0 || len > 8)
 			return false;
@@ -217,10 +236,10 @@ private:
 		return 0;
 	}
 	int req_EXIT() {
-		int status;
-		if (!r_get_trailing_int(1, &status))
+		unsigned int status;
+		if (!r_get_trailing_uint(1, &status))
 			return ERR;
-		exit(status);
+		exit((int)status);
 		return 0; // not reached
 	}
 	int req_WAIT() {
@@ -272,8 +291,8 @@ private:
 		return 0;
 	}
 	int req_SLEEP() {
-		int seconds;
-		if (!r_get_trailing_int(1, &seconds))
+		unsigned int seconds;
+		if (!r_get_trailing_uint(1, &seconds))
 			return ERR;
 		int ret;
 		if (seconds == 0) {
@@ -471,10 +490,10 @@ private:
 			return ERR;
 		int addr = r_get_uint16(1);
 		int size = r_get_uint16(3);
-		int i;
-		if (!r_get_trailing_int(5, &i))
+		unsigned int i;
+		if (!r_get_trailing_uint(5, &i))
 			return ERR;
-		if (i < 0 || i >= argc)
+		if (i >= (unsigned int)argc)
 			return XV65_EDOM;
 		return put_string(addr, size, argv[i]);
 	}
@@ -503,6 +522,34 @@ private:
 		gettimeofday(&tv, NULL);
 		put_value(&v_REQDAT[0], 8, tv.tv_sec);
 		put_value(&v_REQDAT[8], 8, tv.tv_usec);
+		return 0;
+	}
+	int req_LSEEK() {
+		if (n < 3)
+			return ERR;
+		int fd = r_get_uint8(1);
+		int in_whence = r_get_uint8(2);
+		int64_t offset;
+		if (!r_get_trailing_int64(3, &offset))
+			return ERR;
+		int out_whence;
+		switch (in_whence) {
+		case XV65_SEEK_SET:
+			out_whence = SEEK_SET;
+			break;
+		case XV65_SEEK_CUR:
+			out_whence = SEEK_CUR;
+			break;
+		case XV65_SEEK_END:
+			out_whence = SEEK_END;
+			break;
+		default:
+			return ERR;
+		}
+		off_t ret = lseek(fd, (off_t)offset, out_whence);
+		if (ret < 0)
+			return errno;
+		put_value(&v_REQDAT[0], 8, (uint64_t)ret);
 		return 0;
 	}
 	void dump_request() {
@@ -596,6 +643,9 @@ private:
 			break;
 		case REQ_TIME:
 			ret = req_TIME();
+			break;
+		case REQ_LSEEK:
+			ret = req_LSEEK();
 			break;
 		}
 		v_REQRES = ret;
