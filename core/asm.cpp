@@ -706,13 +706,15 @@ public:
 	}
 };
 
+static const int HASHMAP_SLOTS = 256; // must be a power of 2
+static const int HASHMAP_MASK = HASHMAP_SLOTS - 1;
+
 enum SymbolType {
 	SYM_UNDEFINED,
 	SYM_LABEL,
 	SYM_DEFINE,
 };
 
-// just a list for now (poor perf., but quick and easy to impl.)
 struct Symbol {
 	struct Symbol *next;
 	SymbolType type;
@@ -732,7 +734,15 @@ struct Operand {
 struct Binary {
 private:
 	Buffer storage;
-	Symbol *symbols;
+	Symbol *symbols[HASHMAP_SLOTS];
+	int get_slot(const char *s) {
+		// djb2 - http://www.cse.yorku.ca/~oz/hash.html
+		unsigned long n = 5381;
+		char c;
+		while ((c = *s++))
+			n = n * 33 + c;
+		return n & HASHMAP_MASK;
+	}
 public:
 	Buffer reqs;
 	Program *prg;
@@ -742,16 +752,13 @@ public:
 	Segment *segment;
 	Binary(LineReader &r_, Program *prg_) : prg(prg_), code(r_), data(r_), segment(&code) {
 		code.set_base(0x300);
-		symbols = new Symbol();
-		symbols->type = SYM_LABEL;
-		symbols->name = String(&storage, "__start__");
-		symbols->addr = code.get_address();
-		symbols->value = -1;
-		symbols->size = 2;
-		symbols->next = 0;
+		for (int i = 0; i < HASHMAP_SLOTS; i++)
+			symbols[i] = 0;
 	}
-	Symbol *find_symbol(const char *s) {
-		Symbol *sym = symbols;
+	Symbol *find_symbol(const char *s, int slot = -1) {
+		if (slot < 0)
+			slot = get_slot(s);
+		Symbol *sym = symbols[slot];
 		while (sym) {
 			if (!strcmp(s, sym->name.get_s()))
 				return sym;
@@ -760,14 +767,15 @@ public:
 		return 0;
 	}
 	Symbol *get_symbol(const char *s) {
-		Symbol *sym = find_symbol(s);
+		int slot = get_slot(s);
+		Symbol *sym = find_symbol(s, slot);
 		if (!sym) {
 			sym = new Symbol();
 			sym->type = SYM_UNDEFINED;
 			sym->name = String(&storage, s);
 			sym->size = 2;
-			sym->next = symbols;
-			symbols = sym;
+			sym->next = symbols[slot];
+			symbols[slot] = sym;
 		}
 		return sym;
 	}

@@ -3,6 +3,7 @@
 *.dat
 *.class
 *.o
+*.swp
 js/jbit-core*.js
 js/libs
 js/images
