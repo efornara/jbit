@@ -21,6 +21,8 @@
 
 /*
 
+Compile with: gcc -Os -s -o sidtype sidtype.c
+
 Assuming that sidpipe is in your path, you can start sidtype and type:
 
     0 0

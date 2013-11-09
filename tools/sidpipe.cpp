@@ -26,6 +26,8 @@ http://www.zimmers.net/anonftp/pub/cbm/crossplatform/emulators/resid/index.html
 
 Tested with resid-0.16.tar.gz on a debian stable.
 
+Compile with: g++ -O2 -s -o sidpipe sidpipe.cpp -lresid -lasound
+
 See sidtype for an example of how to use it.
 
 */
