@@ -4,7 +4,6 @@
 
 VPATH = .:../core
 
-CXX = g++
 CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall
 LDFLAGS =
 LIBS =

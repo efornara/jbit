@@ -1,0 +1,20 @@
+#! /bin/sh
+
+dev=none
+if [ -b /dev/mmcblk0p1 ] ; then
+	dev=/dev/mmcblk0p1
+fi
+
+if [ $dev != none ] ; then
+	mkdir -p /mnt/sdcard
+	mount -o sync $dev /mnt/sdcard
+	if [ -d /mnt/sdcard/store ] ; then
+		ln -s /mnt/sdcard/store /var/store
+	fi
+fi
+
+if [ -f /var/store/local.rc ] ; then
+	. /var/store/local.rc
+else
+	. /etc/local.rc
+fi
