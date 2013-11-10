@@ -1,6 +1,26 @@
 JBit
 ====
 
+There is usually no need for you to build JBit from source.
+
+If you are looking for the J2ME version of JBit (for feature phones),
+[pre-built midlets](http://jbit.sourceforge.net/download.html)
+are available.
+
+If you just want get an idea of what JBit is about and have
+a modern browser (IE8+), a (limited)
+[webapp](http://jbit.sourceforge.net/webapp/index.html)
+is also available.
+
+If you have Windows, you can find a precompiled EXE following the
+instructions on this
+[wiki page](https://github.com/efornara/jbit/wiki/Windows).
+
+However, for Linux(-like) operating systems, building the Native version
+of JBit is recommended. Unlike the Javascript and the J2ME versions,
+the Native version has few dependencies and should be fairly easy
+to build.
+
 ## Native Version
 
 The following should work (tested mostly on debian, but occasionally on
@@ -10,16 +30,12 @@ NetBSD):
 	make
 
 If you are missing ncurses (or have curses), comment out the offending
-lines in the Makefile (or edit them). The (n)curses library is needed
-for the microio device, and, unless you are coming from the mobile
-version of JBit, you are unlikely to need it.
-
-A precompiled EXE for Windows is available here:
-[jbit.exe](http://sourceforge.net/projects/jbit/files/jbit/Native/v1.2/jbit.exe/download).
+lines in the Makefile (or edit them), or install the relevant package
+(*libncurses5-dev* on debian and ubuntu).
 
 The resulting binary (jbit) is self-contained, so you should be able to
-run it from anywhere.  From now on, I assume that you have it in your
-path.
+run it from anywhere.  From now on, I will assume that you have it in
+your path.
 
 Switch to the sample directory and type:
 
@@ -68,10 +84,6 @@ Build the core:
     make
 
 The resulting directory can now be copied into a web server.
-
-A live version is available here:
-
-<http://jbit.sourceforge.net/webapp/>
 
 ## J2ME Version
 
