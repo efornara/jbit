@@ -2,7 +2,7 @@ A Beginner's Tutorial
 
 b Introduction
 
-p JBit is a complete programming environment and is more complex then a
+p JBit is a complete programming environment and is more complex than a
 typical mobile phone application. This tutorial will help you to get
 started.
 
@@ -119,7 +119,7 @@ p Press # to switch to the outside view.
 +--------------+
 
 p Now you are looking at the display of the VM. There is no point in
-showing you the keypad of the VM, as the keypad of your phone can act
+showing you the keypad of the VM, since the keypad of your phone can act
 as the keypad of the VM.
 
 p There is a minor complication here. If we started the VM properly, the
@@ -615,7 +615,7 @@ of number.
 
 p The "qsref" book contains the full list of the addressing modes
 of the CPU. You are not expected to understand all of them by the
-brief descriptions contained in that sheet, but, even if you do not
+brief descriptions contained in that book, but, even if you do not
 understand them, you can still get some information from the way they
 look: the number of lower-case characters of an addressing mode is the
 number of extra bytes an operation needs. For example, the addressing
@@ -685,7 +685,7 @@ Accumulator.
 
 p The "qsref" book contains the full list of the mnemonics of the
 CPU. Again, you are not expected to understand all of them by the
-brief descriptions contained in that sheet, but, even without looking
+brief descriptions contained in that book, but, even without looking
 at the list, you should already be able to guess what a few other
 valid mnemonics (LDX, STX, LDY, STY, INY, DEX and DEY) stand for.
 
@@ -861,9 +861,9 @@ p Info, Copy, Rename and Delete do pretty much what you expect them to
 do. They do not change the current program.
 
 p When you upgrade JBit to a new version, your phone should ask you if
-you want to keep its data and it is important to reply YES to keep your
-saved programs. The exact wording of the question varies from phone to
-phone.
+you want to keep its data and it is important to reply appropriatelly
+to keep your saved programs. The exact wording of the question varies
+from phone to phone.
 
 p Select Tutorial.
 

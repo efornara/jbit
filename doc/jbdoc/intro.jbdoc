@@ -26,10 +26,11 @@ kilobytes of bandwith, a limited wap site is also available:
 
 jbit.sf.net/m
 
-p You can also search for JBit on getjar.com. Before downloading
-JBit, you might want to read about the available versions below.
-
 B News
+
+i JBit 2.0.0
+
+P Merged the J2ME, native and javascript repositories.
 
 i JBDoc-20130829 / 1.1.0
 
@@ -37,31 +38,30 @@ P There is a new book: ioprg1.
 
 B Versions
 
-i JBit2P
+i JBit
 
 p If you have a fairly recent phone, this version should work and it
 is the recommended one.
 
-i JBitGameKit
+i JBit2M
 
-p If you have a MIDP2 phone, but JBit2P is too big to run (or to
-download), this is another option.  Note that this version is
-somehow experimental.
-
-i JBit1
-
-p This is for old (MIDP1) phones. You cannot write interactive,
-graphical games with it, but you can still use it to program the
-generation of static images. Note that old phones usually
-have a limited amount of memory, so it this version might
-crash often. If this happens, consider replacing it with JBit1M.
+p If you have a recent (MIDP2) phone, but JBit is too big to run (or to
+download), this is another option.
 
 i JBit1M
 
-p This is for very old (MIDP1) phones. You cannot generate images
-with it, and this version does not include the demos. However, it
-might be the only version that works with your phone. In the past, I
-have tested it on a Nokia 3410 and it worked.
+p This is for old (MIDP1) phones. You cannot write interactive,
+graphical games or generate images with it, and this version does
+not include the demos. However, it might be the only version that works
+with your phone.
+In the past, I have tested it on a real Nokia 3410 and it worked.
+
+i JBitGameKit
+
+p A custom version of JBit including a pre-made tileset was once available
+and is sometimes referenced in the documentation. At the moment, it
+is not available; a newer (and incompatible) version is planned for the
+near future.
 
 B Documents
 
