@@ -56,34 +56,18 @@ You can find a copy online here:
 
 ## JavaScript Version
 
-The JavaScript version uses
+The current JavaScript is deprecated and it is being replaced by a
+rewrite. See the nano directory.
+
+The new version will still use
 [emscripten](https://github.com/kripken/emscripten), I assume you have
 a working installation. At least, the following command:
 
-    em++
+    emcc
 
 should produce:
 
     emcc: no input files
-
-Enter the js directory:
-
-    cd js
-
-Fetch some additional libraries (ace and jquery) and some images (not kept
-in the git repository):
-
-    make fetch
-
-Copy some samples into the js directory:
-
-    make copy_res
-
-Build the core:
-
-    make
-
-The resulting directory can now be copied into a web server.
 
 ## J2ME Version
 

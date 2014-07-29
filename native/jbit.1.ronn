@@ -188,7 +188,7 @@ pairs.
 
     lda #>blue
     sta REQPTRHI
-    lda #>blue
+    lda #<blue
     sta REQPTRLO
 
     .data
