@@ -56,7 +56,7 @@ You can find a copy online here:
 
 ## JavaScript Version
 
-The current JavaScript is deprecated and it is being replaced by a
+The current JavaScript version is deprecated and it is being replaced by a
 rewrite. See the nano directory.
 
 The new version will still use

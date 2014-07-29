@@ -28,29 +28,14 @@
 
 #include "nano.h"
 
-#define LCD_SIMULATOR
-
-#ifdef LCD_SIMULATOR
-
-extern "C" void lcd_init() {
-  Serial.begin(9600);
+void sim_init() {
+	lcd_init();
 }
 
-extern "C" void lcd_write(unsigned char dc, unsigned char data) {
-  Serial.print("L ");
-  Serial.print(dc);
-  Serial.print(" ";
-  Serial.print(data);
-  Serial.print("\n\r");
-}
-
-#endif
-
-void setup() {
-  sim_init();
-}
-
-void loop() {
-  sim_step();
-  delay(1000);
+void sim_step() {
+	int i;
+	lcd_clear();
+	lcd_home();
+	for (i = 0; i < 8; i++)
+		lcd_write(LCD_DATA, i);
 }

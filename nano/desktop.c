@@ -39,52 +39,91 @@
 
 #include <SDL/SDL.h>
 
+#include "nano.h"
+
+void lcd_init() {
+}
+
+void lcd_write(unsigned char dc, unsigned char data) {
+	static int n = 0;
+	printf("%-6d %s %02X\n", n++, dc ? "DAT" : "CMD", data);
+}
+
 static void usage() {
-	printf("usage: jbnano port\n");
+	printf("usage: jbnano [port]\n");
 	exit(1);
 }
 
-static void test_serial(const char *port) {
+static void remote(const char *port) {
 	struct termios config;
-	int fd, rc;
-	unsigned char c;
+	int fd, rc, n;
+	char line[64];
 	
-	fd = open(port, O_RDWR | O_NONBLOCK);
+	printf("remote...\n");
+	fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
 	assert(fd >= 0);
 	assert(isatty(fd));
-	memset(&config,0,sizeof(config));
+	memset(&config, 0, sizeof(config));
 	config.c_iflag = 0;
 	config.c_oflag = 0;
 	config.c_cflag = CS8 | CREAD | CLOCAL;
 	config.c_lflag = 0;
 	config.c_cc[VMIN] = 1;
-	config.c_cc[VTIME] = 5;
-	rc = cfsetispeed(&config, B9600);
+	config.c_cc[VTIME] = 0;
+	cfsetispeed(&config, B9600);
+	cfsetospeed(&config, B9600);
+	rc = tcsetattr(fd, TCSAFLUSH, &config);
 	assert(rc == 0);
-	rc = cfsetospeed(&config, B9600);
-	assert(rc == 0);
-	tcsetattr(fd, TCSAFLUSH, &config);
-	assert(rc == 0);
+	n = 0;
 	while (1) {
 		while (1) {
-			rc = read(fd, &c, 1);
+			rc = read(fd, &line[n], 1);
 			assert(rc != 0);
 			if (rc < 0) {
 				if (errno == EAGAIN)
 					break;
 				assert(errno == EINTR);
+			} else {
+				if (line[n] == '\n')
+					; /* skip */
+				if (line[n] == '\r') {
+					int rc, data, nv;
+					line[n] = '\0';
+					nv = sscanf(line, "L %d %d", &rc, &data);
+					if (nv == 2)
+						lcd_write(rc, data);
+					n = 0;
+				} else {
+					n++;
+					assert(n < sizeof(line));
+				}
 			}
-			write(1, &c, 1);
 		}
 		usleep(100);
 	}
 	close(fd);
 }
 
+static void local() {
+	printf("local...\n");
+	sim_init();
+	while (1) {
+		sim_step();
+		usleep(1000000);
+	}
+}
+
 int main(int argc, char *argv[]) {
-	if (argc != 2)
+	switch (argc) {
+	case 1:
+		local();
+		break;
+	case 2:
+		remote(argv[1]);
+		break;
+	default:
 		usage();
-	test_serial(argv[1]);
+	}
 	return 0;
 }
 

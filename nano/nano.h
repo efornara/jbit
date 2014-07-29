@@ -26,31 +26,26 @@
  * SUCH DAMAGE.
  */
 
-#include "nano.h"
-
-#define LCD_SIMULATOR
-
-#ifdef LCD_SIMULATOR
-
-extern "C" void lcd_init() {
-  Serial.begin(9600);
-}
-
-extern "C" void lcd_write(unsigned char dc, unsigned char data) {
-  Serial.print("L ");
-  Serial.print(dc);
-  Serial.print(" ";
-  Serial.print(data);
-  Serial.print("\n\r");
-}
-
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-void setup() {
-  sim_init();
-}
+#define LCD_COMMAND 0
+#define LCD_DATA 1
 
-void loop() {
-  sim_step();
-  delay(1000);
-}
+#define LCD_WIDTH 84
+#define LCD_HEIGHT 48
+
+void lcd_init();
+void lcd_write(unsigned char dc, unsigned char data);
+
+void lcd_clear();
+void lcd_goto(int col, int row);
+void lcd_home();
+
+void sim_init();
+void sim_step();
+
+#ifdef __cplusplus
+};
+#endif
