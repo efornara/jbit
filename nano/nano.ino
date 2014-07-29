@@ -39,7 +39,7 @@ extern "C" void lcd_init() {
 extern "C" void lcd_write(unsigned char dc, unsigned char data) {
   Serial.print("L ");
   Serial.print(dc);
-  Serial.print(" ";
+  Serial.print(" ");
   Serial.print(data);
   Serial.print("\n\r");
 }
