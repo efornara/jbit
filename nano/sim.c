@@ -28,6 +28,8 @@
 
 #include "nano.h"
 
+const char *msg = "Hello, World!";
+
 void sim_init() {
 	lcd_init();
 }
@@ -36,6 +38,7 @@ void sim_step() {
 	int i;
 	lcd_clear();
 	lcd_home();
-	for (i = 0; i < 90; i++)
-		lcd_write(LCD_DATA, i);
+	lcd_goto(4, 2);
+	for (i = 0; msg[i]; i++)
+		lcd_char(msg[i]);
 }

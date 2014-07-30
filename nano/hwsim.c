@@ -71,16 +71,16 @@ void lcd_write(unsigned char dc, unsigned char data) {
 		break; 
 	case LCD_DATA:
 		for (i = 0; i < 8; i++) {
-			int pixel = data & 0x80 ? 1 : 0;
-			lcd_bitmap[(col * LCD_ROWS + row) * 8 + i] = pixel;
-			data <<= 1;
+			int pixel = data & 0x1;
+			lcd_bitmap[(col * 8) + (LCD_WIDTH * 8 * row) + i] = pixel;
+			data >>= 1;
 		}
-		row++;
-		if (row == LCD_ROWS) {
-			row = 0;
-			col++;
-			if (col == LCD_WIDTH)
-				col = 0;
+		col++;
+		if (col == LCD_WIDTH) {
+			col = 0;
+			row++;
+			if (row == LCD_ROWS)
+				row = 0;
 		}
 		break; 
 	}

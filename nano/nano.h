@@ -61,6 +61,7 @@ void lcd_write(unsigned char dc, unsigned char data);
 void lcd_clear();
 void lcd_goto(int col, int row);
 void lcd_home();
+void lcd_char(char c);
 
 /* JBIT SIM */
 

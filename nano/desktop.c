@@ -93,7 +93,7 @@ static void sdl_events() {
 
 static void sdl_update_screen() {
 	SDL_Rect rect;
-	int x, y, i;
+	int x, y, r, i, j;
 
 	rect.x = 0;
 	rect.y = 0;
@@ -107,12 +107,15 @@ static void sdl_update_screen() {
 	SDL_FillRect(screen, &rect, BGCOLOR);
 	rect.w = SCALE;
 	rect.h = SCALE;
-	for (i = 0, x = 0; x < LCD_WIDTH; x++) {
-		rect.x = BORDER + x * SCALE;
-		for (y = 0; y < LCD_HEIGHT; y++, i++) {
-			rect.y = BORDER + y * SCALE;
-			if (lcd_bitmap[i])
-				SDL_FillRect(screen, &rect, FGCOLOR);
+	for (i = 0, r = 0; r < LCD_ROWS; r++) {
+		y = BORDER + r * 8 * SCALE;
+		for (x = 0; x < LCD_WIDTH; x++) {
+			rect.x = BORDER + x * SCALE;
+			for (j = 0; j < 8; j++, i++) {
+				rect.y = y + j * SCALE;
+				if (lcd_bitmap[i])
+					SDL_FillRect(screen, &rect, FGCOLOR);
+			}
 		}
 	}
 	SDL_Flip(screen);
