@@ -26,47 +26,64 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifdef PLATFORM_DESKTOP
 
-/* CONFIG */
+#include <string.h>
+#include <stdint.h>
 
-/* LCD: uncomment one of the following */
-/*#define LCD_NULL*/
-#define LCD_HWSIM
-/*#define LCD_REAL*/
+#include "nano.h"
 
-/* KEYPAD: uncomment one of the following */
-/*#define KEYPAD_NULL*/
-#define KEYPAD_HWSIM
-/*#define KEYPAD_REAL*/
+uint8_t lcd_bitmap[LCD_BITMAP_SIZE];
 
-/* LCD */
+static int col;
+static int row;
 
-#define LCD_COMMAND 0
-#define LCD_DATA 1
+static void clear() {
+	memset(lcd_bitmap, 0, sizeof(lcd_bitmap));
+}
 
-#define LCD_WIDTH 84
-#define LCD_ROWS 6
-#define LCD_HEIGHT (LCD_ROWS * 8)
+void lcd_init() {
+	clear();
+	col = 0;
+	row = 0;
+}
 
-#define LCD_BITMAP_SIZE (LCD_WIDTH * LCD_HEIGHT)
+void lcd_write(unsigned char dc, unsigned char data) {
+	int i;
 
-#define LCD_HWSIM_CMD_CLEAR 4
+	switch (dc) {
+	case LCD_COMMAND:
+		switch (data) {
+		case LCD_HWSIM_CMD_CLEAR:
+			clear();
+			break;
+		default:
+			if (data & 0x80) {
+				int c = data & 0x7f;
+				if (c < LCD_WIDTH)
+					col = c;
+			} else if (data & 0x40) {
+				int r = data & 0x0f;
+				if (r < LCD_ROWS)
+					row = r;
+			}
+		}
+		break; 
+	case LCD_DATA:
+		for (i = 0; i < 8; i++) {
+			int pixel = data & 0x80 ? 1 : 0;
+			lcd_bitmap[(col * LCD_ROWS + row) * 8 + i] = pixel;
+			data <<= 1;
+		}
+		row++;
+		if (row == LCD_ROWS) {
+			row = 0;
+			col++;
+			if (col == LCD_WIDTH)
+				col = 0;
+		}
+		break; 
+	}
+}
 
-void lcd_init();
-void lcd_write(unsigned char dc, unsigned char data);
-
-void lcd_clear();
-void lcd_goto(int col, int row);
-void lcd_home();
-
-/* JBIT SIM */
-
-void sim_init();
-void sim_step();
-
-#ifdef __cplusplus
-};
 #endif

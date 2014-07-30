@@ -3,7 +3,7 @@ CFLAGS = -ansi -DPLATFORM_DESKTOP -Wall
 LDFLAGS =
 LIBS = -lSDL
 
-OBJS = desktop.o sim.o lcd.o
+OBJS = desktop.o sim.o lcd.o hwsim.o
 
 all: jbnano
 

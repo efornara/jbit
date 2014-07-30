@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -41,10 +42,85 @@
 
 #include "nano.h"
 
-void lcd_init() {
+#define SCALE 5
+#define BORDER 10
+#define BORDER2 (BORDER * 2)
+
+#define BDCOLOR 0xa4ceb5
+#define BGCOLOR 0x96bba4
+#define FGCOLOR 0x000000
+
+#define DISPLAY_WIDTH (LCD_WIDTH * SCALE)
+#define DISPLAY_HEIGHT (LCD_HEIGHT * SCALE)
+
+#define SCREEN_WIDTH (DISPLAY_WIDTH + BORDER2)
+#define SCREEN_HEIGHT (DISPLAY_HEIGHT + BORDER2)
+
+extern uint8_t lcd_bitmap[LCD_BITMAP_SIZE];
+
+static SDL_Surface *screen;
+
+static void sdl_init() {
+	int rc;
+	const char *title = "JBit Nano";
+
+	rc = SDL_Init(SDL_INIT_VIDEO);
+	assert(rc != -1);
+	atexit(SDL_Quit);
+	screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 24, SDL_DOUBLEBUF);
+	assert(screen);
+	SDL_WM_SetCaption(title, title);
 }
 
-void lcd_write(unsigned char dc, unsigned char data) {
+static void sdl_events() {
+	SDL_Event ev;
+	int key;
+
+	while (SDL_PollEvent(&ev)) {
+		switch (ev.type) {
+		case SDL_KEYDOWN:
+			key = ev.key.keysym.sym;
+			switch (key) {
+			case SDLK_ESCAPE:
+				exit(0);
+			}
+			break;
+		case SDL_QUIT:
+			exit(0);
+		}
+	}
+}
+
+static void sdl_update_screen() {
+	SDL_Rect rect;
+	int x, y, i;
+
+	rect.x = 0;
+	rect.y = 0;
+	rect.w = SCREEN_WIDTH;
+	rect.h = SCREEN_HEIGHT;
+	SDL_FillRect(screen, &rect, BDCOLOR);
+	rect.x = BORDER;
+	rect.y = BORDER;
+	rect.w = DISPLAY_WIDTH;
+	rect.h = DISPLAY_HEIGHT;
+	SDL_FillRect(screen, &rect, BGCOLOR);
+	rect.w = SCALE;
+	rect.h = SCALE;
+	for (i = 0, x = 0; x < LCD_WIDTH; x++) {
+		rect.x = BORDER + x * SCALE;
+		for (y = 0; y < LCD_HEIGHT; y++, i++) {
+			rect.y = BORDER + y * SCALE;
+			if (lcd_bitmap[i])
+				SDL_FillRect(screen, &rect, FGCOLOR);
+		}
+	}
+	SDL_Flip(screen);
+}
+
+static void sdl_sync() {
+	sdl_events();
+	sdl_update_screen();
 }
 
 static void usage() {
@@ -85,8 +161,9 @@ static void remote(const char *port) {
 	struct termios config;
 	int fd, rc, i;
 	char buf[1024];
+	Uint32 t;
 	
-	printf("remote...\n");
+	printf("remote\n");
 	fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
 	assert(fd >= 0);
 	assert(isatty(fd));
@@ -101,7 +178,10 @@ static void remote(const char *port) {
 	cfsetospeed(&config, B115200);
 	rc = tcsetattr(fd, TCSAFLUSH, &config);
 	assert(rc == 0);
+	printf("waiting for arduino to reset...\n");
+	t = SDL_GetTicks();
 	SDL_Delay(3000);
+	sdl_init();
 	while (1) {
 		while (1) {
 			rc = read(fd, buf, sizeof(buf));
@@ -115,17 +195,22 @@ static void remote(const char *port) {
 					remote_handle_char(buf[i]);
 			}
 		}
-		SDL_Delay(10);
+		if (SDL_GetTicks() - t > 30) {
+			t = SDL_GetTicks();
+			sdl_sync();
+		}
 	}
 	close(fd);
 }
 
 static void local() {
-	printf("local...\n");
+	printf("local\n");
+	sdl_init();
 	sim_init();
 	while (1) {
 		sim_step();
-		SDL_Delay(1000);
+		sdl_sync();
+		SDL_Delay(80);
 	}
 }
 
