@@ -30,15 +30,22 @@
 
 const char *msg = "Hello, World!";
 
+const char *keys = "0123456789*#";
+
 void sim_init() {
 	lcd_init();
+	keypad_init();
 }
 
 void sim_step() {
-	int i;
+	int i, mask;
 	lcd_clear();
 	lcd_home();
 	lcd_goto(4, 2);
 	for (i = 0; msg[i]; i++)
 		lcd_char(msg[i]);
+	lcd_goto(4, 3);
+	keypad_scan();
+	for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
+		lcd_char((keypad_state & mask) ? keys[i] : ' ');
 }

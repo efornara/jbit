@@ -63,6 +63,27 @@ void lcd_goto(int col, int row);
 void lcd_home();
 void lcd_char(char c);
 
+/* KEYPAD */
+
+#define KEYPAD_MASK_0 (1 << 0)
+#define KEYPAD_MASK_1 (1 << 1)
+#define KEYPAD_MASK_2 (1 << 2)
+#define KEYPAD_MASK_3 (1 << 3)
+#define KEYPAD_MASK_4 (1 << 4)
+#define KEYPAD_MASK_5 (1 << 5)
+#define KEYPAD_MASK_6 (1 << 6)
+#define KEYPAD_MASK_7 (1 << 7)
+#define KEYPAD_MASK_8 (1 << 8)
+#define KEYPAD_MASK_9 (1 << 9)
+
+#define KEYPAD_MASK_STAR (1 << 10)
+#define KEYPAD_MASK_HASH (1 << 11)
+
+extern unsigned short keypad_state;
+
+void keypad_init();
+void keypad_scan();
+
 /* JBIT SIM */
 
 void sim_init();

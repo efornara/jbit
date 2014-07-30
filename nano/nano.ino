@@ -28,9 +28,10 @@
 
 #include "nano.h"
 
+
 #if defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
 
-void connectToHWSim() {
+void connect_to_hwsim() {
   static bool hwsim_started = false;
   if (!hwsim_started) {
     Serial.begin(115200);
@@ -39,6 +40,7 @@ void connectToHWSim() {
 }
 
 #endif
+
 
 #if defined(LCD_NULL)
 
@@ -51,7 +53,7 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
 #elif defined(LCD_HWSIM)
 
 extern "C" void lcd_init() {
-  connectToHWSim();
+  connect_to_hwsim();
 }
 
 extern "C" void lcd_write(unsigned char dc, unsigned char data) {
@@ -69,6 +71,71 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
 #else
 #error "no lcd configured"
 #endif
+
+
+#if defined(KEYPAD_NULL)
+
+unsigned short keypad_state;
+
+extern "C" void keypad_init() {
+  keypad_state = 0;
+}
+
+extern "C" void keypad_scan() {
+}
+
+#elif defined(KEYPAD_HWSIM)
+
+unsigned short keypad_state;
+
+static void keypad_update() {
+  bool ready = false, done = false;
+  int n = 0;
+  Serial.print("K\n\r");
+  keypad_state = 0;
+  for (int spin = 0; spin < 100 && !done; spin++) {
+    delayMicroseconds(50);
+    while (Serial.available() > 0) {
+      int value = Serial.read();
+      switch (value) {
+      case 'K':
+        ready = true;
+        break;
+      case '0':
+      case '1':
+        if (ready) {
+          keypad_state <<= 1;
+          keypad_state |= value - '0';
+          n++;
+        }
+        break;
+      case '\r':
+        done = true;
+        break;
+      }
+    }
+  }
+  if (n != 12)
+    keypad_state = 0;
+}
+
+extern "C" void keypad_init() {
+  connect_to_hwsim();
+  keypad_state = 0;
+}
+
+extern "C" void keypad_scan() {
+  keypad_update();
+}
+
+#elif defined(KEYPAD_REAL)
+
+#error "not implemented"
+
+#else
+#error "no keypad configured"
+#endif
+
 
 void setup() {
   sim_init();

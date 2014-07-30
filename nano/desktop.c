@@ -72,6 +72,8 @@ static void sdl_init() {
 	SDL_WM_SetCaption(title, title);
 }
 
+extern void keypad_update(int key_down, int value);
+
 static void sdl_events() {
 	SDL_Event ev;
 	int key;
@@ -79,10 +81,38 @@ static void sdl_events() {
 	while (SDL_PollEvent(&ev)) {
 		switch (ev.type) {
 		case SDL_KEYDOWN:
+		case SDL_KEYUP:
 			key = ev.key.keysym.sym;
+			switch (key) {
+			case SDLK_UP:
+				key = '2';
+				break;
+			case SDLK_DOWN:
+				key = '8';
+				break;
+			case SDLK_LEFT:
+				key = '4';
+				break;
+			case SDLK_RIGHT:
+				key = '6';
+				break;
+			case SDLK_RETURN:
+				key = '5';
+				break;
+			case ',':
+				key = '*';
+				break;
+			case '.':
+				key = '#';
+				break;
+			}
 			switch (key) {
 			case SDLK_ESCAPE:
 				exit(0);
+				break;
+			default:
+				keypad_update(ev.type == SDL_KEYDOWN, key);
+				break;
 			}
 			break;
 		case SDL_QUIT:
@@ -131,6 +161,24 @@ static void usage() {
 	exit(1);
 }
 
+static int fd;
+
+static void remote_send_keypad_state() {
+	char buf[32];
+	unsigned short mask = 1;
+	int i;
+
+	buf[0] = 'K';
+	buf[1] = ' ';
+	for (i = 13; i >= 2; i--) {
+		buf[i] = (keypad_state & mask) ? '1' : '0';
+		mask <<= 1;
+	}
+	buf[14] = '\n';
+	buf[15] = '\r';
+	write(fd, buf, 16);
+}
+
 static void remote_handle_char(char c) {
 	static const int profile_error_rate = 0;
 	static int n = 0;
@@ -141,13 +189,22 @@ static void remote_handle_char(char c) {
 	if (c == '\n') {
 		/* skip */
 	} else if (c == '\r') {
-		int rc, data, nv;
+		int rc, data, nv, done = 0;
 		char dirty;
 		line[n] = '\0';
-		nv = sscanf(line, "L %d %d%c", &rc, &data, &dirty);
-		if (nv == 2)
-			lcd_write(rc, data);
-		else
+		if (line[0] == 'L') {
+			nv = sscanf(line, "L %d %d%c", &rc, &data, &dirty);
+			if (nv == 2) {
+				lcd_write(rc, data);
+				done = 1;
+			}
+		} else if (line[0] == 'K') {
+			if (line[1] == '\0') {
+				remote_send_keypad_state();
+				done = 1;
+			}
+		}
+		if (!done)
 			err++;
 		tot++;
 		if (profile_error_rate && tot % 1000 == 0)
@@ -162,7 +219,7 @@ static void remote_handle_char(char c) {
 
 static void remote(const char *port) {
 	struct termios config;
-	int fd, rc, i;
+	int rc, i;
 	char buf[1024];
 	Uint32 t;
 	
