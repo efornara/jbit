@@ -38,6 +38,44 @@ JBIT = {};
 		lcd_bitmap,
 		pixel;
 
+	// TODO: find out best practices; this works on iceweasel (deb. wheezy)
+	function on_key(is_down, e) {
+		var code = e.keyCode;
+
+		switch (code) {
+		case 13: // RETURN
+			code = 48 + 5;
+			break;
+		case 37: // LEFT
+			code = 48 + 4;
+			break;
+		case 38: // UP
+			code = 48 + 2;
+			break;
+		case 39: // RIGHT
+			code = 48 + 6;
+			break;
+		case 40: // DOWN
+			code = 48 + 8;
+			break;
+			code = 48 + 8;
+			break;
+			code = 48 + 8;
+			break;
+		case 170: // STAR
+		case 188: // COMMA
+			code = 42;
+			break;
+		case 163: // HASH
+		case 190: // PERIOD
+			code = 35;
+			break;
+		}
+		if (code < ' ' || code > '~')
+			return;
+		Module.ccall('keypad_update', 'number', ['number', 'number'], [is_down, code]);
+	}
+
 	JBIT.init = function() {
 		var ctx,
 			i;
@@ -53,6 +91,8 @@ JBIT = {};
 		Module.ccall('sim_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
 		window.setInterval(JBIT.update, 100);
+		window.addEventListener('keyup', function(e) { on_key(false, e); }, false);
+		window.addEventListener('keydown', function(e) { on_key(true, e); }, false);
 	};
 
 	JBIT.update = function() {
