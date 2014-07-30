@@ -30,11 +30,27 @@
 extern "C" {
 #endif
 
+/* CONFIG */
+
+/* LCD: uncomment one of the following */
+/*#define LCD_NULL*/
+#define LCD_HWSIM
+/*#define LCD_REAL*/
+
+/* KEYPAD: uncomment one of the following */
+/*#define KEYPAD_NULL*/
+#define KEYPAD_HWSIM
+/*#define KEYPAD_REAL*/
+
+/* LCD */
+
 #define LCD_COMMAND 0
 #define LCD_DATA 1
 
 #define LCD_WIDTH 84
 #define LCD_HEIGHT 48
+
+#define LCD_HWSIM_CMD_CLEAR 4
 
 void lcd_init();
 void lcd_write(unsigned char dc, unsigned char data);
@@ -42,6 +58,8 @@ void lcd_write(unsigned char dc, unsigned char data);
 void lcd_clear();
 void lcd_goto(int col, int row);
 void lcd_home();
+
+/* JBIT SIM */
 
 void sim_init();
 void sim_step();

@@ -45,8 +45,6 @@ void lcd_init() {
 }
 
 void lcd_write(unsigned char dc, unsigned char data) {
-	static int n = 0;
-	printf("%-6d %s %02X\n", n++, dc ? "DAT" : "CMD", data);
 }
 
 static void usage() {
@@ -54,10 +52,39 @@ static void usage() {
 	exit(1);
 }
 
+static void remote_handle_char(char c) {
+	static const int profile_error_rate = 0;
+	static int n = 0;
+	static long long tot = 0, err = 0;
+	static char line[124];
+
+	line[n] = c;
+	if (c == '\n') {
+		/* skip */
+	} else if (c == '\r') {
+		int rc, data, nv;
+		char dirty;
+		line[n] = '\0';
+		nv = sscanf(line, "L %d %d%c", &rc, &data, &dirty);
+		if (nv == 2)
+			lcd_write(rc, data);
+		else
+			err++;
+		tot++;
+		if (profile_error_rate && tot % 1000 == 0)
+			fprintf(stderr, "serial: err:%lld, tot:%lld, error rate: %.3f%%\n",
+			  err, tot, ((double)err / tot) * 100.0);
+		n = 0;
+	} else {
+		n++;
+		assert(n < sizeof(line));
+	}
+}
+
 static void remote(const char *port) {
 	struct termios config;
-	int fd, rc, n;
-	char line[64];
+	int fd, rc, i;
+	char buf[1024];
 	
 	printf("remote...\n");
 	fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -70,36 +97,25 @@ static void remote(const char *port) {
 	config.c_lflag = 0;
 	config.c_cc[VMIN] = 1;
 	config.c_cc[VTIME] = 0;
-	cfsetispeed(&config, B9600);
-	cfsetospeed(&config, B9600);
+	cfsetispeed(&config, B115200);
+	cfsetospeed(&config, B115200);
 	rc = tcsetattr(fd, TCSAFLUSH, &config);
 	assert(rc == 0);
-	n = 0;
+	SDL_Delay(3000);
 	while (1) {
 		while (1) {
-			rc = read(fd, &line[n], 1);
+			rc = read(fd, buf, sizeof(buf));
 			assert(rc != 0);
 			if (rc < 0) {
 				if (errno == EAGAIN)
 					break;
 				assert(errno == EINTR);
 			} else {
-				if (line[n] == '\n')
-					; /* skip */
-				if (line[n] == '\r') {
-					int rc, data, nv;
-					line[n] = '\0';
-					nv = sscanf(line, "L %d %d", &rc, &data);
-					if (nv == 2)
-						lcd_write(rc, data);
-					n = 0;
-				} else {
-					n++;
-					assert(n < sizeof(line));
-				}
+				for (i = 0; i < rc; i++)
+					remote_handle_char(buf[i]);
 			}
 		}
-		usleep(100);
+		SDL_Delay(10);
 	}
 	close(fd);
 }
@@ -109,7 +125,7 @@ static void local() {
 	sim_init();
 	while (1) {
 		sim_step();
-		usleep(1000000);
+		SDL_Delay(1000);
 	}
 }
 

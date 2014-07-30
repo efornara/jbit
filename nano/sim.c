@@ -36,6 +36,6 @@ void sim_step() {
 	int i;
 	lcd_clear();
 	lcd_home();
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 90; i++)
 		lcd_write(LCD_DATA, i);
 }

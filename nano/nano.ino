@@ -28,12 +28,30 @@
 
 #include "nano.h"
 
-#define LCD_SIMULATOR
+#if defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
 
-#ifdef LCD_SIMULATOR
+void connectToHWSim() {
+  static bool hwsim_started = false;
+  if (!hwsim_started) {
+    Serial.begin(115200);
+    hwsim_started = true;
+  }
+}
+
+#endif
+
+#if defined(LCD_NULL)
 
 extern "C" void lcd_init() {
-  Serial.begin(9600);
+}
+
+extern "C" void lcd_write(unsigned char dc, unsigned char data) {
+}
+
+#elif defined(LCD_HWSIM)
+
+extern "C" void lcd_init() {
+  connectToHWSim();
 }
 
 extern "C" void lcd_write(unsigned char dc, unsigned char data) {
@@ -44,6 +62,12 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
   Serial.print("\n\r");
 }
 
+#elif defined(LCD_REAL)
+
+#error "not implemented"
+
+#else
+#error "no lcd configured"
 #endif
 
 void setup() {
@@ -52,5 +76,5 @@ void setup() {
 
 void loop() {
   sim_step();
-  delay(1000);
+  delay(100);
 }

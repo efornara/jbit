@@ -29,9 +29,13 @@
 #include "nano.h"
 
 void lcd_clear() {
+#ifdef LCD_HWSIM
+	lcd_write(LCD_COMMAND, LCD_HWSIM_CMD_CLEAR);
+#else
 	int i;
 	for (i = 0; i < LCD_WIDTH * LCD_HEIGHT / 8; i++)
 		lcd_write(LCD_DATA, 0);
+#endif
 }
 
 void lcd_goto(int col, int row) {
