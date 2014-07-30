@@ -165,6 +165,6 @@ void lcd_char(char c) {
 	p -= 32;
 	p *= 5;
 	for (i = 0; i < 5; i++)
-		lcd_write(LCD_DATA, fixed_font[p++]);
+		lcd_write(LCD_DATA, pgm_read_byte(&(fixed_font[p++])));
 	lcd_write(LCD_DATA, 0);
 }

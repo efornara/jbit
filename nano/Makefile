@@ -25,7 +25,7 @@ arduino:
 	make -f Arduino.mk
 
 size: arduino
-	avr-size build-cli/nano.elf
+	avr-size -C --mcu=atmega328p build-cli/nano.elf
 
 full-size: arduino
 	avr-nm --size-sort --print-size --radix d --demangle build-cli/nano.elf
