@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#ifdef PLATFORM_DESKTOP
+#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_JS)
 
 #include <string.h>
 #include <stdint.h>
@@ -34,6 +34,10 @@
 #include "nano.h"
 
 uint8_t lcd_bitmap[LCD_BITMAP_SIZE];
+
+uint8_t *lcd_get_bitmap() {
+	return lcd_bitmap;
+}
 
 static int col;
 static int row;

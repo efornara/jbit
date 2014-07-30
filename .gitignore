@@ -10,5 +10,6 @@ js/images
 js/res
 native/jbit
 native/jbit.exe
-nano/jbnano
+jbnano
+jbit-c.js
 private
