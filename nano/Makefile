@@ -19,4 +19,13 @@ jbit-c.js: $(EM_SRCS)
 	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbit-c.js $(EM_SRCS)
 
 clean:
-	$(RM) *.o jbnano jbit-c.js
+	$(RM) -r build-cli *.o jbnano jbit-c.js
+
+arduino:
+	make -f Arduino.mk
+
+size: arduino
+	avr-size build-cli/nano.elf
+
+full-size: arduino
+	avr-nm --size-sort --print-size --radix d --demangle build-cli/nano.elf

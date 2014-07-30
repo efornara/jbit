@@ -26,6 +26,12 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __AVR
+#include <avr/pgmspace.h>
+#else
+#define PROGMEM
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

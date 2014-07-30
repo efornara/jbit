@@ -36,7 +36,7 @@
 
 	Emanuele
 */
-static unsigned char fixed_font[] = {
+static const unsigned char fixed_font[] PROGMEM = {
 	/* ASCII */
 	0x00, 0x00, 0x00, 0x00, 0x00, /* (space) */
 	0x00, 0x00, 0x5F, 0x00, 0x00, /* ! */

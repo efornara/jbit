@@ -12,4 +12,5 @@ native/jbit
 native/jbit.exe
 jbnano
 jbit-c.js
+build-cli
 private

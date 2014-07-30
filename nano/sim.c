@@ -28,9 +28,9 @@
 
 #include "nano.h"
 
-const char *msg = "Hello, World!";
+const char *const msg = "Hello, World!";
 
-const char *keys = "0123456789*#";
+const char *const keys = "0123456789*#";
 
 void sim_init() {
 	lcd_init();
