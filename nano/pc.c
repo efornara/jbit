@@ -267,7 +267,6 @@ static void remote(const char *port) {
 static void local() {
 	printf("local\n");
 	sdl_init();
-	//sim_init((int)time(0));
 	jbit_init();
 	while (1) {
 		jbit_step();

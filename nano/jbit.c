@@ -28,8 +28,8 @@
 
 #include "nano.h"
 
-extern void sim_init();
-extern void sim_step();
+extern void vm_init();
+extern void vm_step();
 
 extern void demos_init();
 extern void demos_step();
@@ -58,8 +58,8 @@ void jbit_replace_with(int module_) {
 	case MODULE_DEMOS:
 		demos_init();
 		break;
-	case MODULE_SIM:
-		sim_init();
+	case MODULE_VM:
+		vm_init();
 		break;
 	}
 }
@@ -76,8 +76,8 @@ void jbit_step() {
 	case MODULE_DEMOS:
 		demos_step();
 		break;
-	case MODULE_SIM:
-		sim_step();
+	case MODULE_VM:
+		vm_step();
 		break;
 	}
 }

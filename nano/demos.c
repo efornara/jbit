@@ -90,8 +90,8 @@ struct {
 	DEMO_DEF(charset)
 };
 
-const uint8_t *demo_code;
-uint8_t demo_size;
+extern const uint8_t *vm_code;
+extern uint8_t vm_size;
 
 static const char *const demos[] = {
 	"ciao",
@@ -111,7 +111,7 @@ void demos_init() {
 }
 
 void demos_step() {
-	demo_code = demo_def[ui_result].code;
-	demo_size = demo_def[ui_result].size;
-	jbit_replace_with(MODULE_SIM);
+	vm_code = demo_def[ui_result].code;
+	vm_size = demo_def[ui_result].size;
+	jbit_replace_with(MODULE_VM);
 }

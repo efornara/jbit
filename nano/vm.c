@@ -41,8 +41,8 @@ void test_keypad() {
 
 static char vsync;
 
-extern const uint8_t *const demo_code;
-extern const uint8_t demo_size;
+const uint8_t *vm_code;
+uint8_t vm_size;
 
 static const uint8_t irqvec[] PROGMEM = {
 	// 255:240
@@ -63,8 +63,8 @@ uint8_t read6502(uint16_t address) {
 	if (page == 2)
 		return microio_get(&microio, offset);
 	if (page == 3) {
-		if (offset < demo_size)
-			return pgm_read_byte(&(demo_code[offset]));
+		if (offset < vm_size)
+			return pgm_read_byte(&(vm_code[offset]));
 		return 0;
 	}
 	if (page == 255) {
@@ -105,7 +105,7 @@ static void process_events(uint8_t event, char c) {
 	microio_keypress(&microio, c);
 }
 
-void sim_init() {
+void vm_init() {
 	trace6502(0);
 	reset6502();
 	lcd_clear();
@@ -113,7 +113,7 @@ void sim_init() {
 	keypad_handler = process_events;
 }
 
-void sim_step() {
+void vm_step() {
 	int i = 0;
 
 	vsync = 0;

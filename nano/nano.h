@@ -170,7 +170,7 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 
 #define MODULE_JBIT 0
 #define MODULE_DEMOS 1
-#define MODULE_SIM 2
+#define MODULE_VM 2
 
 void jbit_init();
 void jbit_step();

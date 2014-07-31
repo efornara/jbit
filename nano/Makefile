@@ -12,7 +12,7 @@ OBJS = \
 	jbit.o \
 	demos.o \
 	microio.o \
-	sim.o \
+	vm.o \
 	fake6502.o \
 	ui.o \
 	keypad.o \
@@ -23,7 +23,7 @@ EM_SRCS = \
 	jbit.c \
 	demos.c \
 	microio.c \
-	sim.c \
+	vm.c \
 	fake6502.c \
 	ui.c \
 	keypad.c \
