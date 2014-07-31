@@ -129,6 +129,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "nano.h"
+
 //6502 defines
 #define UNDOCUMENTED //when this is defined, undocumented opcodes are handled.
                      //otherwise, they're simply treated as NOPs.
@@ -236,8 +238,8 @@ void reset6502() {
 }
 
 
-static void (*addrtable[256])();
-static void (*optable[256])();
+static void (*const addrtable[256])() PROGMEM;
+static void (*const optable[256])() PROGMEM;
 uint8_t penaltyop, penaltyaddr;
 
 //addressing mode functions, calculates effective addresses
@@ -871,7 +873,7 @@ static void tya() {
 #endif
 
 
-static void (*addrtable[256])() = {
+static void (*const addrtable[256])() PROGMEM = {
 /*        |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  A  |  B  |  C  |  D  |  E  |  F  |     */
 /* 0 */     imp, indx,  imp, indx,   zp,   zp,   zp,   zp,  imp,  imm,  acc,  imm, abso, abso, abso, abso, /* 0 */
 /* 1 */     rel, indy,  imp, indy,  zpx,  zpx,  zpx,  zpx,  imp, absy,  imp, absy, absx, absx, absx, absx, /* 1 */
@@ -891,7 +893,7 @@ static void (*addrtable[256])() = {
 /* F */     rel, indy,  imp, indy,  zpx,  zpx,  zpx,  zpx,  imp, absy,  imp, absy, absx, absx, absx, absx  /* F */
 };
 
-static void (*optable[256])() = {
+static void (*const optable[256])() PROGMEM = {
 /*        |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  A  |  B  |  C  |  D  |  E  |  F  |      */
 /* 0 */      brk,  ora,  nop,  slo,  nop,  ora,  asl,  slo,  php,  ora,  asl,  nop,  nop,  ora,  asl,  slo, /* 0 */
 /* 1 */      bpl,  ora,  nop,  slo,  nop,  ora,  asl,  slo,  clc,  ora,  nop,  slo,  nop,  ora,  asl,  slo, /* 1 */
@@ -911,7 +913,7 @@ static void (*optable[256])() = {
 /* F */      beq,  sbc,  nop,  isb,  nop,  sbc,  inc,  isb,  sed,  sbc,  nop,  isb,  nop,  sbc,  inc,  isb  /* F */
 };
 
-static const uint8_t ticktable[256] = {
+static const uint8_t ticktable[256] PROGMEM = {
 /*        |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  A  |  B  |  C  |  D  |  E  |  F  |     */
 /* 0 */      7,    6,    2,    8,    3,    3,    5,    5,    3,    2,    2,    2,    4,    4,    6,    6,  /* 0 */
 /* 1 */      2,    5,    2,    8,    4,    4,    6,    6,    2,    4,    2,    7,    4,    4,    7,    7,  /* 1 */
@@ -959,9 +961,9 @@ void exec6502(uint32_t tickcount) {
         penaltyop = 0;
         penaltyaddr = 0;
 
-        (*addrtable[opcode])();
-        (*optable[opcode])();
-        clockticks6502 += ticktable[opcode];
+		(*(void (*)())pgm_read_word(&addrtable[opcode]))();
+		(*(void (*)())pgm_read_word(&optable[opcode]))();
+        clockticks6502 += pgm_read_byte(&(ticktable[opcode]));
         if (penaltyop && penaltyaddr) clockticks6502++;
 
         instructions++;
@@ -978,9 +980,9 @@ void step6502() {
     penaltyop = 0;
     penaltyaddr = 0;
 
-    (*addrtable[opcode])();
-    (*optable[opcode])();
-    clockticks6502 += ticktable[opcode];
+	(*(void (*)())pgm_read_word(&addrtable[opcode]))();
+	(*(void (*)())pgm_read_word(&optable[opcode]))();
+    clockticks6502 += pgm_read_byte(&(ticktable[opcode]));
     if (penaltyop && penaltyaddr) clockticks6502++;
     clockgoal6502 = clockticks6502;
 
