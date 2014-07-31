@@ -29,7 +29,7 @@
 #if defined(PLATFORM_PC) || defined(PLATFORM_JS)
 
 #include <string.h>
-#include <stdint.h>
+#include <time.h>
 
 #include "nano.h"
 
@@ -161,6 +161,10 @@ void keypad_update(int key_down, int value) {
 		keypad_state |= mask;
 	else
 		keypad_state &= ~mask;
+}
+
+int sys_get_random_seed() {
+	return time(0);
 }
 
 #endif

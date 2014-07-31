@@ -75,5 +75,14 @@ static const uint8_t charset_code[] PROGMEM = {
 
 #define DEMO_PRG random_code
 
-const uint8_t *const demo_code = DEMO_PRG;
-const uint8_t demo_size = sizeof(DEMO_PRG);
+const uint8_t *demo_code;
+uint8_t demo_size;
+
+void demos_init() {
+}
+
+void demos_step() {
+	demo_code = DEMO_PRG;
+	demo_size = sizeof(DEMO_PRG);
+	jbit_replace_with(MODULE_SIM);
+}

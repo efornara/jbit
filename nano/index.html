@@ -5,14 +5,19 @@
 <title>JBit Nano</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, user-scalable=no">
-<link rel="stylesheet" href="jbit.css">
+<link rel="stylesheet" href="jbnano.css">
 </head>
 <body>
 
 <canvas id="display" width="420" height="240">
 </canvas>
-<script src="jbit-c.js"></script>
-<script src="jbit.js"></script>
+<script src="jbnano-c.js"></script>
+<script src="jbnano.js"></script>
+<script>
+window.onload = function() {
+	JBNANO.init();
+};
+</script>
 
 </body>
 </html>

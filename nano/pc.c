@@ -267,9 +267,10 @@ static void remote(const char *port) {
 static void local() {
 	printf("local\n");
 	sdl_init();
-	sim_init((int)time(0));
+	//sim_init((int)time(0));
+	jbit_init();
 	while (1) {
-		sim_step();
+		jbit_step();
 		sdl_sync();
 		SDL_Delay(80);
 	}

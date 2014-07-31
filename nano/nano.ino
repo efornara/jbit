@@ -143,12 +143,15 @@ extern "C" void keypad_scan() {
 #error "no keypad configured"
 #endif
 
+extern "C" int sys_get_random_seed() {
+	return analogRead(0);
+}
 
 void setup() {
-  sim_init(analogRead(0));
+  jbit_init();
 }
 
 void loop() {
-  sim_step();
+  jbit_step();
   delay(100);
 }

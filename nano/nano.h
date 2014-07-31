@@ -120,6 +120,10 @@ extern keypad_handler_t keypad_handler;
 
 void keypad_process();
 
+/* SYS */
+
+int sys_get_random_seed();
+
 /* 6502 */
 
 /*
@@ -156,10 +160,14 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
 void microio_keypress(microio_context_t *ctx, uint8_t code);
 
-/* JBIT SIM */
+/* MAIN */
 
-void sim_init(int random_seed);
-void sim_step();
+#define MODULE_DEMOS 1
+#define MODULE_SIM 2
+
+void jbit_init();
+void jbit_step();
+void jbit_replace_with(int module);
 
 #ifdef __cplusplus
 };

@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-JBIT = {};
+JBNANO = {};
 
 (function() {
 
@@ -34,9 +34,13 @@ JBIT = {};
 		LCD_WIDTH = 84,
 		LCD_HEIGHT = 48,
 		LCD_ROWS = 5,
-		sim_step,
+		jbit_step,
+		keypad_update,
 		lcd_bitmap,
 		pixel;
+
+	jbit_step = Module.cwrap('jbit_step', 'number', []);
+	keypad_update = Module.cwrap('keypad_update', 'number', ['number', 'number']);
 
 	// TODO: find out best practices; this works on iceweasel (deb. wheezy)
 	function on_key(is_down, e) {
@@ -73,10 +77,10 @@ JBIT = {};
 		}
 		if (code < ' ' || code > '~')
 			return;
-		Module.ccall('keypad_update', 'number', ['number', 'number'], [is_down, code]);
+		keypad_update(is_down, code);
 	}
 
-	JBIT.init = function() {
+	JBNANO.init = function() {
 		var ctx,
 			i;
 
@@ -88,19 +92,19 @@ JBIT = {};
 			pixel.data[i*4 + 2] = 0;
 			pixel.data[i*4 + 3] = 255;
 		}
-		Module.ccall('sim_init', 'number', [], []);
+		Module.ccall('jbit_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
-		window.setInterval(JBIT.update, 100);
+		window.setInterval(JBNANO.update, 100);
 		window.addEventListener('keyup', function(e) { on_key(false, e); }, false);
 		window.addEventListener('keydown', function(e) { on_key(true, e); }, false);
 	};
 
-	JBIT.update = function() {
+	JBNANO.update = function() {
 		var ctx,
 			rect_x, rect_y,
 			x, y, r, i, j;
 
-		Module.ccall('sim_step', 'number', [], []);
+		jbit_step();
 		ctx = document.getElementById('display').getContext('2d');
 		ctx.clearRect(0, 0, LCD_WIDTH * SCALE, LCD_HEIGHT * SCALE);
 		for (i = 0, r = 0; r < LCD_ROWS; r++) {
@@ -117,7 +121,3 @@ JBIT = {};
 	};
 
 })();
-
-window.onload = function() {
-	JBIT.init();
-};
