@@ -145,7 +145,7 @@ extern "C" void keypad_scan() {
 
 
 void setup() {
-  sim_init();
+  sim_init(analogRead(0));
 }
 
 void loop() {

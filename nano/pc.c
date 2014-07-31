@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <errno.h>
 #include <assert.h>
 
@@ -266,7 +267,7 @@ static void remote(const char *port) {
 static void local() {
 	printf("local\n");
 	sdl_init();
-	sim_init();
+	sim_init((int)time(0));
 	while (1) {
 		sim_step();
 		sdl_sync();

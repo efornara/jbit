@@ -73,7 +73,7 @@ static const uint8_t charset_code[] PROGMEM = {
 	144,231
 };
 
-#define DEMO_PRG keypad_code
+#define DEMO_PRG random_code
 
 const uint8_t *const demo_code = DEMO_PRG;
 const uint8_t demo_size = sizeof(DEMO_PRG);

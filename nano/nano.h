@@ -144,9 +144,12 @@ void trace6502(int enable);
 typedef struct {
 	uint8_t convideo[MICROIO_CONVIDEO_SIZE];
 	uint8_t keybuf[MICROIO_KEYBUF_SIZE];
+	long long r_seed[2];
+	long long r_divisor;
+	uint8_t r_n_minus_1;
 } microio_context_t;
 
-void microio_init(microio_context_t *ctx);
+void microio_init(microio_context_t *ctx, int random_seed);
 void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data);
 uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 
@@ -155,7 +158,7 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 
 /* JBIT SIM */
 
-void sim_init();
+void sim_init(int random_seed);
 void sim_step();
 
 #ifdef __cplusplus

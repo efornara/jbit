@@ -110,13 +110,13 @@ void process_events(uint8_t event, uint8_t code) {
 #endif
 }
 
-void sim_init() {
+void sim_init(int random_seed) {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
 	trace6502(0);
 	reset6502();
-	microio_init(&microio);
+	microio_init(&microio, random_seed);
 	keypad_handler = process_events;
 }
 

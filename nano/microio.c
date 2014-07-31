@@ -36,9 +36,36 @@
 #define KEYBUF 24
 #define CONVIDEO 40
 
-void microio_init(microio_context_t *ctx) {
+#define MAXRAND 0xFFFFFFFFFFFFLL
+
+static long long rnd_next(microio_context_t *ctx) {
+	ctx->r_seed[0] = (ctx->r_seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
+	return ctx->r_seed[0];
+}
+
+static uint8_t rnd_get(microio_context_t *ctx) {
+	long long i;
+	while (ctx->r_n_minus_1 + 1 <= (i = rnd_next(ctx) / ctx->r_divisor))
+		;
+	return (uint8_t)i;
+}
+
+static void rnd_put(microio_context_t *ctx, uint8_t max) {
+	if (max == 0) {
+		long long t = ctx->r_seed[0];
+		ctx->r_seed[0] = ctx->r_seed[1];
+		ctx->r_seed[1] = t;
+	} else {
+		ctx->r_n_minus_1 = max;
+		ctx->r_divisor = MAXRAND / (max + 1);
+	}
+}
+
+void microio_init(microio_context_t *ctx, int random_seed) {
 	memset(ctx->convideo, ' ', MICROIO_CONVIDEO_SIZE);
 	memset(ctx->keybuf, 0, MICROIO_KEYBUF_SIZE);
+	ctx->r_seed[0] = random_seed;
+	rnd_put(ctx, 255);
 }
 
 void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
@@ -49,6 +76,8 @@ void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
 		for (i = 0; i < MICROIO_KEYBUF_SIZE - 1; i++)
 			ctx->keybuf[i] = ctx->keybuf[i + 1];
 		ctx->keybuf[i] = 0;
+	} else if (addr == RANDOM) {
+		rnd_put(ctx, data);
 	}
 }
 
@@ -57,6 +86,8 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr) {
 		return ctx->convideo[addr - CONVIDEO];
 	} else if (addr >= KEYBUF && addr < KEYBUF + MICROIO_KEYBUF_SIZE) {
 		return ctx->keybuf[addr - KEYBUF];
+	} else if (addr == RANDOM) {
+		return rnd_get(ctx);
 	}
 	return 0;
 }
