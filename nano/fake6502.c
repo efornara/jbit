@@ -107,6 +107,25 @@
  *                                                   *
  *****************************************************/
 
+/*****************************************************
+ *****************************************************
+
+ WARNING! This is not the original Fake6502 emulator!
+
+ This version has been modified to fit jbit nano,
+ and it is likely to contain bugs not present in the
+ original version.
+
+ The original version used as a starting point
+ has been retrieved (20140731) from:
+
+ http://rubbermallet.org/fake6502.c
+
+ See the git history for a list of changes.
+
+ *****************************************************
+ *****************************************************/
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -890,7 +909,7 @@ static void (*optable[256])() = {
 /* F */      beq,  sbc,  nop,  isb,  nop,  sbc,  inc,  isb,  sed,  sbc,  nop,  isb,  nop,  sbc,  inc,  isb  /* F */
 };
 
-static const uint32_t ticktable[256] = {
+static const uint8_t ticktable[256] = {
 /*        |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  A  |  B  |  C  |  D  |  E  |  F  |     */
 /* 0 */      7,    6,    2,    8,    3,    3,    5,    5,    3,    2,    2,    2,    4,    4,    6,    6,  /* 0 */
 /* 1 */      2,    5,    2,    8,    4,    4,    6,    6,    2,    4,    2,    7,    4,    4,    7,    7,  /* 1 */
