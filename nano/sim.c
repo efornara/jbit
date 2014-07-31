@@ -47,9 +47,12 @@ extern const uint8_t *const demo_code;
 extern const uint8_t demo_size;
 
 static const uint8_t irqvec[] PROGMEM = {
-	0, 254, // NMI
+	// 255:240
+	141,18,2,76,240,255,0,0,0,0,
+	// 255:250
+	240, 255, // NMI
 	0, 3, // RESET
-	0, 254, // BRK
+	240, 255, // BRK
 };
 
 static uint8_t ram[512];
@@ -64,10 +67,11 @@ uint8_t read6502(uint16_t address) {
 	if (page == 3) {
 		if (offset < demo_size)
 			return pgm_read_byte(&(demo_code[offset]));
+		return 0;
 	}
 	if (page == 255) {
-		if (offset >= 250)
-			return pgm_read_byte(&(irqvec[offset - 250]));
+		if (offset >= 240)
+			return pgm_read_byte(&(irqvec[offset - 240]));
 	}
 #ifdef PLATFORM_PC
 	printf("read6502: %d:%d\n", address >> 8, address & 0xff);
