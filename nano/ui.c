@@ -26,52 +26,77 @@
  * SUCH DAMAGE.
  */
 
+#include <string.h>
+
 #include "nano.h"
 
-extern void sim_init();
-extern void sim_step();
+uint8_t ui_result;
 
-extern void demos_init();
-extern void demos_step();
+static uint8_t cx;
+static uint8_t cy;
 
-static uint8_t module;
+static void home() {
+	lcd_goto(0, 0);
+	cx = 0;
+	cy = 0;
+}
+static void put_x(uint8_t value) {
+	lcd_write(LCD_DATA, value);
+	cx++;
+}
 
-void jbit_init() {
-	lcd_init();
+static void put_char(char c) {
+	lcd_char(c);
+	cx += LCD_FIXED_CHAR_WIDTH;
+}
+
+static void put_hline(int w) {
+	int i;
+	put_x(0);
+	for (i = 0; i < w - 2; i++)
+		put_x(0x08);
+	put_x(0);
+}
+
+static void put_string(const char *s) {
+	char c;
+	while ((c = *s++))
+		put_char(c);
+}
+
+static void put_endl() {
+	for (; cx < LCD_WIDTH; cx++)
+		lcd_write(LCD_DATA, 0);
+	cx = 0;
+	cy++;
+}
+
+static void draw_header(const char *title) {
+	int i, w, n = strlen(title);
+
+	home();
+	if (n > 13)
+		return;
+	w = (LCD_WIDTH - n * LCD_FIXED_CHAR_WIDTH) / 2;
+	put_hline(w);
+	for (i = 0; i < n; i++)
+		put_char(title[i]);
+	put_hline(w);
+	put_endl();
+}
+
+static void process_events(uint8_t event, uint8_t code) {
+	ui_result = 1;
+}
+
+static void start() {
+	keypad_handler = process_events;
+	ui_result = 0;
+}
+
+void ui_msg(const char *title, const char *msg) {
 	lcd_clear();
-	keypad_init();
-	jbit_replace_with(MODULE_JBIT);
-}
-
-void jbit_replace_with(int module_) {
-	module = module_;
-	keypad_handler = 0;
-	switch (module) {
-	case MODULE_JBIT:
-		ui_msg("JBit", "Press any key to continue.");
-		break;
-	case MODULE_DEMOS:
-		demos_init();
-		break;
-	case MODULE_SIM:
-		sim_init();
-		break;
-	}
-}
-
-void jbit_step() {
-	keypad_scan();
-	keypad_process();
-	switch (module) {
-	case MODULE_JBIT:
-		if (ui_result)
-			jbit_replace_with(MODULE_DEMOS);
-		break;
-	case MODULE_DEMOS:
-		demos_step();
-		break;
-	case MODULE_SIM:
-		sim_step();
-		break;
-	}
+	draw_header(title);
+	put_string(msg);
+	start();
 }

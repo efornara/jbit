@@ -103,17 +103,15 @@ error:
 	return;
 }
 
-void process_events(uint8_t event, uint8_t code) {
+static void process_events(uint8_t event, uint8_t code) {
 	microio_keypress(&microio, keys[code]);
-#ifdef PLATFORM_PC
-	printf("event: %d %d\n", event, code);
-#endif
 }
 
 void sim_init() {
 	trace6502(0);
 	reset6502();
-	microio_init(&microio, 100);
+	lcd_clear();
+	microio_init(&microio, sys_get_random_seed());
 	keypad_handler = process_events;
 }
 

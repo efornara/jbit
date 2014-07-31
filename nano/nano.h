@@ -64,7 +64,10 @@ extern "C" {
 
 #define LCD_WIDTH 84
 #define LCD_ROWS 6
-#define LCD_HEIGHT (LCD_ROWS * 8)
+#define LCD_CHAR_HEIGHT 8
+#define LCD_HEIGHT (LCD_ROWS * LCD_CHAR_HEIGHT)
+
+#define LCD_FIXED_CHAR_WIDTH 6
 
 #define LCD_BITMAP_SIZE (LCD_WIDTH * LCD_HEIGHT)
 
@@ -124,6 +127,11 @@ void keypad_process();
 
 int sys_get_random_seed();
 
+/* UI */
+
+extern uint8_t ui_result;
+void ui_msg(const char *title, const char *msg);
+
 /* 6502 */
 
 /*
@@ -162,6 +170,7 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 
 /* MAIN */
 
+#define MODULE_JBIT 0
 #define MODULE_DEMOS 1
 #define MODULE_SIM 2
 

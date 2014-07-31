@@ -7,8 +7,28 @@ EM_CC = emcc
 EM_CFLAGS = -DPLATFORM_JS -Wall
 EM_LDFLAGS = -s EXPORTED_FUNCTIONS="['_keypad_update', '_jbit_init', '_jbit_step', '_lcd_get_bitmap']"
 
-OBJS = pc.o jbit.o sim.o demos.o microio.o keypad.o lcd.o hwsim.o fake6502.o
-EM_SRCS = jbit.c sim.c demos.c microio.c keypad.c lcd.c hwsim.c fake6502.c
+OBJS = \
+	pc.o \
+	jbit.o \
+	demos.o \
+	microio.o \
+	sim.o \
+	fake6502.o \
+	ui.o \
+	keypad.o \
+	lcd.o \
+	hwsim.o
+
+EM_SRCS = \
+	jbit.c \
+	demos.c \
+	microio.c \
+	sim.c \
+	fake6502.c \
+	ui.c \
+	keypad.c \
+	lcd.c \
+	hwsim.c
 
 all: jbnano
 
