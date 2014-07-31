@@ -34,8 +34,15 @@
 void connect_to_hwsim() {
   static bool hwsim_started = false;
   if (!hwsim_started) {
-    Serial.begin(115200);
     hwsim_started = true;
+    Serial.begin(115200);
+    while (true) {
+      delayMicroseconds(50);
+      while (Serial.available() > 0) {
+        if (Serial.read() == '\r')
+          return;
+      }
+    }
   }
 }
 

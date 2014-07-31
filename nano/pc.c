@@ -241,6 +241,7 @@ static void remote(const char *port) {
 	t = SDL_GetTicks();
 	SDL_Delay(3000);
 	sdl_init();
+	write(fd, "C\n\r", 3);
 	while (1) {
 		while (1) {
 			rc = read(fd, buf, sizeof(buf));

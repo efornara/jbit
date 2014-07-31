@@ -127,5 +127,6 @@ void sim_step() {
 	for (i = 0; i < 1000 && !vsync; i++)
 		step6502();
 	microio_lcd(&microio, 12, 1);
+	keypad_scan();
 	keypad_process();
 }

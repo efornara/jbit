@@ -21,11 +21,17 @@ jbit-c.js: $(EM_SRCS)
 clean:
 	$(RM) -r build-cli *.o jbnano jbit-c.js
 
-arduino:
+remote: jbnano
+	./jbnano /dev/ttyACM0
+
+uno:
 	make -f Arduino.mk
 
-size: arduino
+upload: uno
+	make -f Arduino.mk upload
+
+size: uno
 	avr-size -C --mcu=atmega328p build-cli/nano.elf
 
-full-size: arduino
+full-size: uno
 	avr-nm --size-sort --print-size --radix d --demangle build-cli/nano.elf
