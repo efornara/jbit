@@ -7,8 +7,8 @@ EM_CC = emcc
 EM_CFLAGS = -DPLATFORM_JS -Wall
 EM_LDFLAGS = -s EXPORTED_FUNCTIONS="['_keypad_update', '_sim_init', '_sim_step', '_lcd_get_bitmap']"
 
-OBJS = pc.o sim.o microio.o lcd.o hwsim.o fake6502.o
-EM_SRCS = sim.c microio.c lcd.c hwsim.c fake6502.c
+OBJS = pc.o sim.o microio.o keypad.o lcd.o hwsim.o fake6502.o
+EM_SRCS = sim.c microio.c keypad.c lcd.c hwsim.c fake6502.c
 
 all: jbnano
 

@@ -75,7 +75,7 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
 
 #if defined(KEYPAD_NULL)
 
-unsigned short keypad_state;
+uint16_t keypad_state;
 
 extern "C" void keypad_init() {
   keypad_state = 0;
@@ -86,7 +86,7 @@ extern "C" void keypad_scan() {
 
 #elif defined(KEYPAD_HWSIM)
 
-unsigned short keypad_state;
+uint16_t keypad_state;
 
 static void keypad_update() {
   bool ready = false, done = false;

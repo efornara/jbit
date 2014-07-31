@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef PLATFORM_PC
+#include <stdio.h>
+#endif
 #include <stdint.h>
 
 #ifdef __AVR
@@ -75,6 +78,19 @@ void lcd_char(char c);
 
 /* KEYPAD */
 
+#define KEYPAD_CODE_0 0
+#define KEYPAD_CODE_1 1
+#define KEYPAD_CODE_2 2
+#define KEYPAD_CODE_3 3
+#define KEYPAD_CODE_4 4
+#define KEYPAD_CODE_5 5
+#define KEYPAD_CODE_6 6
+#define KEYPAD_CODE_7 7
+#define KEYPAD_CODE_8 8
+#define KEYPAD_CODE_9 9
+#define KEYPAD_CODE_STAR 10
+#define KEYPAD_CODE_HASH 11
+
 #define KEYPAD_MASK_0 (1 << 0)
 #define KEYPAD_MASK_1 (1 << 1)
 #define KEYPAD_MASK_2 (1 << 2)
@@ -85,14 +101,22 @@ void lcd_char(char c);
 #define KEYPAD_MASK_7 (1 << 7)
 #define KEYPAD_MASK_8 (1 << 8)
 #define KEYPAD_MASK_9 (1 << 9)
-
 #define KEYPAD_MASK_STAR (1 << 10)
 #define KEYPAD_MASK_HASH (1 << 11)
 
-extern unsigned short keypad_state;
+#define KEYPAD_EVENT_RELEASE 0
+#define KEYPAD_EVENT_LONGPRESS 1
+
+extern uint16_t keypad_state;
 
 void keypad_init();
 void keypad_scan();
+
+typedef void (*keypad_handler_t)(uint8_t event, uint8_t code);
+
+extern keypad_handler_t keypad_handler;
+
+void keypad_process();
 
 /* 6502 */
 

@@ -41,10 +41,6 @@ void test_keypad() {
 		lcd_char((keypad_state & mask) ? keys[i] : ' ');
 }
 
-#ifdef PLATFORM_PC
-#include <stdio.h>
-#endif
-
 static char vsync;
 
 static const uint8_t code[] PROGMEM = {
@@ -96,13 +92,20 @@ error:
 	return;
 }
 
+void process_events(uint8_t event, uint8_t code) {
+#ifdef PLATFORM_PC
+	printf("event: %d %d\n", event, code);
+#endif
+}
+
 void sim_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
-	trace6502(1);
+	trace6502(0);
 	reset6502();
 	microio_init(&microio);
+	keypad_handler = process_events;
 }
 
 void sim_step() {
@@ -112,5 +115,6 @@ void sim_step() {
 	for (i = 0; i < 100 && !vsync; i++)
 		step6502();
 	microio_lcd(&microio, 12, 1);
+	keypad_process();
 	test_keypad();
 }

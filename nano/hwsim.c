@@ -90,7 +90,7 @@ void lcd_write(unsigned char dc, unsigned char data) {
 	}
 }
 
-unsigned short keypad_state;
+uint16_t keypad_state;
 
 void keypad_init() {
 	keypad_state = 0;
