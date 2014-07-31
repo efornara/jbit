@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <string.h>
+
 #include "nano.h"
 
 microio_context_t microio;
@@ -53,52 +55,89 @@ static const uint8_t irqvec[] PROGMEM = {
 	240, 255, // BRK
 };
 
-static uint8_t ram[512];
+// mpages; linear search for now
+
+#define PAGE_SIZE 256
+
+#define MAX_N_MPAGES 8
+
+#define MPAGE_SIZE      0x0020
+#define MPAGE_ADDR_MASK 0xffe0
+#define MPAGE_DATA_MASK 0x001f
+
+typedef struct {
+	uint8_t page0[PAGE_SIZE];
+	struct {
+		uint16_t addr;
+		uint8_t data[MPAGE_SIZE];
+	} mpage[MAX_N_MPAGES];
+	uint16_t n_mpages;
+} vm_context_t;
+
+static vm_context_t ctx_;
+static vm_context_t *ctx = &ctx_;
 
 uint8_t read6502(uint16_t address) {
-	int page = address >> 8;
-	int offset = address & 0xff;
-	if (page < 2)
-		return ram[address];
-	if (page == 2)
+	uint8_t page = address >> 8;
+	uint8_t offset = address & 0xff;
+	int i;
+	switch (page) {
+	case 0:
+		return ctx->page0[offset];
+	case 2:
 		return microio_get(&microio, offset);
-	if (page == 3) {
-		if (offset < vm_size)
-			return pgm_read_byte(&(vm_code[offset]));
-		return 0;
-	}
-	if (page == 255) {
+	case 255:
 		if (offset >= 240)
 			return pgm_read_byte(&(irqvec[offset - 240]));
+		return 0;
 	}
-#ifdef PLATFORM_PC
-	printf("read6502: %d:%d\n", address >> 8, address & 0xff);
-	abort();
-#endif
+	for (i = 0; i < ctx->n_mpages; i++)
+		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
+			return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
+	if (page != 1 && address < 0x300 + vm_size)
+		return pgm_read_byte(&(vm_code[address - 0x300]));
 	return 0;
 }
 
 void write6502(uint16_t address, uint8_t value) {
-	int page = address >> 8;
-	int offset = address & 0xff;
-	if (page < 2) {
-		ram[address] = value;
+	uint8_t page = address >> 8;
+	uint8_t offset = address & 0xff;
+	int i;
+	switch (page) {
+	case 0:
+		ctx->page0[offset] = value;
+		return;
+	case 2:
+		microio_put(&microio, offset, value);
+		return;
+	case 255:
 		return;
 	}
-	if (page != 2)
-		goto error;
-	if (offset == 18) {
-		vsync = 1;
-		return;
-	}
-	microio_put(&microio, offset, value);
-	return;
-error:
+	for (i = 0; i < ctx->n_mpages; i++)
+		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
+			goto write_value;
+	if (ctx->n_mpages == MAX_N_MPAGES) {
+		// TODO: vm state: out of memory
 #ifdef PLATFORM_PC
-	printf("write6502: %d:%d %d\n", address >> 8, address & 0xff, value);
-	abort();
+		printf("out of memory\n");
+		abort();
 #endif
-	return;
+		return;
+	}
+	i = ctx->n_mpages++;
+	ctx->mpage[i].addr = (address & MPAGE_ADDR_MASK);
+	if (page == 1 || ctx->mpage[i].addr > 0x300 + vm_size) {
+		memset(ctx->mpage[i].data, 0, MPAGE_SIZE);
+	} else {
+		int j, a = (address & MPAGE_ADDR_MASK);
+		for (j = 0; j < MPAGE_SIZE; j++)
+			if (a + j < 0x300 + vm_size)
+				ctx->mpage[i].data[j] = pgm_read_byte(&(vm_code[a + j - 0x300]));
+			else
+				ctx->mpage[i].data[j] = 0;
+	}
+write_value:
+	ctx->mpage[i].data[offset & MPAGE_DATA_MASK] = value;
 }
 
 static void process_events(uint8_t event, char c) {
@@ -106,6 +145,7 @@ static void process_events(uint8_t event, char c) {
 }
 
 void vm_init() {
+	memset(&ctx_, 0, sizeof(ctx_));
 	trace6502(0);
 	reset6502();
 	lcd_clear();
