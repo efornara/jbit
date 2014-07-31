@@ -93,6 +93,20 @@ extern unsigned short keypad_state;
 void keypad_init();
 void keypad_scan();
 
+/* 6502 */
+
+/*
+  Fake6502 by Mike Chambers looks like a good CPU emulator.
+  It adds 6K of flash and needs some fixes to make it use pgm, but it
+  should be fairly easy to integrate.
+  In the future, it would be nice to have an option to select another
+  emulator with a trade-off that is a better fit for jbit nano
+  (i.e. slower but smaller).
+ */
+
+void reset6502();
+void step6502();
+
 /* MICRO IO */
 
 #define MICROIO_CONVIDEO_SIZE 40

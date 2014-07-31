@@ -41,10 +41,18 @@ void test_keypad() {
 		lcd_char((keypad_state & mask) ? keys[i] : ' ');
 }
 
+uint8_t read6502(uint16_t address) {
+	return 0;
+}
+
+void write6502(uint16_t address, uint8_t value) {
+}
+
 void sim_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
+	reset6502();
 	microio_init(&microio);
 }
 
@@ -52,6 +60,7 @@ void sim_step() {
 	static uint8_t c = 0;
 	int i;
 
+	step6502();
 	for (i = 40; i < 80; i++)
 		microio_put(&microio, i, c);
 	c++;
