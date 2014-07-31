@@ -38,6 +38,8 @@
 
 #define MAXRAND 0xFFFFFFFFFFFFLL
 
+extern uint8_t vm_vsync;
+
 static long long rnd_next(microio_context_t *ctx) {
 	ctx->r_seed[0] = (ctx->r_seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
 	return ctx->r_seed[0];
@@ -76,6 +78,8 @@ void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
 		for (i = 0; i < MICROIO_KEYBUF_SIZE - 1; i++)
 			ctx->keybuf[i] = ctx->keybuf[i + 1];
 		ctx->keybuf[i] = 0;
+	} else if (addr == FRMDRAW) {
+		vm_vsync = 1;
 	} else if (addr == RANDOM) {
 		rnd_put(ctx, data);
 	}

@@ -41,7 +41,7 @@ void test_keypad() {
 		lcd_char((keypad_state & mask) ? keypad_labels[i] : ' ');
 }
 
-static char vsync;
+uint8_t vm_vsync;
 
 const uint8_t *vm_code;
 uint8_t vm_size;
@@ -156,8 +156,8 @@ void vm_init() {
 void vm_step() {
 	int i = 0;
 
-	vsync = 0;
-	for (i = 0; i < 1000 && !vsync; i++)
+	vm_vsync = 0;
+	for (i = 0; i < 1000 && !vm_vsync; i++)
 		step6502();
 	microio_lcd(&microio, 12, 1);
 }
