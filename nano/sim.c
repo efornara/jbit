@@ -41,29 +41,76 @@ void test_keypad() {
 		lcd_char((keypad_state & mask) ? keys[i] : ' ');
 }
 
+#ifdef PLATFORM_PC
+#include <stdio.h>
+#endif
+
+static char vsync;
+
+static const uint8_t code[] PROGMEM = {
+	// loop1
+	238, 40, 2, 141, 18, 2, 234, 76, 0, 3
+};
+
+static const uint8_t irqvec[] PROGMEM = {
+	0, 4, // NMI
+	0, 3, // RESET
+	0, 4, // BRK
+};
+
 uint8_t read6502(uint16_t address) {
+	int page = address >> 8;
+	int offset = address & 0xff;
+	if (page == 2) {
+		if (offset >= 40 && offset < 80)
+			return microio_get(&microio, offset);
+	}
+	if (page == 3) {
+		if (offset < sizeof(code))
+			return pgm_read_byte(&(code[offset]));
+	}
+	if (page == 255) {
+		if (offset >= 250)
+			return pgm_read_byte(&(irqvec[offset - 250]));
+	}
+#ifdef PLATFORM_PC
+	printf("read6502: %d:%d\n", address >> 8, address & 0xff);
+#endif
 	return 0;
 }
 
 void write6502(uint16_t address, uint8_t value) {
+	int page = address >> 8;
+	int offset = address & 0xff;
+	if (page != 2)
+		goto error;
+	if (offset >= 40 && offset < 80)
+		microio_put(&microio, offset, value);
+	if (offset == 18)
+		vsync = 1;
+	return;
+error:
+#ifdef PLATFORM_PC
+	printf("write6502: %d:%d %d\n", address >> 8, address & 0xff, value);
+#endif
+	return;
 }
 
 void sim_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
+	trace6502(1);
 	reset6502();
 	microio_init(&microio);
 }
 
 void sim_step() {
-	static uint8_t c = 0;
-	int i;
+	int i = 0;
 
-	step6502();
-	for (i = 40; i < 80; i++)
-		microio_put(&microio, i, c);
-	c++;
+	vsync = 0;
+	for (i = 0; i < 100 && !vsync; i++)
+		step6502();
 	microio_lcd(&microio, 12, 1);
 	test_keypad();
 }

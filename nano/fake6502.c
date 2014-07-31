@@ -331,9 +331,11 @@ static uint16_t getvalue() {
         else return((uint16_t)read6502(ea));
 }
 
+/* NOT USED
 static uint16_t getvalue16() {
     return((uint16_t)read6502(ea) | ((uint16_t)read6502(ea+1) << 8));
 }
+*/
 
 static void putvalue(uint16_t saveval) {
     if (addrtable[opcode] == acc) a = (uint8_t)(saveval & 0x00FF);
@@ -992,4 +994,22 @@ void hookexternal(void *funcptr) {
         loopexternal = funcptr;
         callexternal = 1;
     } else callexternal = 0;
+}
+
+#ifdef PLATFORM_PC
+
+static void dump() {
+	printf("%10d %3d:%03d  S %02X  A %d  X %d  Y %d  SP %d\n",
+	  instructions, pc >> 8, pc & 0xff, status, a, x, y, sp);
+}
+
+#endif
+
+void trace6502(int enable) {
+#ifdef PLATFORM_PC
+	if (enable)
+		hookexternal(dump);
+	else
+		hookexternal(NULL);
+#endif
 }

@@ -107,6 +107,8 @@ void keypad_scan();
 void reset6502();
 void step6502();
 
+void trace6502(int enable);
+
 /* MICRO IO */
 
 #define MICROIO_CONVIDEO_SIZE 40
