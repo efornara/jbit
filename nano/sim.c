@@ -43,27 +43,27 @@ void test_keypad() {
 
 static char vsync;
 
-static const uint8_t code[] PROGMEM = {
-	// loop1
-	238, 40, 2, 141, 18, 2, 234, 76, 0, 3
-};
+extern const uint8_t *const demo_code;
+extern const uint8_t demo_size;
 
 static const uint8_t irqvec[] PROGMEM = {
-	0, 4, // NMI
+	0, 254, // NMI
 	0, 3, // RESET
-	0, 4, // BRK
+	0, 254, // BRK
 };
+
+static uint8_t ram[512];
 
 uint8_t read6502(uint16_t address) {
 	int page = address >> 8;
 	int offset = address & 0xff;
-	if (page == 2) {
-		if (offset >= 40 && offset < 80)
-			return microio_get(&microio, offset);
-	}
+	if (page < 2)
+		return ram[address];
+	if (page == 2)
+		return microio_get(&microio, offset);
 	if (page == 3) {
-		if (offset < sizeof(code))
-			return pgm_read_byte(&(code[offset]));
+		if (offset < demo_size)
+			return pgm_read_byte(&(demo_code[offset]));
 	}
 	if (page == 255) {
 		if (offset >= 250)
@@ -71,6 +71,7 @@ uint8_t read6502(uint16_t address) {
 	}
 #ifdef PLATFORM_PC
 	printf("read6502: %d:%d\n", address >> 8, address & 0xff);
+	abort();
 #endif
 	return 0;
 }
@@ -78,21 +79,28 @@ uint8_t read6502(uint16_t address) {
 void write6502(uint16_t address, uint8_t value) {
 	int page = address >> 8;
 	int offset = address & 0xff;
+	if (page < 2) {
+		ram[address] = value;
+		return;
+	}
 	if (page != 2)
 		goto error;
-	if (offset >= 40 && offset < 80)
-		microio_put(&microio, offset, value);
-	if (offset == 18)
+	if (offset == 18) {
 		vsync = 1;
+		return;
+	}
+	microio_put(&microio, offset, value);
 	return;
 error:
 #ifdef PLATFORM_PC
 	printf("write6502: %d:%d %d\n", address >> 8, address & 0xff, value);
+	abort();
 #endif
 	return;
 }
 
 void process_events(uint8_t event, uint8_t code) {
+	microio_keypress(&microio, keys[code]);
 #ifdef PLATFORM_PC
 	printf("event: %d %d\n", event, code);
 #endif
@@ -112,9 +120,8 @@ void sim_step() {
 	int i = 0;
 
 	vsync = 0;
-	for (i = 0; i < 100 && !vsync; i++)
+	for (i = 0; i < 1000 && !vsync; i++)
 		step6502();
 	microio_lcd(&microio, 12, 1);
 	keypad_process();
-	test_keypad();
 }

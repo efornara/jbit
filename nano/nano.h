@@ -28,6 +28,8 @@
 
 #ifdef PLATFORM_PC
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #endif
 #include <stdint.h>
 
@@ -137,16 +139,19 @@ void trace6502(int enable);
 /* MICRO IO */
 
 #define MICROIO_CONVIDEO_SIZE 40
+#define MICROIO_KEYBUF_SIZE 8
 
 typedef struct {
 	uint8_t convideo[MICROIO_CONVIDEO_SIZE];
+	uint8_t keybuf[MICROIO_KEYBUF_SIZE];
 } microio_context_t;
 
 void microio_init(microio_context_t *ctx);
 void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data);
 uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 
-void microio_lcd(microio_context_t *ctx, int x, int y);
+void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
+void microio_keypress(microio_context_t *ctx, uint8_t code);
 
 /* JBIT SIM */
 

@@ -26,48 +26,20 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
-
 #include "nano.h"
 
-#define FRMFPS 17
-#define FRMDRAW 18
-#define RANDOM 23
-#define KEYBUF 24
-#define CONVIDEO 40
+static const uint8_t loop1_code[] PROGMEM = {
+	238,40,2,141,18,2,234,76,0,3
+};
 
-void microio_init(microio_context_t *ctx) {
-	memset(ctx->convideo, ' ', MICROIO_CONVIDEO_SIZE);
-	memset(ctx->keybuf, 0, MICROIO_KEYBUF_SIZE);
-}
+static const uint8_t charset_code[] PROGMEM = {
+	169,0,170,160,0,153,40,2,
+	24,105,1,200,192,40,208,245,138,141,18,2,172,24,2,240,248,192,50,240,
+	15,192,56,240,20,192,48,240,25,160,1,140,24,2,208,214,201,0,240,245,
+	56,233,10,176,240,201,220,240,236,24,105,10,144,231
+};
 
-void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
-	if (addr >= CONVIDEO && addr < CONVIDEO + MICROIO_CONVIDEO_SIZE) {
-		ctx->convideo[addr - CONVIDEO] = data;
-	} else if (addr == KEYBUF) {
-		ctx->keybuf[0] = 0;
-	}
-}
+#define DEMO_PRG charset_code
 
-uint8_t microio_get(microio_context_t *ctx, uint8_t addr) {
-	if (addr >= CONVIDEO && addr < CONVIDEO + MICROIO_CONVIDEO_SIZE) {
-		return ctx->convideo[addr - CONVIDEO];
-	} else if (addr >= KEYBUF && addr < KEYBUF + MICROIO_KEYBUF_SIZE) {
-		return ctx->keybuf[addr - KEYBUF];
-	}
-	return 0;
-}
-
-void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y) {
-	int i, r, c;
-
-	for (i = 0, r = 0; r < 4; r++) {
-		lcd_goto(x, y + r);
-		for (c = 0; c < 10; c++, i++)
-			lcd_char(ctx->convideo[i]);
-	}
-}
-
-void microio_keypress(microio_context_t *ctx, uint8_t code) {
-	ctx->keybuf[0] = code;
-}
+const uint8_t *const demo_code = DEMO_PRG;
+const uint8_t demo_size = sizeof(DEMO_PRG);
