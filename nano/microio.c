@@ -45,7 +45,10 @@ void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
 	if (addr >= CONVIDEO && addr < CONVIDEO + MICROIO_CONVIDEO_SIZE) {
 		ctx->convideo[addr - CONVIDEO] = data;
 	} else if (addr == KEYBUF) {
-		ctx->keybuf[0] = 0;
+		int i;
+		for (i = 0; i < MICROIO_KEYBUF_SIZE - 1; i++)
+			ctx->keybuf[i] = ctx->keybuf[i + 1];
+		ctx->keybuf[i] = 0;
 	}
 }
 
@@ -69,5 +72,11 @@ void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y) {
 }
 
 void microio_keypress(microio_context_t *ctx, uint8_t code) {
-	ctx->keybuf[0] = code;
+	int i;
+	for (i = 0; i < MICROIO_KEYBUF_SIZE; i++) {
+		if (ctx->keybuf[i] == 0) {
+			ctx->keybuf[i] = code;
+			return;
+		}
+	}
 }
