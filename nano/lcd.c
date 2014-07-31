@@ -136,7 +136,7 @@ static const unsigned char fixed_font[] PROGMEM = {
 	0x08, 0x1C, 0x2A, 0x08, 0x08, /* <- */
 
 	/* JBIT CUSTOM */
-	0xFF, 0xA3, 0xA3, 0xA3, 0xFF, /* undefined */
+	0x7F, 0x63, 0x63, 0x63, 0x7F, /* undefined */
 };
 
 void lcd_clear() {
@@ -160,7 +160,7 @@ void lcd_home() {
 
 void lcd_char(char c) {
 	int i, p = c & 0xff;
-	if (p < 32 && p > 127)
+	if (p < 32 || p > 127)
 		p = 128;
 	p -= 32;
 	p *= 5;

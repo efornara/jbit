@@ -26,35 +26,39 @@
  * SUCH DAMAGE.
  */
 
+#include <string.h>
+
 #include "nano.h"
 
-microio_context_t microio;
+#include "../native/_xv65.h"
 
-const char *const keys = "0123456789*#";
+#define REG(x) (x - 0x200)
 
-void test_keypad() {
-	int i, mask;
-
-	lcd_goto(4, 5);
-	keypad_scan();
-	for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
-		lcd_char((keypad_state & mask) ? keys[i] : ' ');
+void microio_init(microio_context_t *ctx) {
+	memset(ctx->convideo, ' ', MICROIO_CONVIDEO_SIZE);
 }
 
-void sim_init() {
-	lcd_init();
-	lcd_clear();
-	keypad_init();
-	microio_init(&microio);
+void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
+	if (addr >= REG(CONVIDEO)
+	  && addr < REG(CONVIDEO) + MICROIO_CONVIDEO_SIZE) {
+		ctx->convideo[addr - REG(CONVIDEO)] = data;
+	}
 }
 
-void sim_step() {
-	static uint8_t c = 0;
-	int i;
+uint8_t microio_get(microio_context_t *ctx, uint8_t addr) {
+	if (addr >= REG(CONVIDEO)
+	  && addr < REG(CONVIDEO) + MICROIO_CONVIDEO_SIZE) {
+		return ctx->convideo[addr - REG(CONVIDEO)];
+	}
+	return 0;
+}
 
-	for (i = 40; i < 80; i++)
-		microio_put(&microio, i, c);
-	c++;
-	microio_lcd(&microio, 12, 1);
-	test_keypad();
+void microio_lcd(microio_context_t *ctx, int x, int y) {
+	int i, r, c;
+
+	for (i = 0, r = 0; r < 4; r++) {
+		lcd_goto(x, y + r);
+		for (c = 0; c < 10; c++, i++)
+			lcd_char(ctx->convideo[i]);
+	}
 }

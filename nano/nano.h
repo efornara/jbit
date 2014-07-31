@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stdint.h>
+
 #ifdef __AVR
 #include <avr/pgmspace.h>
 #else
@@ -40,14 +42,14 @@ extern "C" {
 /* CONFIG */
 
 /* LCD: uncomment one of the following */
-/*#define LCD_NULL*/
+//#define LCD_NULL
 #define LCD_HWSIM
-/*#define LCD_REAL*/
+//#define LCD_REAL
 
 /* KEYPAD: uncomment one of the following */
-/*#define KEYPAD_NULL*/
+//#define KEYPAD_NULL
 #define KEYPAD_HWSIM
-/*#define KEYPAD_REAL*/
+//#define KEYPAD_REAL
 
 /* LCD */
 
@@ -90,6 +92,20 @@ extern unsigned short keypad_state;
 
 void keypad_init();
 void keypad_scan();
+
+/* MICRO IO */
+
+#define MICROIO_CONVIDEO_SIZE 40
+
+typedef struct {
+	uint8_t convideo[MICROIO_CONVIDEO_SIZE];
+} microio_context_t;
+
+void microio_init(microio_context_t *ctx);
+void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data);
+uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
+
+void microio_lcd(microio_context_t *ctx, int x, int y);
 
 /* JBIT SIM */
 

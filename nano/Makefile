@@ -1,14 +1,14 @@
 CC = gcc
-CFLAGS = -ansi -DPLATFORM_DESKTOP -Wall
+CFLAGS = -DPLATFORM_PC -Wall
 LDFLAGS =
 LIBS = -lSDL
 
 EM_CC = emcc
-EM_CFLAGS = -ansi -DPLATFORM_JS -Wall
+EM_CFLAGS = -DPLATFORM_JS -Wall
 EM_LDFLAGS = -s EXPORTED_FUNCTIONS="['_keypad_update', '_sim_init', '_sim_step', '_lcd_get_bitmap']"
 
-OBJS = desktop.o sim.o lcd.o hwsim.o
-EM_SRCS = sim.c lcd.c hwsim.c
+OBJS = pc.o sim.o microio.o lcd.o hwsim.o
+EM_SRCS = sim.c microio.c lcd.c hwsim.c
 
 all: jbnano
 

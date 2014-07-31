@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(PLATFORM_DESKTOP) || defined(PLATFORM_JS)
+#if defined(PLATFORM_PC) || defined(PLATFORM_JS)
 
 #include <string.h>
 #include <stdint.h>
