@@ -38,8 +38,6 @@ static uint8_t module;
 
 static const char *const modules[] = {
 	"Demos",
-	"dummy 1",
-	"dummy 2",
 	0
 };
 
@@ -73,10 +71,7 @@ void jbit_step() {
 		return;
 	switch (module) {
 	case MODULE_JBIT:
-		if (ui_result == 0)
-			jbit_replace_with(MODULE_DEMOS);
-		else
-			jbit_replace_with(MODULE_JBIT);
+		jbit_replace_with(MODULE_DEMOS);
 		break;
 	case MODULE_DEMOS:
 		demos_step();

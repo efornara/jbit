@@ -41,9 +41,9 @@ union {
 	struct {
 		const char *const *items;
 		uint8_t current;
-		uint8_t max;
+		uint8_t top;
 	} menu;
-} context;
+} ctx;
 
 static uint8_t cx;
 static uint8_t cy;
@@ -106,18 +106,18 @@ static void draw_header(const char *title) {
 static int menu_get_n_items() {
 	int i;
 
-	for (i = 0; context.menu.items[i]; i++)
+	for (i = 0; ctx.menu.items[i]; i++)
 		;
 	return i;
 }
 
 static void draw_menu_items() {
-	int i;
+	int i, j = ctx.menu.top;
 
 	goto_y(1);
-	for (i = 0; context.menu.items[i] && i < 5; i++) {
-		put_char(i == context.menu.current ? '>' : ' ');
-		put_string(context.menu.items[i]);
+	for (i = 0, j = ctx.menu.top; ctx.menu.items[j] && i < 5; i++, j++) {
+		put_char(j  == ctx.menu.current ? '>' : ' ');
+		put_string(ctx.menu.items[j]);
 		put_endl();
 	}
 	for (; i < 5; i++)
@@ -130,27 +130,31 @@ static void process_events(uint8_t event, char c) {
 		ui_result = 1;
 		ui_state = STATE_IDLE;
 		break;
-	case STATE_MENU:
+	case STATE_MENU: {
+		int n = menu_get_n_items();
 		switch (c) {
 		case UP:
-			if (context.menu.current > 0) {
-				context.menu.current--;
+			if (ctx.menu.current > 0) {
+				ctx.menu.current--;
+				if (ctx.menu.current < ctx.menu.top)
+					ctx.menu.top = ctx.menu.current;
 				draw_menu_items();
 			}
 			break;
 		case DOWN:
-			if (context.menu.current < 5
-			  && context.menu.current < menu_get_n_items() - 1) {
-				context.menu.current++;
+			if (ctx.menu.current < n - 1) {
+				ctx.menu.current++;
+				if (ctx.menu.top + ctx.menu.current > 4)
+					ctx.menu.top++;
 				draw_menu_items();
 			}
 			break;
-		case '5':
-			ui_result = context.menu.current;
+		case SELECT:
+			ui_result = ctx.menu.current;
 			ui_state = STATE_IDLE;
 			break;
 		}
-		break;
+		} break;
 	}
 }
 
@@ -170,7 +174,8 @@ void ui_menu(const char *title, const char *const items[]) {
 	lcd_clear();
 	draw_header(title);
 	start(STATE_MENU);
-	context.menu.items = items;
-	context.menu.current = 0;
+	ctx.menu.items = items;
+	ctx.menu.current = 0;
+	ctx.menu.top = 0;
 	draw_menu_items();
 }

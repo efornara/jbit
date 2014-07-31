@@ -73,16 +73,45 @@ static const uint8_t charset_code[] PROGMEM = {
 	144,231
 };
 
-#define DEMO_PRG random_code
+#define DEMO_DEF(x) { x ## _code, sizeof(x ## _code) },
+
+struct {
+	const uint8_t *const code;
+	const uint8_t size;
+} demo_def[] = {
+	DEMO_DEF(ciao)
+	DEMO_DEF(loop1)
+	DEMO_DEF(fill1)
+	DEMO_DEF(fill2)
+	DEMO_DEF(loop2)
+	DEMO_DEF(loop3)
+	DEMO_DEF(keypad)
+	DEMO_DEF(random)
+	DEMO_DEF(charset)
+};
 
 const uint8_t *demo_code;
 uint8_t demo_size;
 
+static const char *const demos[] = {
+	"ciao",
+	"loop1",
+	"fill1",
+	"fill2",
+	"loop2",
+	"loop3",
+	"keypad",
+	"random",
+	"charset",
+	0
+};
+
 void demos_init() {
+	ui_menu("Demos", demos);
 }
 
 void demos_step() {
-	demo_code = DEMO_PRG;
-	demo_size = sizeof(DEMO_PRG);
+	demo_code = demo_def[ui_result].code;
+	demo_size = demo_def[ui_result].size;
 	jbit_replace_with(MODULE_SIM);
 }
