@@ -36,6 +36,13 @@ extern void demos_step();
 
 static uint8_t module;
 
+static const char *const modules[] = {
+	"Demos",
+	"dummy 1",
+	"dummy 2",
+	0
+};
+
 void jbit_init() {
 	lcd_init();
 	lcd_clear();
@@ -48,7 +55,7 @@ void jbit_replace_with(int module_) {
 	keypad_handler = 0;
 	switch (module) {
 	case MODULE_JBIT:
-		ui_msg("JBit", "Press any key to continue.");
+		ui_menu("JBit", modules);
 		break;
 	case MODULE_DEMOS:
 		demos_init();
@@ -62,10 +69,14 @@ void jbit_replace_with(int module_) {
 void jbit_step() {
 	keypad_scan();
 	keypad_process();
+	if (ui_state)
+		return;
 	switch (module) {
 	case MODULE_JBIT:
-		if (ui_result)
+		if (ui_result == 0)
 			jbit_replace_with(MODULE_DEMOS);
+		else
+			jbit_replace_with(MODULE_JBIT);
 		break;
 	case MODULE_DEMOS:
 		demos_step();

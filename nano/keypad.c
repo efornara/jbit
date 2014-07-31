@@ -28,6 +28,8 @@
 
 #include "nano.h"
 
+const char *const keypad_labels = "0123456789*#";
+
 keypad_handler_t keypad_handler = 0;
 
 static uint16_t oldstate = 0;
@@ -40,7 +42,7 @@ void keypad_process() {
 		int i;
 		for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
 			if (released & mask)
-				keypad_handler(KEYPAD_EVENT_RELEASE, i);
+				keypad_handler(KEYPAD_EVENT_RELEASE, keypad_labels[i]);
 	}
 	oldstate = keypad_state;
 }

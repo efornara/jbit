@@ -83,18 +83,11 @@ void lcd_char(char c);
 
 /* KEYPAD */
 
-#define KEYPAD_CODE_0 0
-#define KEYPAD_CODE_1 1
-#define KEYPAD_CODE_2 2
-#define KEYPAD_CODE_3 3
-#define KEYPAD_CODE_4 4
-#define KEYPAD_CODE_5 5
-#define KEYPAD_CODE_6 6
-#define KEYPAD_CODE_7 7
-#define KEYPAD_CODE_8 8
-#define KEYPAD_CODE_9 9
-#define KEYPAD_CODE_STAR 10
-#define KEYPAD_CODE_HASH 11
+#define UP '2'
+#define DOWN '8'
+#define LEFT '4'
+#define RIGHT '6'
+#define SELECT '5'
 
 #define KEYPAD_MASK_0 (1 << 0)
 #define KEYPAD_MASK_1 (1 << 1)
@@ -112,12 +105,14 @@ void lcd_char(char c);
 #define KEYPAD_EVENT_RELEASE 0
 #define KEYPAD_EVENT_LONGPRESS 1
 
+extern const char *const keypad_labels;
+
 extern uint16_t keypad_state;
 
 void keypad_init();
 void keypad_scan();
 
-typedef void (*keypad_handler_t)(uint8_t event, uint8_t code);
+typedef void (*keypad_handler_t)(uint8_t event, char c);
 
 extern keypad_handler_t keypad_handler;
 
@@ -129,8 +124,11 @@ int sys_get_random_seed();
 
 /* UI */
 
+extern uint8_t ui_state;
 extern uint8_t ui_result;
+
 void ui_msg(const char *title, const char *msg);
+void ui_menu(const char *title, const char *const items[]);
 
 /* 6502 */
 

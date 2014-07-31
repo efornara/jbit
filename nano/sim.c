@@ -30,15 +30,13 @@
 
 microio_context_t microio;
 
-const char *const keys = "0123456789*#";
-
 void test_keypad() {
 	int i, mask;
 
 	lcd_goto(4, 5);
 	keypad_scan();
 	for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
-		lcd_char((keypad_state & mask) ? keys[i] : ' ');
+		lcd_char((keypad_state & mask) ? keypad_labels[i] : ' ');
 }
 
 static char vsync;
@@ -103,8 +101,8 @@ error:
 	return;
 }
 
-static void process_events(uint8_t event, uint8_t code) {
-	microio_keypress(&microio, keys[code]);
+static void process_events(uint8_t event, char c) {
+	microio_keypress(&microio, c);
 }
 
 void sim_init() {

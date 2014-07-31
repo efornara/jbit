@@ -30,16 +30,34 @@
 
 #include "nano.h"
 
+#define STATE_IDLE 0
+#define STATE_MSG 1
+#define STATE_MENU 2
+
+uint8_t ui_state = STATE_IDLE;
 uint8_t ui_result;
+
+union {
+	struct {
+		const char *const *items;
+		uint8_t current;
+		uint8_t max;
+	} menu;
+} context;
 
 static uint8_t cx;
 static uint8_t cy;
 
-static void home() {
-	lcd_goto(0, 0);
+static void goto_y(int y) {
+	lcd_goto(0, y);
 	cx = 0;
-	cy = 0;
+	cy = y;
 }
+
+static void goto_home() {
+	goto_y(0);
+}
+
 static void put_x(uint8_t value) {
 	lcd_write(LCD_DATA, value);
 	cx++;
@@ -74,7 +92,7 @@ static void put_endl() {
 static void draw_header(const char *title) {
 	int i, w, n = strlen(title);
 
-	home();
+	goto_home();
 	if (n > 13)
 		return;
 	w = (LCD_WIDTH - n * LCD_FIXED_CHAR_WIDTH) / 2;
@@ -85,18 +103,74 @@ static void draw_header(const char *title) {
 	put_endl();
 }
 
-static void process_events(uint8_t event, uint8_t code) {
-	ui_result = 1;
+static int menu_get_n_items() {
+	int i;
+
+	for (i = 0; context.menu.items[i]; i++)
+		;
+	return i;
 }
 
-static void start() {
+static void draw_menu_items() {
+	int i;
+
+	goto_y(1);
+	for (i = 0; context.menu.items[i] && i < 5; i++) {
+		put_char(i == context.menu.current ? '>' : ' ');
+		put_string(context.menu.items[i]);
+		put_endl();
+	}
+	for (; i < 5; i++)
+		put_endl();
+}
+
+static void process_events(uint8_t event, char c) {
+	switch (ui_state) {
+	case STATE_MSG:
+		ui_result = 1;
+		ui_state = STATE_IDLE;
+		break;
+	case STATE_MENU:
+		switch (c) {
+		case UP:
+			if (context.menu.current > 0) {
+				context.menu.current--;
+				draw_menu_items();
+			}
+			break;
+		case DOWN:
+			if (context.menu.current < 5
+			  && context.menu.current < menu_get_n_items() - 1) {
+				context.menu.current++;
+				draw_menu_items();
+			}
+			break;
+		case '5':
+			ui_result = context.menu.current;
+			ui_state = STATE_IDLE;
+			break;
+		}
+		break;
+	}
+}
+
+static void start(uint8_t state) {
 	keypad_handler = process_events;
-	ui_result = 0;
+	ui_state = state;
 }
 
 void ui_msg(const char *title, const char *msg) {
 	lcd_clear();
 	draw_header(title);
 	put_string(msg);
-	start();
+	start(STATE_MSG);
+}
+
+void ui_menu(const char *title, const char *const items[]) {
+	lcd_clear();
+	draw_header(title);
+	start(STATE_MENU);
+	context.menu.items = items;
+	context.menu.current = 0;
+	draw_menu_items();
 }
