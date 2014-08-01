@@ -4,6 +4,7 @@
 *.class
 *.o
 *.swp
+*.map
 js/jbit-core*.js
 js/libs
 js/images

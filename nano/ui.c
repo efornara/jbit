@@ -144,7 +144,7 @@ static void process_events(uint8_t event, char c) {
 		case DOWN:
 			if (ctx.menu.current < n - 1) {
 				ctx.menu.current++;
-				if (ctx.menu.top + ctx.menu.current > 4)
+				if (ctx.menu.current - ctx.menu.top > 4)
 					ctx.menu.top++;
 				draw_menu_items();
 			}

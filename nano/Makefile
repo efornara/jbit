@@ -39,7 +39,7 @@ jbnano-c.js: $(EM_SRCS)
 	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbnano-c.js $(EM_SRCS)
 
 clean:
-	$(RM) -r build-cli *.o jbnano jbnano-c.js
+	$(RM) -r build-cli *.o jbnano jbnano-c.*
 
 remote: jbnano
 	./jbnano /dev/ttyACM0

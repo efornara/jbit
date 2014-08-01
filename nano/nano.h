@@ -31,6 +31,11 @@
 #include <stdlib.h>
 #include <assert.h>
 #endif
+
+#ifdef PLATFORM_JS
+#include <emscripten.h>
+#endif
+
 #include <stdint.h>
 
 #ifdef __AVR

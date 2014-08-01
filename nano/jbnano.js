@@ -33,7 +33,7 @@ JBNANO = {};
 	var SCALE = 5,
 		LCD_WIDTH = 84,
 		LCD_HEIGHT = 48,
-		LCD_ROWS = 5,
+		LCD_ROWS = 6,
 		jbit_step,
 		keypad_update,
 		lcd_bitmap,
