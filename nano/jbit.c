@@ -43,7 +43,7 @@ uint8_t ui_result = 0;
 
 #ifdef ENABLE_VM
 extern void vm_init();
-extern void vm_step();
+extern uint16_t vm_step();
 #endif
 
 #ifdef ENABLE_DEMOS
@@ -118,7 +118,8 @@ static int item_selected() {
 	return MODULE_JBIT;
 }
 
-void jbit_step() {
+uint16_t jbit_step() {
+	uint16_t w = 100;
 	keypad_scan();
 	keypad_process();
 	if (ui_state)
@@ -129,7 +130,7 @@ void jbit_step() {
 		break;
 #ifdef ENABLE_VM
 	case MODULE_VM:
-		vm_step();
+		w = vm_step();
 		break;
 #endif
 #ifdef ENABLE_DEMOS
@@ -138,4 +139,5 @@ void jbit_step() {
 		break;
 #endif
 	}
+	return w;
 }

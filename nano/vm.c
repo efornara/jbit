@@ -50,6 +50,7 @@ void test_keypad() {
 }
 
 uint8_t vm_vsync;
+uint16_t vm_wait;
 
 static const uint8_t irqvec[] PROGMEM = {
 	// 255:240
@@ -175,6 +176,7 @@ static void process_events(uint8_t event, char c) {
 
 void vm_init() {
 	memset(&ctx_, 0, sizeof(ctx_));
+	vm_wait = 100;
 	trace6502(0);
 	reset6502();
 	lcd_clear();
@@ -187,7 +189,7 @@ void vm_init() {
 	keypad_handler = process_events;
 }
 
-void vm_step() {
+uint16_t vm_step() {
 	int i = 0;
 
 	vm_vsync = 0;
@@ -196,6 +198,7 @@ void vm_step() {
 #ifdef ENABLE_MICROIO
 	microio_lcd(&microio, 12, 1);
 #endif
+	return vm_wait;
 }
 
 #endif

@@ -144,6 +144,7 @@ void trace6502(int enable);
 /* VM */
 
 extern uint8_t vm_vsync;
+extern uint16_t vm_wait;
 
 /* MICRO IO */
 
@@ -194,7 +195,7 @@ extern uint16_t jbit_prg_size;
 extern uint8_t jbit_prg_pgm;
 
 void jbit_init();
-void jbit_step();
+uint16_t jbit_step();
 void jbit_replace_with(int module);
 
 #ifdef __cplusplus

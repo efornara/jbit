@@ -254,6 +254,7 @@ void setup() {
 }
 
 void loop() {
-  jbit_step();
-  delay(100);
+  uint16_t w = jbit_step();
+  if (w)
+    delay(w);
 }

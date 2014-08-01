@@ -43,6 +43,7 @@ extern "C" void primo_init(primo_context_t *ctx) {
 	ctx->io = UNASSIGNED;
 	ctx->digital = UNASSIGNED;
 	ctx->analog = 0;
+	vm_wait = 0;
 }
 
 extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {

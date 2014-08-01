@@ -16,8 +16,11 @@ l1:	lda #DIGVAL_LOW
 	jmp l1
 
 pause:
-	ldx #0
+	ldy #20
+l3:	ldx #0
 l2: nop
 	dex
 	bne l2
+	dey
+	bne l3
 	rts
