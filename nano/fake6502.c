@@ -131,8 +131,10 @@
 
 #include "nano.h"
 
+#ifdef ENABLE_VM
+
 //6502 defines
-#define UNDOCUMENTED //when this is defined, undocumented opcodes are handled.
+//#define UNDOCUMENTED //when this is defined, undocumented opcodes are handled.
                      //otherwise, they're simply treated as NOPs.
 
 #define NES_CPU      //when this is defined, the binary-coded decimal (BCD)
@@ -1015,3 +1017,5 @@ void trace6502(int enable) {
 		hookexternal(NULL);
 #endif
 }
+
+#endif

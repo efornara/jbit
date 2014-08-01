@@ -46,21 +46,11 @@
 #define pgm_read_word(p) (*(p))
 #endif
 
+#include "config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* CONFIG */
-
-/* LCD: uncomment one of the following */
-//#define LCD_NULL
-#define LCD_HWSIM
-//#define LCD_REAL
-
-/* KEYPAD: uncomment one of the following */
-//#define KEYPAD_NULL
-#define KEYPAD_HWSIM
-//#define KEYPAD_REAL
 
 /* LCD */
 
@@ -151,6 +141,10 @@ void step6502();
 
 void trace6502(int enable);
 
+/* VM */
+
+extern uint8_t vm_vsync;
+
 /* MICRO IO */
 
 #define MICROIO_CONVIDEO_SIZE 40
@@ -164,18 +158,21 @@ typedef struct {
 	uint8_t r_n_minus_1;
 } microio_context_t;
 
-void microio_init(microio_context_t *ctx, int random_seed);
+void microio_init(microio_context_t *ctx);
 void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data);
 uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 
 void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
 void microio_keypress(microio_context_t *ctx, uint8_t code);
 
-/* MAIN */
+/* JBIT */
 
 #define MODULE_JBIT 0
 #define MODULE_DEMOS 1
 #define MODULE_VM 2
+
+extern const uint8_t *jbit_prg_code;
+extern uint8_t jbit_prg_size;
 
 void jbit_init();
 void jbit_step();

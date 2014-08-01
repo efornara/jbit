@@ -30,15 +30,17 @@
 
 #include "nano.h"
 
+#ifdef ENABLE_MICROIO
+
 #define FRMFPS 17
 #define FRMDRAW 18
 #define RANDOM 23
 #define KEYBUF 24
 #define CONVIDEO 40
 
-#define MAXRAND 0xFFFFFFFFFFFFLL
+#ifdef ENABLE_MICROIO_RANDOM
 
-extern uint8_t vm_vsync;
+#define MAXRAND 0xFFFFFFFFFFFFLL
 
 static long long rnd_next(microio_context_t *ctx) {
 	ctx->r_seed[0] = (ctx->r_seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
@@ -63,11 +65,15 @@ static void rnd_put(microio_context_t *ctx, uint8_t max) {
 	}
 }
 
-void microio_init(microio_context_t *ctx, int random_seed) {
+#endif // RANDOM
+
+void microio_init(microio_context_t *ctx) {
 	memset(ctx->convideo, ' ', MICROIO_CONVIDEO_SIZE);
 	memset(ctx->keybuf, 0, MICROIO_KEYBUF_SIZE);
-	ctx->r_seed[0] = random_seed;
+#ifdef ENABLE_MICROIO_RANDOM
+	ctx->r_seed[0] = sys_get_random_seed();
 	rnd_put(ctx, 255);
+#endif
 }
 
 void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
@@ -81,7 +87,9 @@ void microio_put(microio_context_t *ctx, uint8_t addr, uint8_t data) {
 	} else if (addr == FRMDRAW) {
 		vm_vsync = 1;
 	} else if (addr == RANDOM) {
+#ifdef ENABLE_MICROIO_RANDOM
 		rnd_put(ctx, data);
+#endif
 	}
 }
 
@@ -91,7 +99,9 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr) {
 	} else if (addr >= KEYBUF && addr < KEYBUF + MICROIO_KEYBUF_SIZE) {
 		return ctx->keybuf[addr - KEYBUF];
 	} else if (addr == RANDOM) {
+#ifdef ENABLE_MICROIO_RANDOM
 		return rnd_get(ctx);
+#endif
 	}
 	return 0;
 }
@@ -115,3 +125,5 @@ void microio_keypress(microio_context_t *ctx, uint8_t code) {
 		}
 	}
 }
+
+#endif

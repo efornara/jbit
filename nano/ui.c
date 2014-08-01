@@ -30,6 +30,8 @@
 
 #include "nano.h"
 
+#ifdef ENABLE_UI
+
 #define STATE_IDLE 0
 #define STATE_MSG 1
 #define STATE_MENU 2
@@ -179,3 +181,5 @@ void ui_menu(const char *title, const char *const items[]) {
 	ctx.menu.top = 0;
 	draw_menu_items();
 }
+
+#endif

@@ -28,6 +28,8 @@
 
 #include "nano.h"
 
+#ifdef ENABLE_DEMOS
+
 static const uint8_t ciao_code[] PROGMEM = {
 	169,67,141,53,2,169,73,141,54,2,169,65,141,55,2,169,79,141,56,2
 };
@@ -111,7 +113,9 @@ void demos_init() {
 }
 
 void demos_step() {
-	vm_code = demo_def[ui_result].code;
-	vm_size = demo_def[ui_result].size;
+	jbit_prg_code = demo_def[ui_result].code;
+	jbit_prg_size = demo_def[ui_result].size;
 	jbit_replace_with(MODULE_VM);
 }
+
+#endif

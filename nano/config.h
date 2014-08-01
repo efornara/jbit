@@ -26,97 +26,38 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
+// Facilities
+#define ENABLE_UI
 
-#include "nano.h"
+// Modules
+#define ENABLE_VM
+#define ENABLE_DEMOS
 
-const uint8_t *jbit_prg_code;
-uint8_t jbit_prg_size;
+// Devices
+#define ENABLE_MICROIO
+#define ENABLE_MICROIO_RANDOM
+
+// LCD (one of)
+//#define LCD_NULL
+#define LCD_HWSIM
+//#define LCD_REAL
+
+// KEYPAD (one of)
+//#define KEYPAD_NULL
+#define KEYPAD_HWSIM
+//#define KEYPAD_REAL
+
+
+// internal configuration checks
 
 #ifndef ENABLE_UI
-uint8_t ui_state = 0;
-uint8_t ui_result = 0;
+#if defined(ENABLE_DEMOS)
+#error "Interactive modules only available if UI is enabled"
+#endif
 #endif
 
-#ifdef ENABLE_VM
-extern void vm_init();
-extern void vm_step();
+#ifndef ENABLE_VM
+#if defined(ENABLE_MICROIO)
+#error "Devices only available if VM is enabled"
 #endif
-
-#ifdef ENABLE_DEMOS
-extern void demos_init();
-extern void demos_step();
 #endif
-
-static uint8_t module;
-
-static const char *const modules[] = {
-#ifdef ENABLE_DEMOS
-	"Demos",
-#endif
-	0
-};
-
-void jbit_init() {
-	lcd_init();
-	lcd_clear();
-	keypad_init();
-	jbit_replace_with(MODULE_JBIT);
-}
-
-void jbit_replace_with(int module_) {
-	module = module_;
-	keypad_handler = 0;
-	switch (module) {
-	case MODULE_JBIT:
-#ifdef ENABLE_UI
-		ui_menu("JBit", modules);
-#endif
-		break;
-#ifdef ENABLE_VM
-	case MODULE_VM:
-		vm_init();
-		break;
-#endif
-#ifdef ENABLE_DEMOS
-	case MODULE_DEMOS:
-		demos_init();
-		break;
-#endif
-	default:
-		jbit_replace_with(MODULE_JBIT);
-	}
-}
-
-static int item_selected() {
-	const char *name = modules[ui_result];
-	if (!name)
-		return MODULE_JBIT;
-#ifdef ENABLE_DEMOS
-	if (!strcmp(name, "Demos"))
-		return MODULE_DEMOS;
-#endif
-	return MODULE_JBIT;
-}
-
-void jbit_step() {
-	keypad_scan();
-	keypad_process();
-	if (ui_state)
-		return;
-	switch (module) {
-	case MODULE_JBIT:
-		jbit_replace_with(item_selected());
-		break;
-#ifdef ENABLE_VM
-	case MODULE_VM:
-		vm_step();
-		break;
-#endif
-#ifdef ENABLE_DEMOS
-	case MODULE_DEMOS:
-		demos_step();
-		break;
-#endif
-	}
-}

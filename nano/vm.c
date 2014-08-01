@@ -30,7 +30,11 @@
 
 #include "nano.h"
 
+#ifdef ENABLE_VM
+
+#ifdef ENABLE_MICROIO
 microio_context_t microio;
+#endif
 
 void test_keypad() {
 	int i, mask;
@@ -42,9 +46,6 @@ void test_keypad() {
 }
 
 uint8_t vm_vsync;
-
-const uint8_t *vm_code;
-uint8_t vm_size;
 
 static const uint8_t irqvec[] PROGMEM = {
 	// 255:240
@@ -85,7 +86,11 @@ uint8_t read6502(uint16_t address) {
 	case 0:
 		return ctx->page0[offset];
 	case 2:
-		return microio_get(&microio, offset);
+#ifdef ENABLE_MICROIO
+		if (offset > 16 && offset < 80)
+			return microio_get(&microio, offset);
+#endif
+		return 0;
 	case 255:
 		if (offset >= 240)
 			return pgm_read_byte(&(irqvec[offset - 240]));
@@ -94,8 +99,8 @@ uint8_t read6502(uint16_t address) {
 	for (i = 0; i < ctx->n_mpages; i++)
 		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
 			return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
-	if (page != 1 && address < 0x300 + vm_size)
-		return pgm_read_byte(&(vm_code[address - 0x300]));
+	if (page != 1 && address < 0x300 + jbit_prg_size)
+		return pgm_read_byte(&(jbit_prg_code[address - 0x300]));
 	return 0;
 }
 
@@ -108,7 +113,10 @@ void write6502(uint16_t address, uint8_t value) {
 		ctx->page0[offset] = value;
 		return;
 	case 2:
-		microio_put(&microio, offset, value);
+#ifdef ENABLE_MICROIO
+		if (offset > 16 && offset < 80)
+			microio_put(&microio, offset, value);
+#endif
 		return;
 	case 255:
 		return;
@@ -126,13 +134,13 @@ void write6502(uint16_t address, uint8_t value) {
 	}
 	i = ctx->n_mpages++;
 	ctx->mpage[i].addr = (address & MPAGE_ADDR_MASK);
-	if (page == 1 || ctx->mpage[i].addr > 0x300 + vm_size) {
+	if (page == 1 || ctx->mpage[i].addr > 0x300 + jbit_prg_size) {
 		memset(ctx->mpage[i].data, 0, MPAGE_SIZE);
 	} else {
 		int j, a = (address & MPAGE_ADDR_MASK);
 		for (j = 0; j < MPAGE_SIZE; j++)
-			if (a + j < 0x300 + vm_size)
-				ctx->mpage[i].data[j] = pgm_read_byte(&(vm_code[a + j - 0x300]));
+			if (a + j < 0x300 + jbit_prg_size)
+				ctx->mpage[i].data[j] = pgm_read_byte(&(jbit_prg_code[a + j - 0x300]));
 			else
 				ctx->mpage[i].data[j] = 0;
 	}
@@ -141,7 +149,9 @@ write_value:
 }
 
 static void process_events(uint8_t event, char c) {
+#ifdef ENABLE_MICROIO
 	microio_keypress(&microio, c);
+#endif
 }
 
 void vm_init() {
@@ -149,7 +159,9 @@ void vm_init() {
 	trace6502(0);
 	reset6502();
 	lcd_clear();
-	microio_init(&microio, sys_get_random_seed());
+#ifdef ENABLE_MICROIO
+	microio_init(&microio);
+#endif
 	keypad_handler = process_events;
 }
 
@@ -159,5 +171,9 @@ void vm_step() {
 	vm_vsync = 0;
 	for (i = 0; i < 1000 && !vm_vsync; i++)
 		step6502();
+#ifdef ENABLE_MICROIO
 	microio_lcd(&microio, 12, 1);
+#endif
 }
+
+#endif
