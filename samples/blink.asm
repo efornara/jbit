@@ -4,13 +4,13 @@
 
 	lda #13
 	sta DIGID
-	lda #1
+	lda #DIGCFG_OUTPUT
 	sta DIGCFG
 
-l1:	lda #0
+l1:	lda #DIGVAL_LOW
 	sta DIGVAL
 	jsr pause
-	lda #1
+	lda #DIGVAL_HIGH
 	sta DIGVAL
 	jsr pause
 	jmp l1
@@ -20,3 +20,4 @@ pause:
 l2: nop
 	dex
 	bne l2
+	rts

@@ -12,3 +12,4 @@ d_microio.h: microio.inc
 
 d_primo.h: primo.inc
 	perl ../tools/inc2sym.pl <primo.inc >d_primo.h
+	perl ../tools/inc2h.pl <primo.inc >../nano/_primo.h

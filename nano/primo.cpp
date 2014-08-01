@@ -26,9 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#include <Arduino.h>
+
 #include "nano.h"
 
 #ifdef ENABLE_PRIMO
+
+#include "_primo.h"
+
+#define REG(x) (x - 0x200)
 
 #define UNASSIGNED 0xff
 
@@ -36,19 +42,44 @@ extern "C" void primo_init(primo_context_t *ctx) {
 	ctx->map = UNASSIGNED;
 	ctx->io = UNASSIGNED;
 	ctx->digital = UNASSIGNED;
-	ctx->analog = UNASSIGNED;
+	ctx->analog = 0;
 }
 
 extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 #ifdef ENABLE_SERIAL_TRACE
 	serial_trace("primo put %d %d", addr, data);
 #endif
+	switch (addr) {
+	case REG(IOID):
+		ctx->io = data;
+		break;
+	case REG(DIGID):
+		ctx->digital = data;
+		break;
+	case REG(DIGCFG):
+		pinMode(ctx->digital, data);
+		break;
+	case REG(DIGVAL):
+		digitalWrite(ctx->digital, data);
+		break;
+	}
 }
 
 extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 #ifdef ENABLE_SERIAL_TRACE
 	serial_trace("primo get %d", addr);
 #endif
+	switch (addr) {
+	case REG(IOID):
+		return ctx->io;
+	case REG(DIGID):
+		return ctx->digital;
+	case REG(DIGCFG):
+		return 255;
+	case REG(DIGVAL):
+		return digitalRead(ctx->digital);
+	}
+	return 0;
 }
 
 #endif

@@ -171,7 +171,7 @@ typedef struct {
 	uint8_t map;
 	uint8_t io;
 	uint8_t digital;
-	uint8_t analog;
+	uint16_t analog;
 } primo_context_t;
 
 void primo_init(primo_context_t *ctx);

@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -DPLATFORM_PC -Wall
-LDFLAGS =
+CFLAGS = -DPLATFORM_PC -Wall -ggdb
+LDFLAGS = -ggdb
 LIBS = -lSDL
 
 EM_CC = emcc
