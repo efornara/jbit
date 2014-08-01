@@ -165,9 +165,23 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
 void microio_keypress(microio_context_t *ctx, uint8_t code);
 
+/* PRIMO */
+
+typedef struct {
+	uint8_t map;
+	uint8_t io;
+	uint8_t digital;
+	uint8_t analog;
+} primo_context_t;
+
+void primo_init(primo_context_t *ctx);
+void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data);
+uint8_t primo_get(primo_context_t *ctx, uint8_t addr);
+
 /* NANO */
 
 void serial_loader();
+void serial_trace(const char *format, ...);
 
 /* JBIT */
 

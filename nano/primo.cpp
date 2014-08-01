@@ -26,63 +26,29 @@
  * SUCH DAMAGE.
  */
 
+#include "nano.h"
 
-#define ENABLE_VM
-#define ENABLE_PRIMO
-#define ENABLE_SERIAL
-#define ENABLE_SERIAL_TRACE
-#define LCD_NULL
-#define KEYPAD_NULL
+#ifdef ENABLE_PRIMO
 
+#define UNASSIGNED 0xff
 
-#ifdef DIST_CUSTOM
+extern "C" void primo_init(primo_context_t *ctx) {
+	ctx->map = UNASSIGNED;
+	ctx->io = UNASSIGNED;
+	ctx->digital = UNASSIGNED;
+	ctx->analog = UNASSIGNED;
+}
 
-// Facilities
-//#define ENABLE_UI
-
-// Modules
-//#define ENABLE_VM
-//#define ENABLE_DEMOS
-
-// Devices
-//#define ENABLE_MICROIO
-//#define ENABLE_MICROIO_RANDOM
-//#define ENABLE_PRIMO
-
-// Loaders
-//#define ENABLE_AUTORUN
-//#define ENABLE_SERIAL
-//#define ENABLE_SERIAL_TRACE
-
-// LCD (one of)
-#define LCD_NULL
-//#define LCD_HWSIM
-//#define LCD_REAL
-
-// KEYPAD (one of)
-#define KEYPAD_NULL
-//#define KEYPAD_HWSIM
-//#define KEYPAD_REAL
-
+extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
+#ifdef ENABLE_SERIAL_TRACE
+	serial_trace("primo put %d %d", addr, data);
 #endif
+}
 
+extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
+#ifdef ENABLE_SERIAL_TRACE
+	serial_trace("primo get %d", addr);
+#endif
+}
 
-// internal configuration checks
-
-#ifndef ENABLE_UI
-#if defined(ENABLE_DEMOS)
-#error "Interactive modules only available if UI is enabled"
-#endif
-#endif
-
-#ifndef ENABLE_VM
-#if defined(ENABLE_MICROIO) || defined(ENABLE_PRIMO)
-#error "Devices only available if VM is enabled"
-#endif
-#endif
-
-#ifndef __AVR
-#if defined(ENABLE_SERIAL)
-#error "Serial loader not available for this target"
-#endif
 #endif

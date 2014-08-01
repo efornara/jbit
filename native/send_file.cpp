@@ -68,7 +68,10 @@ void serial_write() {
 //	printf("> %s", serial.out);
 }
 
-int state = -1;
+#define START -1
+#define DONE -2
+
+int state = START;
 
 void set_cmd(const char *format...) {
 	va_list ap;
@@ -80,15 +83,19 @@ void set_cmd(const char *format...) {
 	strcat(serial.out, "\n\r");
 }
 
-void set_cmd_from_state() {
-	if (state == -1) {
+bool set_cmd_from_state() {
+	if (state == DONE) {
+		return false;
+	} else if (state == START) {
 		set_cmd("P %d", len);
 	} else if (state >= 0 && state < len) {
 		set_cmd("B %d %d", state, p[state] & 0xff);
-	} else {
+	} else if (state == len) {
 		printf(" ...done.\n");
-		exit(0);
+		printf("Listening for trace. Press Ctrl-C to exit.\n");
+		state = DONE;
 	}
+	return true;
 }
 
 void handle_line(jbit_serial_t *ctx) {
@@ -98,7 +105,7 @@ void handle_line(jbit_serial_t *ctx) {
 		return;
 	}
 	if (!strcmp(cmd, serial.in)) {
-		if (state == -1)
+		if (state == START)
 			printf("Sending %d bytes...\n", len);
 		state++;
 	}
@@ -115,8 +122,8 @@ void send_file(const Program *prg, const char *port) {
 	serial_write();
 	while (1) {
 		int old_state = state;
-		set_cmd_from_state();
-		serial_write();
+		if (set_cmd_from_state())
+			serial_write();
 		for (int spin = 0; spin < 100; spin++) {
 			rc = jbit_serial_poll(&serial, handle_line);
 			assert(rc == 0);

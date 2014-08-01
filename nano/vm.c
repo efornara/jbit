@@ -36,6 +36,10 @@
 microio_context_t microio;
 #endif
 
+#ifdef ENABLE_PRIMO
+primo_context_t primo;
+#endif
+
 void test_keypad() {
 	int i, mask;
 
@@ -97,6 +101,10 @@ uint8_t read6502(uint16_t address) {
 		if (offset > 16 && offset < 80)
 			return microio_get(&microio, offset);
 #endif
+#ifdef ENABLE_PRIMO
+		if (offset < 16 || offset > 80)
+			return primo_get(&primo, offset);
+#endif
 		return 0;
 	case 255:
 		if (offset >= 240)
@@ -123,6 +131,10 @@ void write6502(uint16_t address, uint8_t value) {
 #ifdef ENABLE_MICROIO
 		if (offset > 16 && offset < 80)
 			microio_put(&microio, offset, value);
+#endif
+#ifdef ENABLE_PRIMO
+		if (offset < 16 || offset > 80)
+			primo_put(&primo, offset, value);
 #endif
 		return;
 	case 255:
@@ -168,6 +180,9 @@ void vm_init() {
 	lcd_clear();
 #ifdef ENABLE_MICROIO
 	microio_init(&microio);
+#endif
+#ifdef ENABLE_PRIMO
+	primo_init(&primo);
 #endif
 	keypad_handler = process_events;
 }

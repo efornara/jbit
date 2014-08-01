@@ -83,6 +83,23 @@ static void get_line(char *buf, int len) {
   }
 }
 
+#if defined(ENABLE_SERIAL_TRACE)
+
+void serial_trace(const char *format...) {
+  char msg[64];
+  va_list ap;
+
+  va_start(ap, format);
+  vsnprintf(msg, sizeof(msg), format, ap);
+  va_end(ap);
+  msg[sizeof(msg) - 1] = '\0';
+  Serial.print("# ");
+  Serial.print(msg);
+  Serial.print("\n\r");
+}
+
+#endif
+
 static int serial_loader_error(const char *msg) {
   Serial.print("# error: ");
   Serial.print(msg);
@@ -91,9 +108,10 @@ static int serial_loader_error(const char *msg) {
 }
 
 static int serial_loader_step() {
-  char line[128];
+  char line[64];
   char dirty;
   int nv;
+  int ret = -1;
   get_line(line, sizeof(line));
   if (state == -1 || line[0] == 'P') {
     if ((nv = sscanf(line, "P %d%c", &jbit_prg_size, &dirty)) != 1)
@@ -115,12 +133,12 @@ static int serial_loader_step() {
     state++;
     if (state == jbit_prg_size) {
       Serial.print("# finished\n\r");
-      return 0;
+      ret = 0;
     }
   }
   Serial.print(line);
   Serial.print("\n\r");
-  return -1;
+  return ret;
 }
 
 extern "C" void serial_loader() {
