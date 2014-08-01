@@ -38,11 +38,14 @@
 
 #define UNASSIGNED 0xff
 
+#define FLAGS_ANALOG_SHIFTED 0x01
+
 extern "C" void primo_init(primo_context_t *ctx) {
+	ctx->analog = 0;
 	ctx->map = UNASSIGNED;
 	ctx->io = UNASSIGNED;
 	ctx->digital = UNASSIGNED;
-	ctx->analog = 0;
+	ctx->flags = 0;
 	vm_wait = 0;
 }
 
@@ -63,6 +66,14 @@ extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 	case REG(DIGVAL):
 		digitalWrite(ctx->digital, data);
 		break;
+	case REG(ANLGLO):
+		ctx->analog = analogRead(data);
+		ctx->flags &= ~FLAGS_ANALOG_SHIFTED;
+		break;
+	case REG(ANLGHI):
+		ctx->analog = analogRead(data);
+		ctx->flags |= FLAGS_ANALOG_SHIFTED;
+		break;
 	}
 }
 
@@ -79,6 +90,13 @@ extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 		return 255;
 	case REG(DIGVAL):
 		return digitalRead(ctx->digital);
+	case REG(ANLGLO):
+		return ctx->analog & 0xff;
+	case REG(ANLGHI):
+		if (ctx->flags & FLAGS_ANALOG_SHIFTED)
+			return ctx->analog >> 2;
+		else
+			return ctx->analog >> 8;
 	}
 	return 0;
 }

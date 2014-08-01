@@ -169,10 +169,11 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 /* PRIMO */
 
 typedef struct {
+	uint16_t analog;
 	uint8_t map;
 	uint8_t io;
 	uint8_t digital;
-	uint16_t analog;
+	uint8_t flags;
 } primo_context_t;
 
 void primo_init(primo_context_t *ctx);

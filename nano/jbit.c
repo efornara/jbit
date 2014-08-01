@@ -123,7 +123,7 @@ uint16_t jbit_step() {
 	keypad_scan();
 	keypad_process();
 	if (ui_state)
-		return;
+		return w;
 	switch (module) {
 	case MODULE_JBIT:
 		jbit_replace_with(item_selected());
