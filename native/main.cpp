@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013  Emanuele Fornara
+ * Copyright (C) 2012-2014  Emanuele Fornara
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -75,6 +75,9 @@ void usage(int code = 1) {
 	 "  -v            show version and exit\n"
 	 "  -d device     override device selection (? for device list)\n"
 	 "  -s device     list symbols and exit (? for device list)\n"
+#ifdef ENABLE_SENDFILE
+	 "  -S port       send file via serial port (e.g. /dev/ttyACM0)\n"
+#endif
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
 	 "\n");
 	exit(code);
@@ -295,6 +298,14 @@ void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 		fatal("internal error (convert)");
 }
 
+#ifdef ENABLE_SENDFILE
+void send_file(const char *file_name, const char *port_name, Tag dev_tag) {
+	Program prg;
+	parse(file_name, dev_tag, &prg);
+	::send_file(&prg, port_name);
+}
+#endif
+
 } // namespace
 
 DeviceRegistry *DeviceRegistry::get_instance() {
@@ -322,6 +333,9 @@ int main(int argc, char *argv[])
 	Tag fmt_tag;
 	Tag dev_tag;
 	int filename_i = -1;
+#ifdef ENABLE_SENDFILE
+	int send_i = -1;
+#endif
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
 		if (!strcmp(s, "-v")) {
@@ -347,6 +361,12 @@ int main(int argc, char *argv[])
 				fmt_tag = Tag(f);
 			else
 				fatal("unknown conversion format '%s'", f);
+#ifdef ENABLE_SENDFILE
+		} else if (!strcmp(s, "-S")) {
+			if (++i == argc)
+				usage();
+			send_i = i;
+#endif
 		} else if (!strcmp(s, "-a") && filename_i == -1) {
 			if (++i == argc)
 				usage();
@@ -362,6 +382,10 @@ int main(int argc, char *argv[])
 		usage();
 	if (fmt_tag.is_valid())
 		convert(argv[filename_i], dev_tag, fmt_tag);
+#ifdef ENABLE_SENDFILE
+	if (send_i != -1)
+		send_file(argv[filename_i], argv[send_i], dev_tag);
+#endif
 	else
 		run(argc - filename_i, &argv[filename_i], dev_tag);
 }

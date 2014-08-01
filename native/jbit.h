@@ -86,3 +86,5 @@ struct DeviceEntry {
 		DeviceRegistry::get_instance()->add(this);
 	}
 };
+
+extern void send_file(const Program *prg, const char *port); 

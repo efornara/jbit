@@ -32,8 +32,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include "serial.h"
-
 #include <SDL/SDL.h>
 
 #include "nano.h"
@@ -157,6 +155,9 @@ static void usage() {
 	exit(1);
 }
 
+#include "../native/serial.h"
+#include "../native/serial.c"
+
 static jbit_serial_t serial;
 
 static void remote_send_keypad_state() {
@@ -205,7 +206,6 @@ static void remote_handle_line(jbit_serial_t *ctx) {
 }
 
 static void remote(const char *port) {
-
 	int rc;
 	Uint32 t;
 	

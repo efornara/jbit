@@ -4,6 +4,7 @@
 
 VPATH = .:../core
 
+CFLAGS = -Wall
 CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall
 LDFLAGS =
 LIBS =
@@ -17,9 +18,11 @@ EXE = jbit
 #
 
 # development
+#CFLAGS += -ggdb
 #CXXFLAGS += -ggdb
 
 # release
+CFLAGS += -O2 -fomit-frame-pointer
 CXXFLAGS += -O2 -fomit-frame-pointer
 LDFLAGS += -s
 
@@ -38,6 +41,10 @@ LIBS += -lncurses
 
 # xv65: tested only on debian stable; comment out if it doesn't compile
 OBJS += xv65.o
+
+# serial: tested only on debian stable; comment out if it doesn't compile
+CXXFLAGS += -DENABLE_SENDFILE
+OBJS += send_file.o serial.o
 
 
 #

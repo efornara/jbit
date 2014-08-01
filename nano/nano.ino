@@ -29,7 +29,7 @@
 #include "nano.h"
 
 
-#if defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
+#if defined(ENABLE_SERIALPROG) || defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
 
 void connect_to_hwsim() {
   static bool hwsim_started = false;
@@ -44,6 +44,71 @@ void connect_to_hwsim() {
       }
     }
   }
+}
+
+#endif
+
+
+#if defined(ENABLE_SERIALPROG)
+
+short prog_size;
+short state;
+
+void serialprog_init() {
+  connect_to_hwsim();
+  state = -1;
+}
+
+void get_line(char *buf, int len) {
+  int i = 0;
+  while (1) {
+    while (Serial.available() > 0) {
+      int value = Serial.read();
+      switch (value) {
+      case '\r':
+        buf[i] = '\0';
+        return;
+      case '\n':
+        continue; // skip
+      default:
+        buf[i++] = value;
+      }
+    }
+  }
+}
+
+int serialprog_error(const char *msg) {
+  Serial.print("# error: ");
+  Serial.print(msg);
+  Serial.print("\n\r");
+  return -1;
+}
+
+int serialprog_step() {
+  char line[128];
+  char dirty;
+  int nv;
+  get_line(line, sizeof(line));
+  if (state == -1 || line[0] == 'P') {
+    if ((nv = sscanf(line, "P %d%c", &prog_size, &dirty)) != 1)
+      return serialprog_error("header");
+    state = 0;
+  } else if (state < prog_size) {
+    int pos, data;
+    if ((nv = sscanf(line, "B %d %d%c", &pos, &data, &dirty)) != 2)
+      return serialprog_error("byte");
+    if (pos != state)
+      return serialprog_error("pos");
+    if (data < 0 || data > 255)
+      return serialprog_error("data");
+    state++;
+    if (state == prog_size) {
+      Serial.print("# finished\n\r");
+    }
+  }
+  Serial.print(line);
+  Serial.print("\n\r");
+  return 0;
 }
 
 #endif
@@ -144,14 +209,16 @@ extern "C" void keypad_scan() {
 #endif
 
 extern "C" int sys_get_random_seed() {
-	return analogRead(0);
+  return analogRead(0);
 }
 
 void setup() {
-  jbit_init();
+//  jbit_init();
+  serialprog_init();
 }
 
 void loop() {
-  jbit_step();
-  delay(100);
+//  jbit_step();
+//  delay(100);
+  serialprog_step();
 }

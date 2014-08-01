@@ -29,6 +29,10 @@
 #ifndef JBIT_SERIAL_H
 #define JBIT_SERIAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define JBIT_SERIAL_BUFFER_SIZE 128
 
 typedef struct {
@@ -45,5 +49,9 @@ int jbit_serial_open(jbit_serial_t *ctx, const char *filename, int speed);
 int jbit_serial_close(jbit_serial_t *ctx);
 int jbit_serial_write(jbit_serial_t *ctx);
 int jbit_serial_poll(jbit_serial_t *ctx, jbit_serial_read_t callback);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

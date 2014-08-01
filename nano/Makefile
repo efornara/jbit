@@ -1,7 +1,5 @@
-VPATH = .:../native
-
 CC = gcc
-CFLAGS = -DPLATFORM_PC -I../native -Wall
+CFLAGS = -DPLATFORM_PC -Wall
 LDFLAGS =
 LIBS = -lSDL
 
@@ -11,7 +9,6 @@ EM_LDFLAGS = -s EXPORTED_FUNCTIONS="['_keypad_update', '_jbit_init', '_jbit_step
 
 OBJS = \
 	pc.o \
-	serial.o \
 	jbit.o \
 	demos.o \
 	microio.o \

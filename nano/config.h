@@ -26,29 +26,36 @@
  * SUCH DAMAGE.
  */
 
+#define DIST_CUSTOM
+
+#ifdef DIST_CUSTOM
+
 // Facilities
-#define ENABLE_UI
+//#define ENABLE_UI
 
 // Modules
-#define ENABLE_VM
-#define ENABLE_DEMOS
+//#define ENABLE_VM
+//#define ENABLE_DEMOS
 
 // Devices
-#define ENABLE_MICROIO
-#define ENABLE_MICROIO_RANDOM
+//#define ENABLE_MICROIO
+//#define ENABLE_MICROIO_RANDOM
 
 // Loaders
 //#define ENABLE_AUTORUN
+#define ENABLE_SERIALPROG
 
 // LCD (one of)
-//#define LCD_NULL
-#define LCD_HWSIM
+#define LCD_NULL
+//#define LCD_HWSIM
 //#define LCD_REAL
 
 // KEYPAD (one of)
-//#define KEYPAD_NULL
-#define KEYPAD_HWSIM
+#define KEYPAD_NULL
+//#define KEYPAD_HWSIM
 //#define KEYPAD_REAL
+
+#endif
 
 
 // internal configuration checks
