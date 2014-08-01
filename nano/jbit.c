@@ -30,8 +30,10 @@
 
 #include "nano.h"
 
+extern const uint8_t autorun_jb[] PROGMEM;
+
 const uint8_t *jbit_prg_code;
-uint8_t jbit_prg_size;
+uint16_t jbit_prg_size;
 
 #ifndef ENABLE_UI
 uint8_t ui_state = 0;
@@ -57,11 +59,23 @@ static const char *const modules[] = {
 	0
 };
 
+#define SIZE_HEADER 12
+#define OFFSET_CODEPAGES 8
+#define OFFSET_DATAPAGES 9
+
 void jbit_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
+#ifdef ENABLE_AUTORUN
+	jbit_prg_code = &autorun_jb[SIZE_HEADER];
+	jbit_prg_size = \
+	  (pgm_read_byte(&autorun_jb[OFFSET_CODEPAGES])
+	  + pgm_read_byte(&autorun_jb[OFFSET_DATAPAGES])) << 8;
+	jbit_replace_with(MODULE_VM);
+#else
 	jbit_replace_with(MODULE_JBIT);
+#endif
 }
 
 void jbit_replace_with(int module_) {

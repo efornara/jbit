@@ -172,7 +172,7 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 #define MODULE_VM 2
 
 extern const uint8_t *jbit_prg_code;
-extern uint8_t jbit_prg_size;
+extern uint16_t jbit_prg_size;
 
 void jbit_init();
 void jbit_step();

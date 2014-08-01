@@ -38,6 +38,25 @@ jbnano: $(OBJS)
 jbnano-c.js: $(EM_SRCS)
 	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbnano-c.js $(EM_SRCS)
 
+%.bin: %.jb
+	mkdir -p build-cli
+	rm -f build-cli/autorun.o
+	cp $< AUTORUN_TMP
+	avr-objcopy -I binary -O elf32-avr \
+	 --rename-section .data=.progmem.data,contents,alloc,load,readonly,data \
+	 --redefine-sym _binary_AUTORUN_TMP_start=autorun_jb \
+	 AUTORUN_TMP build-cli/autorun.o
+	rm -f AUTORUN_TMP
+
+LOCAL_ARCH = -O elf64-x86-64 --binary-architecture i386
+autorun.o: ../midp/jbit/res/ciao.jb
+	rm -f autorun.o
+	cp $< AUTORUN_TMP
+	objcopy -I binary $(LOCAL_ARCH) \
+	 --redefine-sym _binary_AUTORUN_TMP_start=autorun_jb \
+	 AUTORUN_TMP autorun.o
+	rm -f AUTORUN_TMP
+
 clean:
 	$(RM) -r build-cli *.o jbnano jbnano-c.*
 

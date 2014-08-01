@@ -37,6 +37,9 @@
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
 
+// Loaders
+//#define ENABLE_AUTORUN
+
 // LCD (one of)
 //#define LCD_NULL
 #define LCD_HWSIM
