@@ -29,7 +29,7 @@
 #include "nano.h"
 
 
-#if defined(ENABLE_SERIALPROG) || defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
+#if defined(ENABLE_SERIAL) || defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)
 
 void connect_to_hwsim() {
   static bool hwsim_started = false;
@@ -49,17 +49,23 @@ void connect_to_hwsim() {
 #endif
 
 
-#if defined(ENABLE_SERIALPROG)
+#if defined(ENABLE_SERIAL)
 
-short prog_size;
-short state;
+extern const uint8_t *jbit_prg_code;
+extern uint16_t jbit_prg_size;
+extern uint8_t jbit_prg_pgm;
 
-void serialprog_init() {
+static uint8_t *code;
+static int state;
+
+static void serial_loader_init() {
   connect_to_hwsim();
+  jbit_prg_pgm = 0;
+  code = NULL;
   state = -1;
 }
 
-void get_line(char *buf, int len) {
+static void get_line(char *buf, int len) {
   int i = 0;
   while (1) {
     while (Serial.available() > 0) {
@@ -77,38 +83,51 @@ void get_line(char *buf, int len) {
   }
 }
 
-int serialprog_error(const char *msg) {
+static int serial_loader_error(const char *msg) {
   Serial.print("# error: ");
   Serial.print(msg);
   Serial.print("\n\r");
   return -1;
 }
 
-int serialprog_step() {
+static int serial_loader_step() {
   char line[128];
   char dirty;
   int nv;
   get_line(line, sizeof(line));
   if (state == -1 || line[0] == 'P') {
-    if ((nv = sscanf(line, "P %d%c", &prog_size, &dirty)) != 1)
-      return serialprog_error("header");
+    if ((nv = sscanf(line, "P %d%c", &jbit_prg_size, &dirty)) != 1)
+      return serial_loader_error("header");
+    if (code)
+      free(code);
+    if ((code = (uint8_t *)malloc(jbit_prg_size)) == NULL)
+      return serial_loader_error("malloc");
     state = 0;
-  } else if (state < prog_size) {
+  } else if (state < jbit_prg_size) {
     int pos, data;
     if ((nv = sscanf(line, "B %d %d%c", &pos, &data, &dirty)) != 2)
-      return serialprog_error("byte");
+      return serial_loader_error("byte");
     if (pos != state)
-      return serialprog_error("pos");
+      return serial_loader_error("pos");
     if (data < 0 || data > 255)
-      return serialprog_error("data");
+      return serial_loader_error("data");
+    code[pos] = data;
     state++;
-    if (state == prog_size) {
+    if (state == jbit_prg_size) {
       Serial.print("# finished\n\r");
+      return 0;
     }
   }
   Serial.print(line);
   Serial.print("\n\r");
-  return 0;
+  return -1;
+}
+
+extern "C" void serial_loader() {
+  serial_loader_init();
+  while (serial_loader_step())
+    ;
+  jbit_prg_code = code;
 }
 
 #endif
@@ -213,12 +232,10 @@ extern "C" int sys_get_random_seed() {
 }
 
 void setup() {
-//  jbit_init();
-  serialprog_init();
+  jbit_init();
 }
 
 void loop() {
-//  jbit_step();
-//  delay(100);
-  serialprog_step();
+  jbit_step();
+  delay(100);
 }

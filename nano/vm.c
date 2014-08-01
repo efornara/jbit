@@ -78,6 +78,13 @@ typedef struct {
 static vm_context_t ctx_;
 static vm_context_t *ctx = &ctx_;
 
+uint8_t get_prog_byte(int offset) {
+	if (jbit_prg_pgm)
+		return pgm_read_byte(&(jbit_prg_code[offset]));
+	else
+		return jbit_prg_code[offset];
+}
+
 uint8_t read6502(uint16_t address) {
 	uint8_t page = address >> 8;
 	uint8_t offset = address & 0xff;
@@ -100,7 +107,7 @@ uint8_t read6502(uint16_t address) {
 		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
 			return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
 	if (page != 1 && address < 0x300 + jbit_prg_size)
-		return pgm_read_byte(&(jbit_prg_code[address - 0x300]));
+		return get_prog_byte(address - 0x300);
 	return 0;
 }
 
@@ -140,7 +147,7 @@ void write6502(uint16_t address, uint8_t value) {
 		int j, a = (address & MPAGE_ADDR_MASK);
 		for (j = 0; j < MPAGE_SIZE; j++)
 			if (a + j < 0x300 + jbit_prg_size)
-				ctx->mpage[i].data[j] = pgm_read_byte(&(jbit_prg_code[a + j - 0x300]));
+				ctx->mpage[i].data[j] = get_prog_byte(a + j - 0x300);
 			else
 				ctx->mpage[i].data[j] = 0;
 	}

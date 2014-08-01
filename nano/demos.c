@@ -115,6 +115,7 @@ void demos_init() {
 void demos_step() {
 	jbit_prg_code = demo_def[ui_result].code;
 	jbit_prg_size = demo_def[ui_result].size;
+	jbit_prg_pgm = 1;
 	jbit_replace_with(MODULE_VM);
 }
 

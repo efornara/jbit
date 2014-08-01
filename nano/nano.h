@@ -165,6 +165,10 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
 void microio_keypress(microio_context_t *ctx, uint8_t code);
 
+/* NANO */
+
+void serial_loader();
+
 /* JBIT */
 
 #define MODULE_JBIT 0
@@ -173,6 +177,7 @@ void microio_keypress(microio_context_t *ctx, uint8_t code);
 
 extern const uint8_t *jbit_prg_code;
 extern uint16_t jbit_prg_size;
+extern uint8_t jbit_prg_pgm;
 
 void jbit_init();
 void jbit_step();

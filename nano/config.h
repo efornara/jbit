@@ -26,7 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#define DIST_CUSTOM
+
+#define ENABLE_VM
+#define ENABLE_SERIAL
+#define LCD_NULL
+#define KEYPAD_NULL
+
 
 #ifdef DIST_CUSTOM
 
@@ -43,7 +48,7 @@
 
 // Loaders
 //#define ENABLE_AUTORUN
-#define ENABLE_SERIALPROG
+//#define ENABLE_SERIAL
 
 // LCD (one of)
 #define LCD_NULL
@@ -69,5 +74,11 @@
 #ifndef ENABLE_VM
 #if defined(ENABLE_MICROIO)
 #error "Devices only available if VM is enabled"
+#endif
+#endif
+
+#ifndef __AVR
+#if defined(ENABLE_SERIAL)
+#error "Serial loader not available for this target"
 #endif
 #endif

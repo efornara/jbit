@@ -34,6 +34,7 @@ extern const uint8_t autorun_jb[] PROGMEM;
 
 const uint8_t *jbit_prg_code;
 uint16_t jbit_prg_size;
+uint8_t jbit_prg_pgm;
 
 #ifndef ENABLE_UI
 uint8_t ui_state = 0;
@@ -67,11 +68,15 @@ void jbit_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
-#ifdef ENABLE_AUTORUN
+#if defined(ENABLE_AUTORUN)
 	jbit_prg_code = &autorun_jb[SIZE_HEADER];
 	jbit_prg_size = \
 	  (pgm_read_byte(&autorun_jb[OFFSET_CODEPAGES])
 	  + pgm_read_byte(&autorun_jb[OFFSET_DATAPAGES])) << 8;
+	jbit_prg_pgm = 1;
+	jbit_replace_with(MODULE_VM);
+#elif defined(ENABLE_SERIAL)
+	serial_loader();
 	jbit_replace_with(MODULE_VM);
 #else
 	jbit_replace_with(MODULE_JBIT);
