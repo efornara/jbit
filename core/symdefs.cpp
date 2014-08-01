@@ -55,6 +55,11 @@ const SymDef io2_symdefs[] = {
 { 0, 0 },
 }; 
 
+const SymDef primo_symdefs[] = {
+#include "d_primo.h"
+{ 0, 0 },
+};
+
 } // namespace
 
 const char *asm_devices[] = {
@@ -62,6 +67,7 @@ const char *asm_devices[] = {
 	"xv65",
 	"microio",
 	"io2",
+	"primo",
 	0
 };
 
@@ -74,5 +80,7 @@ const SymDef *get_device_symdefs(const char *device) {
 		return microio_symdefs;
 	if (!strcmp(device, "io2"))
 		return io2_symdefs;
+	if (!strcmp(device, "primo"))
+		return primo_symdefs;
 	return 0;
 }

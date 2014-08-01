@@ -1,4 +1,4 @@
-all: d_xv65.h d_io2.h d_microio.h
+all: d_xv65.h d_io2.h d_microio.h d_primo.h
 
 d_xv65.h: xv65.inc
 	perl ../tools/inc2sym.pl <xv65.inc >d_xv65.h
@@ -9,3 +9,6 @@ d_io2.h: io2.inc
 
 d_microio.h: microio.inc
 	perl ../tools/inc2sym.pl <microio.inc >d_microio.h
+
+d_primo.h: primo.inc
+	perl ../tools/inc2sym.pl <primo.inc >d_primo.h
