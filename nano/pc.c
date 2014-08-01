@@ -30,13 +30,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <errno.h>
 #include <assert.h>
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
+#include "serial.h"
 
 #include <SDL/SDL.h>
 
@@ -161,10 +157,10 @@ static void usage() {
 	exit(1);
 }
 
-static int fd;
+static jbit_serial_t serial;
 
 static void remote_send_keypad_state() {
-	char buf[32];
+	char *buf = serial.out;
 	unsigned short mask = 1;
 	int i;
 
@@ -176,92 +172,63 @@ static void remote_send_keypad_state() {
 	}
 	buf[14] = '\n';
 	buf[15] = '\r';
-	write(fd, buf, 16);
+	buf[16] = '\0';
+	jbit_serial_write(&serial);
 }
 
-static void remote_handle_char(char c) {
+static void remote_handle_line(jbit_serial_t *ctx) {
 	static const int profile_error_rate = 0;
-	static int n = 0;
 	static long long tot = 0, err = 0;
-	static char line[124];
 
-	line[n] = c;
-	if (c == '\n') {
-		/* skip */
-	} else if (c == '\r') {
-		int rc, data, nv, done = 0;
-		char dirty;
-		line[n] = '\0';
-		if (line[0] == 'L') {
-			nv = sscanf(line, "L %d %d%c", &rc, &data, &dirty);
-			if (nv == 2) {
-				lcd_write(rc, data);
-				done = 1;
-			}
-		} else if (line[0] == 'K') {
-			if (line[1] == '\0') {
-				remote_send_keypad_state();
-				done = 1;
-			}
+	const char *line = serial.in;
+	int rc, data, nv, done = 0;
+	char dirty;
+
+	if (line[0] == 'L') {
+		nv = sscanf(line, "L %d %d%c", &rc, &data, &dirty);
+		if (nv == 2) {
+			lcd_write(rc, data);
+			done = 1;
 		}
-		if (!done)
-			err++;
-		tot++;
-		if (profile_error_rate && tot % 1000 == 0)
-			fprintf(stderr, "serial: err:%lld, tot:%lld, error rate: %.3f%%\n",
-			  err, tot, ((double)err / tot) * 100.0);
-		n = 0;
-	} else {
-		n++;
-		assert(n < sizeof(line));
+	} else if (line[0] == 'K') {
+		if (line[1] == '\0') {
+			remote_send_keypad_state();
+			done = 1;
+		}
 	}
+	if (!done)
+		err++;
+	tot++;
+	if (profile_error_rate && tot % 1000 == 0)
+		fprintf(stderr, "serial: err:%lld, tot:%lld, error rate: %.3f%%\n",
+		  err, tot, ((double)err / tot) * 100.0);
 }
 
 static void remote(const char *port) {
-	struct termios config;
-	int rc, i;
-	char buf[1024];
+
+	int rc;
 	Uint32 t;
 	
 	printf("remote\n");
-	fd = open(port, O_RDWR | O_NOCTTY | O_NONBLOCK);
-	assert(fd >= 0);
-	assert(isatty(fd));
-	memset(&config, 0, sizeof(config));
-	config.c_iflag = 0;
-	config.c_oflag = 0;
-	config.c_cflag = CS8 | CREAD | CLOCAL;
-	config.c_lflag = 0;
-	config.c_cc[VMIN] = 1;
-	config.c_cc[VTIME] = 0;
-	cfsetispeed(&config, B115200);
-	cfsetospeed(&config, B115200);
-	rc = tcsetattr(fd, TCSAFLUSH, &config);
+	rc = jbit_serial_open(&serial, port, 115200);
 	assert(rc == 0);
 	printf("waiting for arduino to reset...\n");
 	t = SDL_GetTicks();
 	SDL_Delay(3000);
 	sdl_init();
-	write(fd, "C\n\r", 3);
+	strcpy(serial.out, "C\n\r");
+	rc = jbit_serial_write(&serial);
+	assert(rc == 0);
 	while (1) {
-		while (1) {
-			rc = read(fd, buf, sizeof(buf));
-			assert(rc != 0);
-			if (rc < 0) {
-				if (errno == EAGAIN)
-					break;
-				assert(errno == EINTR);
-			} else {
-				for (i = 0; i < rc; i++)
-					remote_handle_char(buf[i]);
-			}
-		}
+		rc = jbit_serial_poll(&serial, remote_handle_line);
+		assert(rc == 0);
 		if (SDL_GetTicks() - t > 30) {
 			t = SDL_GetTicks();
 			sdl_sync();
 		}
 	}
-	close(fd);
+	rc = jbit_serial_close(&serial);
+	assert(rc == 0);
 }
 
 static void local() {
