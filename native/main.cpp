@@ -383,7 +383,7 @@ int main(int argc, char *argv[])
 	if (fmt_tag.is_valid())
 		convert(argv[filename_i], dev_tag, fmt_tag);
 #ifdef ENABLE_SENDFILE
-	if (send_i != -1)
+	else if (send_i != -1)
 		send_file(argv[filename_i], argv[send_i], dev_tag);
 #endif
 	else
