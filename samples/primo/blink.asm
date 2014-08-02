@@ -4,8 +4,8 @@
 
 	lda #13
 	sta DIGID
-	lda #DIGCFG_OUTPUT
-	sta DIGCFG
+	lda #DIGWCFG_OUTPUT
+	sta DIGWCFG
 
 l1:	lda #DIGVAL_LOW
 	sta DIGVAL

@@ -32,15 +32,6 @@
 /*  SUCH DAMAGE.                                                           */
 /*                                                                         */
 
-#define REQPUT 0x0201
-#define REQEND 0x0202
-#define REQRES 0x0203
-
-#define REQPTRLO 0x0204
-#define REQPTRHI 0x0205
-
-#define REQDAT 0x0260
-
 #define IOBIT0 0x02F0
 #define IOBIT1 0x02F1
 #define IOBIT2 0x02F2
@@ -49,21 +40,19 @@
 #define IOBIT5 0x02F5
 #define IOBIT6 0x02F6
 #define IOBIT7 0x02F7
-#define IOBYTE 0x02F7
+#define IOBYTE 0x02F8
+#define IOID 0x02F9
 
-#define IOID 0x02FA
-#define DIGID 0x02FB
-#define DIGVAL 0x02FC
-#define DIGCFG 0x02FD
+#define DIGID 0x02FA
+#define DIGVAL 0x02FB
+#define DIGWCFG 0x02FC
+#define DIGPWM 0x02FD
 #define ANLGLO 0x02FE
 #define ANLGHI 0x02FF
 
-#define REQ_MAPIO 10
-
-#define DIGCFG_INPUT 0
-#define DIGCFG_OUTPUT 1
-#define DIGCFG_INPULLUP 2
+#define DIGWCFG_INPUT 0
+#define DIGWCFG_OUTPUT 1
+#define DIGWCFG_INPULLUP 2
 
 #define DIGVAL_HIGH 1
 #define DIGVAL_LOW 0
-

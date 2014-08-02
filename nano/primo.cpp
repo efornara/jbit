@@ -60,11 +60,14 @@ extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 	case REG(DIGID):
 		ctx->digital = data;
 		break;
-	case REG(DIGCFG):
+	case REG(DIGWCFG):
 		pinMode(ctx->digital, data);
 		break;
 	case REG(DIGVAL):
 		digitalWrite(ctx->digital, data);
+		break;
+	case REG(DIGPWM):
+		analogWrite(ctx->digital, data);
 		break;
 	case REG(ANLGLO):
 		ctx->analog = analogRead(data);
@@ -86,8 +89,8 @@ extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 		return ctx->io;
 	case REG(DIGID):
 		return ctx->digital;
-	case REG(DIGCFG):
-		return 255;
+	case REG(DIGWCFG):
+		return 0xff;
 	case REG(DIGVAL):
 		return digitalRead(ctx->digital);
 	case REG(ANLGLO):
