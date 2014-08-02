@@ -27,6 +27,13 @@
  */
 
 
+#include "local.h"
+
+
+#ifndef LOCAL_CONFIG
+
+#ifdef __AVR
+
 #define ENABLE_VM
 #define ENABLE_PRIMO
 #define ENABLE_SERIAL
@@ -34,38 +41,30 @@
 #define LCD_NULL
 #define KEYPAD_NULL
 
+#else
 
-#ifdef DIST_CUSTOM
-
-// Facilities
-//#define ENABLE_UI
-
-// Modules
-//#define ENABLE_VM
-//#define ENABLE_DEMOS
-
-// Devices
-//#define ENABLE_MICROIO
-//#define ENABLE_MICROIO_RANDOM
-//#define ENABLE_PRIMO
-
-// Loaders
-//#define ENABLE_AUTORUN
-//#define ENABLE_SERIAL
-//#define ENABLE_SERIAL_TRACE
-
-// LCD (one of)
+#define ENABLE_UI
+#define ENABLE_VM
+#define ENABLE_DEMOS
+#define ENABLE_MICROIO
+#define ENABLE_MICROIO_RANDOM
 #define LCD_NULL
-//#define LCD_HWSIM
-//#define LCD_REAL
-
-// KEYPAD (one of)
 #define KEYPAD_NULL
-//#define KEYPAD_HWSIM
-//#define KEYPAD_REAL
 
 #endif
 
+#endif
+
+
+// derived values
+
+#if !defined(LCD_HWSIM) && !defined(LCD_REAL)
+#define LCD_NULL
+#endif
+
+#if !defined(KEYPAD_HWSIM) && !defined(KEYPAD_REAL)
+#define KEYPAD_NULL
+#endif
 
 // internal configuration checks
 
