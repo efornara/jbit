@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JBIT" "1" "October 2013" "" ""
+.TH "JBIT" "1" "August 2014" "" ""
 .
 .SH "NAME"
 \fBjbit\fR \- 6502 Assembler and Simulator
@@ -203,7 +203,7 @@ Direct access to the 10x4 display matrix, disposed in row\-major order: first th
 Simple programs aimed at 6502 beginner programmers are available in the 6502 subdirectory of the samples directory\.
 .
 .SH "REQUESTS"
-The two major devices in JBit are \fIxv65\fR and \fIio2\fR\. The underlying systems they expose are completely different, but they share the same basic communication mechanism: the request\. A request is essentially a function call to the host environment\.
+The two major devices in JBit are \fIxv65\fR and \fIio2\fR (a new major device, \fIprimo\fR, is being developed; see below)\. The underlying systems they expose are completely different, but they share the same basic communication mechanism: the request\. A request is essentially a function call to the host environment\.
 .
 .P
 This is a xv65 request that makes the calling process sleep for 10 seconds:
@@ -260,7 +260,7 @@ For longer requests, you can store somewhere in memory the request preceded by a
 
 lda #>blue
 sta REQPTRHI
-lda #>blue
+lda #<blue
 sta REQPTRLO
 
 \.data
@@ -274,7 +274,7 @@ blue: 5 0 17 0 0 255
 The order is important! The request is issued when REQPTRLO is written\. This allows to put multiple requests on the same page and to issue them by writing only to REQPTRLO\.
 .
 .P
-Counting the number of bytes of a requested might be error prone, so the assembler provides a pair of directives to auto\-compute the length of a request:
+Counting the number of bytes of a request might be error prone, so the assembler provides a pair of directives to auto\-compute the length of a request:
 .
 .IP "" 4
 .
@@ -399,6 +399,31 @@ A fair amount of documentation for the io2 device is available here:
 .P
 \fIhttp://jbit\.sourceforge\.net/doc/jbdoc\.html\fR
 .
+.SH "PRIMO"
+The device \fIprimo\fR is intended to map the hardware facilities of some popular ATmega microcontrollers from Atmel \fIhttp://www\.atmel\.com\fR\. The main target for primo is the Arduino Uno board \fIhttp://arduino\.cc/en/Main/arduinoBoardUno\fR\.
+.
+.P
+Please note that while jbit in general comes without warranty of any kind, this is especially true for the primo device\. I assume that you are an experienced microcontroller developer\.
+.
+.P
+Study carefully the blink\.asm example in the samples/primo directory\. If you cannot figure out how it works, stop now and make some practice with Arduino using the standard tools\.
+.
+.P
+If the blink\.asm example makes sense to you, open the nano sketch with the Arduino IDE, verify and upload the sketch\. Close the Arduino IDE and upload blink\.asm to the board:
+.
+.IP "" 4
+.
+.nf
+
+jbit \-S /dev/ttyACM0 blink\.asm
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Note that this last command does not reprogram the board: the code is uploaded to the ram of the board and it is run by the simulator that you uploaded in the previous step\. It is possible to build a hex image with a jbit primo program attached (autorun), but the process is not documented at the moment\.
+.
 .SH "EXAMPLES"
 Find constants for IPNGGEN:
 .
@@ -487,7 +512,7 @@ The parser is too permissive, and programs that rely on it, might not load in fu
 The parser does not always provide contextual information\. For example, if a symbol is redefined, the location of the first definition is not reported\.
 .
 .SH "COPYRIGHT"
-Copyright (C) 2012\-2013 Emanuele Fornara
+Copyright (C) 2012\-2014 Emanuele Fornara
 .
 .P
 Released under the BSD 2\-Clause License\.
