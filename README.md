@@ -74,9 +74,9 @@ emulator](http://rubbermallet.org/fake6502.c).
 
 The same code base is used to generate three targets:
 
-An image for (Arduino Uno)[http://arduino.cc/en/Main/arduinoBoardUno].
-See [jbit(1)](http://efornara.github.io/jbit/jbit.1.html#PRIMO) for more
-information.
+An image for [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno).
+See [jbit(1) - PRIMO](http://efornara.github.io/jbit/jbit.1.html#PRIMO)
+for more information.
 
 A test native program. Just typing make should work, but you need the
 development package of SDL 1.2. Note that this target might disappear
