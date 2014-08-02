@@ -63,6 +63,7 @@
     <a href="#REQUESTS">REQUESTS</a>
     <a href="#XV65">XV65</a>
     <a href="#IO2">IO2</a>
+    <a href="#PRIMO">PRIMO</a>
     <a href="#EXAMPLES">EXAMPLES</a>
     <a href="#FILES">FILES</a>
     <a href="#ENVIRONMENT">ENVIRONMENT</a>
@@ -129,7 +130,7 @@ already familiar with 6502 assembly and new to JBit.</p>
 </code></pre>
 
 <p>JBit has a binary format too, although it is mostly used on the J2ME
-version of JBit (see <a href="#IO2" title="IO2" data-bare-link="true">IO2</a>).</p>
+version of JBit (see <a href="#IO2" data-bare-link="true" title="IO2">IO2</a>).</p>
 
 <pre><code>jbit -c jb a.asm &gt;a.jb
 jbit a.jb
@@ -235,9 +236,10 @@ called console), a keypad similar to the ones found on classic phones
 
 <h2 id="REQUESTS">REQUESTS</h2>
 
-<p>The two major devices in JBit are <em>xv65</em> and <em>io2</em>. The underlying
-systems they expose are completely different, but they share the same
-basic communication mechanism: the request. A request is essentially a
+<p>The two major devices in JBit are <em>xv65</em> and <em>io2</em> (a new major device,
+<em>primo</em>, is being developed; see below). The underlying systems they
+expose are completely different, but they share the same basic
+communication mechanism: the request. A request is essentially a
 function call to the host environment.</p>
 
 <p>This is a xv65 request that makes the calling process sleep for 10
@@ -271,7 +273,7 @@ pairs.</p>
 
 <pre><code>lda #&gt;blue
 sta REQPTRHI
-lda #&gt;blue
+lda #&lt;blue
 sta REQPTRLO
 
 .data
@@ -282,7 +284,7 @@ blue: 5 0 17 0 0 255
 This allows to put multiple requests on the same page and to issue them
 by writing only to REQPTRLO.</p>
 
-<p>Counting the number of bytes of a requested might be error prone, so the
+<p>Counting the number of bytes of a request might be error prone, so the
 assembler provides a pair of directives to auto-compute the length of a
 request:</p>
 
@@ -381,6 +383,34 @@ the joypad), you can stop the program. Select <em>Menu</em> and then select
 
 <p><a href="http://jbit.sourceforge.net/doc/jbdoc.html" data-bare-link="true">http://jbit.sourceforge.net/doc/jbdoc.html</a></p>
 
+<h2 id="PRIMO">PRIMO</h2>
+
+<p>The device <em>primo</em> is intended to map the hardware facilities of some
+popular ATmega microcontrollers from <a href="http://www.atmel.com">Atmel</a>. The
+main target for primo is the <a href="http://arduino.cc/en/Main/arduinoBoardUno">Arduino Uno
+board</a>.</p>
+
+<p>Please note that while jbit in general comes without warranty of any
+kind, this is especially true for the primo device. I assume that you
+are an experienced microcontroller developer.</p>
+
+<p>Study carefully the blink.asm example in the samples/primo directory. If
+you cannot figure out how it works, stop now and make some practice with
+Arduino using the standard tools.</p>
+
+<p>If the blink.asm example makes sense to you, open the nano sketch with
+the Arduino IDE, verify and upload the sketch. Close the Arduino IDE and
+upload blink.asm to the board:</p>
+
+<pre><code>jbit -S /dev/ttyACM0 blink.asm
+</code></pre>
+
+<p>Note that this last command does not reprogram the board: the code is
+uploaded to the ram of the board and it is run by the simulator that you
+uploaded in the previous step. It is possible to build a hex image with
+a jbit primo program attached (autorun), but the process is not
+documented at the moment.</p>
+
 <h2 id="EXAMPLES">EXAMPLES</h2>
 
 <p>Find constants for IPNGGEN:</p>
@@ -443,7 +473,7 @@ reported.</p>
 
 <h2 id="COPYRIGHT">COPYRIGHT</h2>
 
-<p>Copyright (C) 2012-2013  Emanuele Fornara</p>
+<p>Copyright (C) 2012-2014  Emanuele Fornara</p>
 
 <p>Released under the BSD 2-Clause License.</p>
 
@@ -456,7 +486,7 @@ reported.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>October 2013</li>
+    <li class='tc'>August 2014</li>
     <li class='tr'>jbit(1)</li>
   </ol>
 
