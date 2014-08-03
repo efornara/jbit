@@ -117,7 +117,7 @@ void send_file(const Program *prg, const char *port) {
 	get_program(prg);
 	serial_open(port);
 	printf("waiting for arduino to reset...\n");
-	usleep(3000000);
+	usleep(1000000);
 	set_cmd("C");
 	serial_write();
 	while (1) {
