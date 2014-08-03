@@ -8,6 +8,9 @@
 //#define ENABLE_VM
 //#define ENABLE_DEMOS
 
+// VM
+//#define MAX_N_MPAGES 0
+
 // Devices
 //#define ENABLE_MICROIO
 //#define ENABLE_MICROIO_RANDOM

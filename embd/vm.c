@@ -65,8 +65,6 @@ static const uint8_t irqvec[] PROGMEM = {
 
 #define PAGE_SIZE 256
 
-#define MAX_N_MPAGES 8
-
 #define MPAGE_SIZE      0x0020
 #define MPAGE_ADDR_MASK 0xffe0
 #define MPAGE_DATA_MASK 0x001f
@@ -78,6 +76,7 @@ typedef struct {
 		uint8_t data[MPAGE_SIZE];
 	} mpage[MAX_N_MPAGES];
 	uint16_t n_mpages;
+	uint16_t last_ro_addr;
 } vm_context_t;
 
 static vm_context_t ctx_;
@@ -112,9 +111,10 @@ uint8_t read6502(uint16_t address) {
 			return pgm_read_byte(&(irqvec[offset - 240]));
 		return 0;
 	}
-	for (i = 0; i < ctx->n_mpages; i++)
-		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
-			return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
+	if (page == 1 || address > ctx->last_ro_addr)
+		for (i = 0; i < ctx->n_mpages; i++)
+			if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
+				return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
 	if (page != 1 && address < 0x300 + jbit_prg_size)
 		return get_prog_byte(address - 0x300);
 	return 0;
@@ -123,7 +123,7 @@ uint8_t read6502(uint16_t address) {
 void write6502(uint16_t address, uint8_t value) {
 	uint8_t page = address >> 8;
 	uint8_t offset = address & 0xff;
-	int i;
+	int i, a;
 	switch (page) {
 	case 0:
 		ctx->page0[offset] = value;
@@ -153,11 +153,14 @@ void write6502(uint16_t address, uint8_t value) {
 		return;
 	}
 	i = ctx->n_mpages++;
-	ctx->mpage[i].addr = (address & MPAGE_ADDR_MASK);
+	a = address & MPAGE_ADDR_MASK;
+	ctx->mpage[i].addr = a;
+	if (page != 1 && a < ctx->last_ro_addr)
+		ctx->last_ro_addr = a - 1;
 	if (page == 1 || ctx->mpage[i].addr > 0x300 + jbit_prg_size) {
 		memset(ctx->mpage[i].data, 0, MPAGE_SIZE);
 	} else {
-		int j, a = (address & MPAGE_ADDR_MASK);
+		int j;
 		for (j = 0; j < MPAGE_SIZE; j++)
 			if (a + j < 0x300 + jbit_prg_size)
 				ctx->mpage[i].data[j] = get_prog_byte(a + j - 0x300);
@@ -176,6 +179,7 @@ static void process_events(uint8_t event, char c) {
 
 void vm_init() {
 	memset(&ctx_, 0, sizeof(ctx_));
+	ctx->last_ro_addr = 0xffff;
 	vm_wait = 100;
 	trace6502(0);
 	reset6502();

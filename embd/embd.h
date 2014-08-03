@@ -77,6 +77,12 @@
 
 #endif
 
+// default values
+
+#ifndef MAX_N_MPAGES
+#define MAX_N_MPAGES 8
+#endif
+
 // derived values
 
 #if !defined(LCD_HWSIM) && !defined(LCD_REAL)
