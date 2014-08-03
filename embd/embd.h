@@ -193,7 +193,7 @@ void ui_menu(const char *title, const char *const items[]);
   It adds 6K of flash and needs some fixes to make it use pgm, but it
   should be fairly easy to integrate.
   In the future, it would be nice to have an option to select another
-  emulator with a trade-off that is a better fit for jbit nano
+  emulator with a trade-off that is a better fit for jbit embd
   (i.e. slower but smaller).
  */
 
@@ -241,7 +241,7 @@ void primo_init(primo_context_t *ctx);
 void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data);
 uint8_t primo_get(primo_context_t *ctx, uint8_t addr);
 
-/* NANO */
+/* EMBD */
 
 void serial_loader();
 void serial_trace(const char *format, ...);

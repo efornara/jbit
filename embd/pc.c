@@ -34,7 +34,7 @@
 
 #include <SDL/SDL.h>
 
-#include "nano.h"
+#include "embd.h"
 
 #define SCALE 5
 #define BORDER 10
@@ -56,7 +56,7 @@ static SDL_Surface *screen;
 
 static void sdl_init() {
 	int rc;
-	const char *title = "JBit Nano";
+	const char *title = "JBit Embd";
 
 	rc = SDL_Init(SDL_INIT_VIDEO);
 	assert(rc != -1);
@@ -151,7 +151,7 @@ static void sdl_sync() {
 }
 
 static void usage() {
-	printf("usage: jbnano [port]\n");
+	printf("usage: jbembd [port]\n");
 	exit(1);
 }
 

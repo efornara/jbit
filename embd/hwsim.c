@@ -31,7 +31,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "nano.h"
+#include "embd.h"
 
 uint8_t lcd_bitmap[LCD_BITMAP_SIZE];
 

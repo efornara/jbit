@@ -112,7 +112,7 @@
 
  WARNING! This is not the original Fake6502 emulator!
 
- This version has been modified to fit jbit nano,
+ This version has been modified to fit jbit embd,
  and it is likely to contain bugs not present in the
  original version.
 
@@ -129,7 +129,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "nano.h"
+#include "embd.h"
 
 #ifdef ENABLE_VM
 

@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "nano.h"
+#include "embd.h"
 
 #ifdef ENABLE_DEMOS
 

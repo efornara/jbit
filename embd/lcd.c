@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "nano.h"
+#include "embd.h"
 
 /*
 	Hard to trace the original source of this font to give proper attribution.

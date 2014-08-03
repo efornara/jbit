@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#include "nano.h"
+#include "embd.h"
 
 extern const uint8_t autorun_jb[] PROGMEM;
 

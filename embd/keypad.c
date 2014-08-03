@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "nano.h"
+#include "embd.h"
 
 const char *const keypad_labels = "0123456789*#";
 

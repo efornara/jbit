@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#include "nano.h"
+#include "embd.h"
 
 #ifdef ENABLE_VM
 

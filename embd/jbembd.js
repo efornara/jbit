@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-JBNANO = {};
+JBEMBD = {};
 
 (function() {
 
@@ -80,7 +80,7 @@ JBNANO = {};
 		keypad_update(is_down, code);
 	}
 
-	JBNANO.init = function() {
+	JBEMBD.init = function() {
 		var ctx,
 			i;
 
@@ -94,12 +94,12 @@ JBNANO = {};
 		}
 		Module.ccall('jbit_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
-		window.setInterval(JBNANO.update, 100);
+		window.setInterval(JBEMBD.update, 100);
 		window.addEventListener('keyup', function(e) { on_key(false, e); }, false);
 		window.addEventListener('keydown', function(e) { on_key(true, e); }, false);
 	};
 
-	JBNANO.update = function() {
+	JBEMBD.update = function() {
 		var ctx,
 			rect_x, rect_y,
 			x, y, r, i, j;

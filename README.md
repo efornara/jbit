@@ -56,8 +56,8 @@ You can find a copy online here:
 
 ## JavaScript Version
 
-The current JavaScript version is being refactored to use nano (see
-below), so it might be broken at any give time.
+The current JavaScript version is being refactored, so it might be
+broken at any give time.
 
 To check the progress, see:
 <http://jbit.sourceforge.net/webapp/test/>.
@@ -65,9 +65,9 @@ To check the progress, see:
 The old version is still available:
 <http://jbit.sourceforge.net/webapp/1.2/>.
 
-## Nano
+## JBit Embedded
 
-Nano is the new version of the VM that is going to be used in future
+This is a new version of the VM that is going to be used in future
 Native and JavaScript versions of JBit. It is written in C and includes
 a modified version of the [Fake6502 CPU
 emulator](http://rubbermallet.org/fake6502.c).
@@ -80,7 +80,7 @@ for more information.
 
 A test native program. Just typing make should work, but you need the
 development package of SDL 1.2. Note that this target might disappear
-entirely, once the consolidated bits of nano are integrated into the
+entirely, once the consolidated bits of embd are integrated into the
 main Native version.
 
 A new JavaScript emulator. Just like the old JavaScript version, you
@@ -95,13 +95,13 @@ produces something like:
 
 you should be able to type:
 
-    make jbnano-c.js
+    make jbembd-c.js
 
 and point your browser to the included index.html. Beware that I recently
 updated emscripten and the suggested script (emsdk-portable) took about
 9GB of disk space. This:
 
-    wget -c http://jbit.sourceforge.net/webapp/test/jbnano-c.js
+    wget -c http://jbit.sourceforge.net/webapp/test/jbembd-c.js
 
 is probably a good enough alternative for most.
 

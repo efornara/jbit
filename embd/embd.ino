@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "nano.h"
+#include "embd.h"
 
 
 #if defined(ENABLE_SERIAL) || defined(LCD_HWSIM) || defined(KEYPAD_HWSIM)

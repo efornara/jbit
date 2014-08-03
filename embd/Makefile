@@ -30,13 +30,13 @@ EM_SRCS = \
 	lcd.c \
 	hwsim.c
 
-all: jbnano
+all: jbembd
 
-jbnano: $(OBJS)
-	$(CC) $(LDFLAGS) -o jbnano $(OBJS) $(LIBS)
+jbembd: $(OBJS)
+	$(CC) $(LDFLAGS) -o jbembd $(OBJS) $(LIBS)
 
-jbnano-c.js: $(EM_SRCS)
-	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbnano-c.js $(EM_SRCS)
+jbembd-c.js: $(EM_SRCS)
+	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbembd-c.js $(EM_SRCS)
 
 %.bin: %.jb
 	mkdir -p build-cli
@@ -58,10 +58,10 @@ autorun.o: ../midp/jbit/res/ciao.jb
 	rm -f AUTORUN_TMP
 
 clean:
-	$(RM) -r build-cli *.o jbnano jbnano-c.*
+	$(RM) -r build-cli *.o jbembd jbembd-c.*
 
-remote: jbnano
-	./jbnano /dev/ttyACM0
+remote: jbembd
+	./jbembd /dev/ttyACM0
 
 uno:
 	make -f Arduino.mk
@@ -70,7 +70,7 @@ upload: uno
 	make -f Arduino.mk upload
 
 size: uno
-	avr-size -C --mcu=atmega328p build-cli/nano.elf
+	avr-size -C --mcu=atmega328p build-cli/embd.elf
 
 full-size: uno
-	avr-nm --size-sort --print-size --radix d --demangle build-cli/nano.elf
+	avr-nm --size-sort --print-size --radix d --demangle build-cli/embd.elf

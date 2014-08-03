@@ -28,7 +28,7 @@
 
 #include <Arduino.h>
 
-#include "nano.h"
+#include "embd.h"
 
 #ifdef ENABLE_PRIMO
 
