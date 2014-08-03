@@ -151,7 +151,8 @@ static void sdl_sync() {
 }
 
 static void usage() {
-	printf("usage: jbembd [port]\n");
+	printf("usage: jbembd -r port\n");
+	printf("       jbembd [file]\n");
 	exit(1);
 }
 
@@ -231,6 +232,27 @@ static void remote(const char *port) {
 	assert(rc == 0);
 }
 
+static void load_jb_file(const char *file_name) {
+	uint8_t *jb;
+	int n, rc;
+	FILE *f;
+
+	f = fopen(file_name, "r");
+	assert(f);
+	fseek(f, 0, SEEK_END);
+	n = ftell(f);
+	rewind(f);
+	jb = (uint8_t *)malloc(n);
+	assert(jb);
+	rc = fread(jb, n, 1, f);
+	assert(rc == 1);
+	fclose(f);
+	n -= 12;
+	assert(n == ((jb[8] + jb[9]) << 8));
+	jbit_prg_code = &jb[12];;
+	jbit_prg_size = n;
+}
+
 static void local() {
 	printf("local\n");
 	sdl_init();
@@ -245,10 +267,17 @@ static void local() {
 int main(int argc, char *argv[]) {
 	switch (argc) {
 	case 1:
+		jbit_prg_code = NULL;
 		local();
 		break;
 	case 2:
-		remote(argv[1]);
+		load_jb_file(argv[1]);
+		local();
+		break;
+	case 3:
+		if (strcmp(argv[1], "-r"))
+			usage();
+		remote(argv[2]);
 		break;
 	default:
 		usage();
