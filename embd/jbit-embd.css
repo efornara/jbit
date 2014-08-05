@@ -32,10 +32,12 @@
 }
 
 .jbit_embd_display {
+	position: relative;
 	background-color: #a4ceb5;
 }
 
 .jbit_embd_key {
+	position: absolute;
 	background-color: #cbcf88;
 	webkit-touch-callout: none;
 	-webkit-user-select: none;

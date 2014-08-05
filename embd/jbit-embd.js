@@ -30,7 +30,7 @@ JBEMBD = {};
 
 (function() {
 
-	var SCALE = 1,
+	var scale = 1,
 		LCD_WIDTH = 84,
 		LCD_HEIGHT = 48,
 		LCD_ROWS = 6,
@@ -41,6 +41,7 @@ JBEMBD = {};
 		lcd_bitmap,
 		buttons,
 		display,
+		keys,
 		pixel;
 
 	jbit_step = Module.cwrap('jbit_step', 'number', []);
@@ -67,21 +68,14 @@ JBEMBD = {};
 		e = document.createElement("canvas");
 		e.id = "jb_display";
 		e.className = "jbit_embd jbit_embd_display";
-		e.width = "84";
-		e.height = "48";
-		e.style.position = "relative";
-		e.style.width = "84px";
-		e.style.height = "48px";
 		parent.appendChild(e);
 		return e;
 	}
 
 	function createKeys(parent) {
-		var k_width = 20, k_height = 20, column, x, y, i, b, id, e;
+		var i, b, id;
 
-		column = 0;
-		x = 0;
-		y = 0;
+		keys = [];
 		for (i = 0; i < buttons.length; i++) {
 			b = buttons[i];
 			id = b.hasOwnProperty('id') ? b.id : b.label;
@@ -89,19 +83,8 @@ JBEMBD = {};
 			e.id = "jb_key_" + id;
 			e.className = "jbit_embd jbit_embd_key";
 			e.innerHTML = b.label;
-			e.style.position = "absolute";
-			e.style.left = x + "px";
-			e.style.top = y + "px";
-			e.style.width = k_width + "px";
-			e.style.height = k_height + "px";
 			parent.appendChild(e);
-			x += k_width + 2;
-			column++;
-			if (column == 3) {
-				column = 0;
-				x = 0
-				y += k_height + 2;
-			}
+			keys[i] = e;
 		}
 	}
 
@@ -112,8 +95,6 @@ JBEMBD = {};
 		e.id = "jb_keypad";
 		e.className = "jbit_embd jbit_embd_keypad";
 		e.style.position = "relative";
-		e.style.width = "84px";
-		e.style.height = "100px";
 		createKeys(e);
 		parent.appendChild(e);
 		return e;
@@ -190,20 +171,88 @@ JBEMBD = {};
 		}
 	}
 
-	function reflow() {
-		var ctx;
+	function reflowDisplay(s) {
+		var w, h;
 
-		console.log("reflow: " + width + " x " + height);
-		if (pixel === undefined) {
+		w = LCD_WIDTH * s;
+		h = LCD_HEIGHT * s;
+		display.width = w + "";
+		display.height = h + "";
+		display.style.width = w + "px";
+		display.style.height = h + "px";
+	}
+
+	function reflowKeys(w, h, mx, my) {
+		var column,
+			x, y, i, e;
+
+		column = 0;
+		x = 0;
+		y = 0;
+		w = Math.floor(w);
+		h = Math.floor(h);
+		for (i = 0; i < keys.length; i++) {
+			e = keys[i];
+			e.style.left = x + "px";
+			e.style.top = y + "px";
+			e.style.width = w + "px";
+			e.style.height = h + "px";
+			x += w + mx;
+			column++;
+			if (column == 3) {
+				column = 0;
+				x = 0
+				y += h + my;
+			}
+		}
+	}
+
+	function reflow() {
+		var MARGIN_X = 10,
+			MARGIN_Y = 5,
+			ctx,
+			display_max_width,
+			keypad_max_width,
+			keypad_max_height,
+			sc, i, w, h;
+
+		if (width < 100 || height < 200) {
+			width = 100;
+			height = 200;
+		}
+
+		if (height > width) {
+			// portrait
+			display_max_width = width;
+			keypad_max_width = width;
+			keypad_max_height = width; // TODO
+		} else {
+			// landscape (TODO)
+			display_max_width = width / 2;
+			keypad_max_width = width / 2;
+			keypad_max_height = width / 3;
+		}
+
+		for (sc = 1; sc < 8; sc++) {
+			if ((LCD_WIDTH + 3) * (sc + 1) > display_max_width)
+				break;
+		}
+		reflowDisplay(sc);
+		if (pixel === undefined || scale !== sc) {
 			ctx = display.getContext('2d');
-			pixel = ctx.createImageData(SCALE, SCALE);
-			for (i = 0; i < SCALE * SCALE; i++) {
+			pixel = ctx.createImageData(sc, sc);
+			for (i = 0; i < sc * sc; i++) {
 				pixel.data[i*4 + 0] = 0;
 				pixel.data[i*4 + 1] = 0;
 				pixel.data[i*4 + 2] = 0;
 				pixel.data[i*4 + 3] = 255;
 			}
+			scale = sc;
 		}
+
+		w = (keypad_max_width - MARGIN_X * 2) / 3;
+		h = (keypad_max_height - MARGIN_Y * 3) / 4;
+		reflowKeys(w, h, MARGIN_X, MARGIN_Y);
 	}
 
 	function resize() {
@@ -249,13 +298,13 @@ JBEMBD = {};
 		if (pixel === undefined)
 			return;
 		ctx = display.getContext('2d');
-		ctx.clearRect(0, 0, LCD_WIDTH * SCALE, LCD_HEIGHT * SCALE);
+		ctx.clearRect(0, 0, LCD_WIDTH * scale, LCD_HEIGHT * scale);
 		for (i = 0, r = 0; r < LCD_ROWS; r++) {
-			y = r * 8 * SCALE;
+			y = r * 8 * scale;
 			for (x = 0; x < LCD_WIDTH; x++) {
-				rect_x = x * SCALE;
+				rect_x = x * scale;
 				for (j = 0; j < 8; j++, i++) {
-					rect_y = y + j * SCALE;
+					rect_y = y + j * scale;
 					if (getValue(lcd_bitmap + i, 'i8'))
 						ctx.putImageData(pixel, rect_x, rect_y);
 				}
