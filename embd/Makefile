@@ -4,7 +4,7 @@ LDFLAGS = -ggdb
 LIBS = -lSDL
 
 EM_CC = emcc
-EM_CFLAGS = -DPLATFORM_JS -Wall
+EM_CFLAGS = -DPLATFORM_JS -Wall -O2
 EM_LDFLAGS = -s EXPORTED_FUNCTIONS="['_keypad_update', '_jbit_init', '_jbit_step', '_lcd_get_bitmap']"
 
 OBJS = \
