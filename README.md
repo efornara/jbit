@@ -60,7 +60,8 @@ The current JavaScript version is being refactored, so it might be
 broken at any give time.
 
 To check the progress, see:
-<http://jbit.sourceforge.net/webapp/test/>.
+<http://jbit.sourceforge.net/webapp/test/index.html> and
+<http://jbit.sourceforge.net/webapp/test/mobile.html>.
 
 The old version is still available:
 <http://jbit.sourceforge.net/webapp/1.2/>.
@@ -95,13 +96,13 @@ produces something like:
 
 you should be able to type:
 
-    make jbembd-c.js
+    make jbit-embd-c.js
 
 and point your browser to the included index.html. Beware that I recently
 updated emscripten and the suggested script (emsdk-portable) took about
 9GB of disk space. This:
 
-    wget -c http://jbit.sourceforge.net/webapp/test/jbembd-c.js
+    wget -c http://jbit.sourceforge.net/webapp/test/jbit-embd-c.js
 
 is probably a good enough alternative for most.
 

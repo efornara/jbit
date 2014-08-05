@@ -35,8 +35,8 @@ all: jbembd
 jbembd: $(OBJS)
 	$(CC) $(LDFLAGS) -o jbembd $(OBJS) $(LIBS)
 
-jbembd-c.js: $(EM_SRCS)
-	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbembd-c.js $(EM_SRCS)
+jbit-embd-c.js: $(EM_SRCS)
+	$(EM_CC) $(EM_LDFLAGS) $(EM_CFLAGS) -o jbit-embd-c.js $(EM_SRCS)
 
 %.bin: %.jb
 	mkdir -p build-cli
@@ -48,17 +48,8 @@ jbembd-c.js: $(EM_SRCS)
 	 AUTORUN_TMP build-cli/autorun.o
 	rm -f AUTORUN_TMP
 
-LOCAL_ARCH = -O elf64-x86-64 --binary-architecture i386
-autorun.o: ../midp/jbit/res/ciao.jb
-	rm -f autorun.o
-	cp $< AUTORUN_TMP
-	objcopy -I binary $(LOCAL_ARCH) \
-	 --redefine-sym _binary_AUTORUN_TMP_start=autorun_jb \
-	 AUTORUN_TMP autorun.o
-	rm -f AUTORUN_TMP
-
 clean:
-	$(RM) -r build-cli *.o jbembd jbembd-c.*
+	$(RM) -r build-cli *.o jbembd jbit-embd-c.*
 
 remote: jbembd
 	./jbembd /dev/ttyACM0

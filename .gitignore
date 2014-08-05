@@ -12,7 +12,7 @@ js/res
 native/jbit
 native/jbit.exe
 jbembd
-jbembd-c.js
+jbit-embd-c.js
 build-cli
 private
 .c9
