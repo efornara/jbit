@@ -34,6 +34,8 @@ JBEMBD = {};
 		LCD_WIDTH = 84,
 		LCD_HEIGHT = 48,
 		LCD_ROWS = 6,
+		width = 0,
+		height = 0,
 		jbit_step,
 		keypad_update,
 		lcd_bitmap,
@@ -64,7 +66,7 @@ JBEMBD = {};
 
 		e = document.createElement("canvas");
 		e.id = "jb_display";
-		e.className = "jbit_embd_display";
+		e.className = "jbit_embd jbit_embd_display";
 		e.width = "84";
 		e.height = "48";
 		e.style.position = "relative";
@@ -75,7 +77,7 @@ JBEMBD = {};
 	}
 
 	function createKeys(parent) {
-		var width = 20, height = 20, column, x, y, i, b, id, e;
+		var k_width = 20, k_height = 20, column, x, y, i, b, id, e;
 
 		column = 0;
 		x = 0;
@@ -85,20 +87,20 @@ JBEMBD = {};
 			id = b.hasOwnProperty('id') ? b.id : b.label;
 			e = document.createElement("div");
 			e.id = "jb_key_" + id;
-			e.className = "jbit_embd_key";
+			e.className = "jbit_embd jbit_embd_key";
 			e.innerHTML = b.label;
 			e.style.position = "absolute";
 			e.style.left = x + "px";
 			e.style.top = y + "px";
-			e.style.width = width + "px";
-			e.style.height = height + "px";
+			e.style.width = k_width + "px";
+			e.style.height = k_height + "px";
 			parent.appendChild(e);
-			x += width + 2;
+			x += k_width + 2;
 			column++;
 			if (column == 3) {
 				column = 0;
 				x = 0
-				y += height + 2;
+				y += k_height + 2;
 			}
 		}
 	}
@@ -108,8 +110,10 @@ JBEMBD = {};
 
 		e = document.createElement("div");
 		e.id = "jb_keypad";
-		e.className = "jbit_embd_key";
+		e.className = "jbit_embd jbit_embd_keypad";
 		e.style.position = "relative";
+		e.style.width = "84px";
+		e.style.height = "100px";
 		createKeys(e);
 		parent.appendChild(e);
 		return e;
@@ -181,31 +185,59 @@ JBEMBD = {};
 			e = document.getElementById("jb_key_" + id);
 			e.addEventListener('mouseup', function(e) { onMouse(false, e); }, false);
 			e.addEventListener('mousedown', function(e) { onMouse(true, e); }, false);
+			e.addEventListener('touchend', function(e) { onMouse(false, e); }, false);
+			e.addEventListener('touchstart', function(e) { onMouse(true, e); }, false);
+		}
+	}
+
+	function reflow() {
+		var ctx;
+
+		console.log("reflow: " + width + " x " + height);
+		if (pixel === undefined) {
+			ctx = display.getContext('2d');
+			pixel = ctx.createImageData(SCALE, SCALE);
+			for (i = 0; i < SCALE * SCALE; i++) {
+				pixel.data[i*4 + 0] = 0;
+				pixel.data[i*4 + 1] = 0;
+				pixel.data[i*4 + 2] = 0;
+				pixel.data[i*4 + 3] = 255;
+			}
+		}
+	}
+
+	function resize() {
+		var w,
+			h;
+
+		if (typeof(window.innerWidth) == 'number') {
+			w = window.innerWidth;
+			h = window.innerHeight;
+		} else {
+			w = document.documentElement.clientWidth;
+			h = document.documentElement.clientHeight;
+		}
+		if (width !== w || height !== h) {
+			width = w;
+			height = h;
+			reflow();
 		}
 	}
 
 	JBEMBD.init = function() {
-		var e,
-			ctx,
-			i;
+		var e;
 
 		e = document.getElementById('sim');
 		display = createDisplay(e);
 		createKeypad(e);
-		ctx = display.getContext('2d');
-		pixel = ctx.createImageData(SCALE, SCALE);
-		for (i = 0; i < SCALE * SCALE; i++) {
-			pixel.data[i*4 + 0] = 0;
-			pixel.data[i*4 + 1] = 0;
-			pixel.data[i*4 + 2] = 0;
-			pixel.data[i*4 + 3] = 255;
-		}
+		resize();
 		Module.ccall('jbit_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
 		window.addEventListener('keyup', function(e) { onKey(false, e); }, false);
 		window.addEventListener('keydown', function(e) { onKey(true, e); }, false);
 		addMouseEvents();
 		window.setInterval(JBEMBD.update, 100);
+		window.onresize = resize;
 	};
 
 	JBEMBD.update = function() {
@@ -214,6 +246,8 @@ JBEMBD = {};
 			x, y, r, i, j;
 
 		jbit_step();
+		if (pixel === undefined)
+			return;
 		ctx = display.getContext('2d');
 		ctx.clearRect(0, 0, LCD_WIDTH * SCALE, LCD_HEIGHT * SCALE);
 		for (i = 0, r = 0; r < LCD_ROWS; r++) {

@@ -26,6 +26,11 @@
  * SUCH DAMAGE.
  */
 
+.jbit_embd {
+	margin: 0;
+	padding: 0;
+}
+
 .jbit_embd_display {
 	background-color: #a4ceb5;
 }
