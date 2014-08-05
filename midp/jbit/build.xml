@@ -2,8 +2,7 @@
 
 <project name="JBit" default="jbit" basedir=".">
 
-	<property name="jbit.version" value="2.0.0"/>
-
+	<property file="../../Version.defs"/>
 	<property file="../../Env.defs"/>
 
 	<taskdef resource="antenna.properties"/>
@@ -34,7 +33,7 @@
 			<isset property="jbitrt"/>
 		</condition>
 
-		<condition property="midlet.version" value="1.0.0" else="${jbit.version}">
+		<condition property="midlet.version" value="1.0.0" else="${JBIT_VERSION}">
 			<isset property="jbitrt"/>
 		</condition>
 

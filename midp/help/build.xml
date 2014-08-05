@@ -2,6 +2,7 @@
 
 <project name="JBDoc" default="build" basedir=".">
 
+	<property file="../../Version.defs"/>
 	<property file="../../Env.defs"/>
 
 	<taskdef resource="antenna.properties" />
@@ -18,7 +19,7 @@
 
 		<property name="midlet.name" value="JBDoc" />
 		<property name="midlet.vendor" value="Emanuele Fornara" />
-		<property name="midlet.version" value="2.0.0" />
+		<property name="midlet.version" value="${JBIT_VERSION}" />
 
 		<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
 		<property name="wtk.midp.version" value="1.0" />

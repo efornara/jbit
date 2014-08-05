@@ -1,7 +1,9 @@
+include ../Version.defs
+
 VPATH = .:../core
 
 CXX = em++
-CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -O2
+CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -O2 -DJBIT_VERSION=\"${JBIT_VERSION}\"
 EXPORTS = EXPORTED_FUNCTIONS="['_core_get_jbit_version', '_core_parse', '_core_get_prg_data', '_core_get_prg_length', '_core_get_error_lineno', '_core_get_error_colno', '_core_get_error_msg']"
 
 OBJS = js.o asm.o symdefs.o

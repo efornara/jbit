@@ -2,10 +2,12 @@
 # VARIABLES
 #
 
+include ../Version.defs
+
 VPATH = .:../core
 
 CFLAGS = -Wall
-CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall
+CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
 LDFLAGS =
 LIBS =
 
