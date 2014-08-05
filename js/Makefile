@@ -10,15 +10,17 @@ all: jbit-core.js
 
 jbit-core.js: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o jbit-core.js $(OBJS) -s $(EXPORTS)
-	$(CXX) $(CXXFLAGS) -o jbit-core-ie.js $(OBJS) -s $(EXPORTS) -s USE_TYPED_ARRAYS=0
+
+test:
+	python -m SimpleHTTPServer
 
 fetch: fetch_libs fetch_images
 
 fetch_libs:
 	mkdir -p libs
-	( cd libs ; wget -c https://github.com/ajaxorg/ace-builds/archive/v1.1.01.tar.gz )
-	( cd libs ; tar xzf v1.1.01.tar.gz ace-builds-1.1.01/src )
-	( cd libs ; wget -c http://code.jquery.com/jquery-1.10.2.js )
+	( cd libs ; wget -c https://github.com/ajaxorg/ace-builds/archive/v1.1.3.tar.gz )
+	( cd libs ; tar xzf v1.1.3.tar.gz ace-builds-1.1.3/src )
+	( cd libs ; wget -c http://code.jquery.com/jquery-2.1.1.js )
 
 fetch_images:
 	mkdir -p images
@@ -31,4 +33,7 @@ copy_res:
 	( cd res ; cp ../../samples/js/*.asm . )
 
 clean:
-	$(RM) jbit-core.js jbit-core-ie.js *.o
+	$(RM) jbit-core.js *.o
+
+cleanall: clean
+	$(RM) -r libs images
