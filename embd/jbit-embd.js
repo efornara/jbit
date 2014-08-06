@@ -213,8 +213,8 @@ var JBEMBD = {};
 	function reflow() {
 		var MIN_WIDTH = 120,
 			MIN_HEIGHT = 160,
-			SCALE_MARGIN_X = (1 / 30),
-			SCALE_MARGIN_Y = (1 / 30),
+			SCALE_MARGIN_X = (1 / 40),
+			SCALE_MARGIN_Y = (1 / 40),
 			margin_x,
 			margin_y,
 			portrait,
@@ -231,7 +231,7 @@ var JBEMBD = {};
 		body.style.width = width + "px";
 		body.style.height = height + "px";
 		margin_x = Math.floor(width * SCALE_MARGIN_X);
-		margin_y = Math.floor(width * SCALE_MARGIN_Y);
+		margin_y = Math.floor(height * SCALE_MARGIN_Y);
 
 		if (height > width) {
 			portrait = true;
@@ -266,7 +266,7 @@ var JBEMBD = {};
 
 		if (portrait) {
 			keypad_width = width;
-			keypad_height = height - (LCD_HEIGHT * scale + margin_y * 2);
+			keypad_height = height - (LCD_HEIGHT * scale + margin_y);
 			x0 = 0;
 			y0 = LCD_HEIGHT * scale + margin_y;
 		} else {
