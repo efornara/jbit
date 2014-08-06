@@ -62,17 +62,17 @@ JBEMBD = {};
 		{ keys:'#', id:'SHARP', label:'#' }
 	];
 
-	function createDisplay(parent) {
+	function createDisplay(parent_) {
 		var e;
 
 		e = document.createElement("canvas");
 		e.id = "jb_display";
-		e.className = "jbit_embd jbit_embd_display";
-		parent.appendChild(e);
+		e.className = "jbit_embd_display";
+		parent_.appendChild(e);
 		return e;
 	}
 
-	function createKeys(parent) {
+	function createKeys(parent_) {
 		var i, b, id;
 
 		keys = [];
@@ -81,22 +81,23 @@ JBEMBD = {};
 			id = b.hasOwnProperty('id') ? b.id : b.label;
 			e = document.createElement("div");
 			e.id = "jb_key_" + id;
-			e.className = "jbit_embd jbit_embd_key";
+			e.className = "jbit_embd_key";
 			e.innerHTML = b.label;
-			parent.appendChild(e);
+			parent_.appendChild(e);
 			keys[i] = e;
 		}
 	}
 
-	function createKeypad(parent) {
+	function createSim(parent_) {
 		var e;
 
 		e = document.createElement("div");
-		e.id = "jb_keypad";
-		e.className = "jbit_embd jbit_embd_keypad";
+		e.id = "jb_sim";
+		e.className = "jbit_embd_sim";
 		e.style.position = "relative";
+		display = createDisplay(e);
 		createKeys(e);
-		parent.appendChild(e);
+		parent_.appendChild(e);
 		return e;
 	}
 
@@ -182,15 +183,13 @@ JBEMBD = {};
 		display.style.height = h + "px";
 	}
 
-	function reflowKeys(w, h, mx, my) {
+	function reflowKeys(x0, y0, w, h, mx, my) {
 		var column,
 			x, y, i, e;
 
 		column = 0;
-		x = 0;
-		y = 0;
-		w = Math.floor(w);
-		h = Math.floor(h);
+		x = x0;
+		y = y0;
 		for (i = 0; i < keys.length; i++) {
 			e = keys[i];
 			e.style.left = x + "px";
@@ -201,7 +200,7 @@ JBEMBD = {};
 			column++;
 			if (column == 3) {
 				column = 0;
-				x = 0
+				x = x0
 				y += h + my;
 			}
 		}
@@ -210,31 +209,28 @@ JBEMBD = {};
 	function reflow() {
 		var MARGIN_X = 10,
 			MARGIN_Y = 5,
+			portrait,
 			ctx,
 			display_max_width,
 			keypad_max_width,
 			keypad_max_height,
-			sc, i, w, h;
+			sc, i, w, h, y0;
 
-		if (width < 100 || height < 200) {
-			width = 100;
-			height = 200;
+		if (width < 90 || height < 130) {
+			width = 90;
+			height = 130;
 		}
 
 		if (height > width) {
-			// portrait
+			portrait = true;
 			display_max_width = width;
-			keypad_max_width = width;
-			keypad_max_height = width; // TODO
 		} else {
-			// landscape (TODO)
+			portrait = false;
 			display_max_width = width / 2;
-			keypad_max_width = width / 2;
-			keypad_max_height = width / 3;
 		}
 
 		for (sc = 1; sc < 8; sc++) {
-			if ((LCD_WIDTH + 3) * (sc + 1) > display_max_width)
+			if ((LCD_WIDTH) * (sc + 1) > display_max_width)
 				break;
 		}
 		reflowDisplay(sc);
@@ -250,9 +246,20 @@ JBEMBD = {};
 			scale = sc;
 		}
 
-		w = (keypad_max_width - MARGIN_X * 2) / 3;
-		h = (keypad_max_height - MARGIN_Y * 3) / 4;
-		reflowKeys(w, h, MARGIN_X, MARGIN_Y);
+		if (portrait) {
+			keypad_max_width = width;
+			keypad_max_height = height - LCD_HEIGHT * scale;
+			x0 = 0;
+			y0 = LCD_HEIGHT * scale;
+		} else {
+			keypad_max_width = width / 2;
+			keypad_max_height = height;
+			x0 = LCD_WIDTH * scale;
+			y0 = 0;
+		}
+		w = Math.floor((keypad_max_width - MARGIN_X * 2) / 3);
+		h = Math.floor((keypad_max_height - MARGIN_Y * 3) / 4);
+		reflowKeys(x0, y0, w, h, MARGIN_X, MARGIN_Y);
 	}
 
 	function resize() {
@@ -277,8 +284,7 @@ JBEMBD = {};
 		var e;
 
 		e = document.getElementById('sim');
-		display = createDisplay(e);
-		createKeypad(e);
+		createSim(e);
 		resize();
 		Module.ccall('jbit_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
