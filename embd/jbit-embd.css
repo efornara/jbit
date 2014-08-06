@@ -26,13 +26,14 @@
  * SUCH DAMAGE.
  */
 
-.jbit_sim, .jbit_embd_display, .jbit_embd_key {
+.jbit_embd_sim, .jbit_embd_display, .jbit_embd_key {
 	margin: 0;
 	padding: 0;
 }
 
-.jbit_sim {
+.jbit_embd_sim {
 	position: relative;
+	background-color: #101010;
 }
 
 .jbit_embd_display {

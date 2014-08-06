@@ -46,6 +46,7 @@ var JBEMBD = {};
 		keypad_update,
 		lcd_bitmap,
 		buttons,
+		body,
 		display,
 		keys,
 		pixel;
@@ -100,7 +101,6 @@ var JBEMBD = {};
 		e = document.createElement("div");
 		e.id = "jb_sim";
 		e.className = "jbit_embd_sim";
-		e.style.position = "relative";
 		display = createDisplay(e);
 		createKeys(e);
 		parent_.appendChild(e);
@@ -177,13 +177,15 @@ var JBEMBD = {};
 		}
 	}
 
-	function reflowDisplay(s) {
+	function reflowDisplay(x0, y0, s) {
 		var w, h;
 
 		w = LCD_WIDTH * s;
 		h = LCD_HEIGHT * s;
 		display.width = w + "";
 		display.height = h + "";
+		display.style.left = x0 + "px";
+		display.style.top = y0 + "px";
 		display.style.width = w + "px";
 		display.style.height = h + "px";
 	}
@@ -225,6 +227,8 @@ var JBEMBD = {};
 			width = 90;
 			height = 130;
 		}
+		body.style.width = width + "px";
+		body.style.height = height + "px";
 
 		if (height > width) {
 			portrait = true;
@@ -235,10 +239,16 @@ var JBEMBD = {};
 		}
 
 		for (sc = 1; sc < 8; sc++) {
-			if ((LCD_WIDTH) * (sc + 1) > display_max_width)
+			if (LCD_WIDTH * (sc + 1) > display_max_width)
 				break;
 		}
-		reflowDisplay(sc);
+		x0 = (display_max_width - LCD_WIDTH * sc) >> 1;
+		if (portrait)
+			y0 = 0;
+		else
+			y0 = (height - LCD_HEIGHT * sc) >> 1;
+		reflowDisplay(x0, y0, sc);
+
 		if (pixel === undefined || scale !== sc) {
 			ctx = display.getContext('2d');
 			pixel = ctx.createImageData(sc, sc);
@@ -259,7 +269,7 @@ var JBEMBD = {};
 		} else {
 			keypad_max_width = width / 2;
 			keypad_max_height = height;
-			x0 = LCD_WIDTH * scale;
+			x0 = width >> 1;
 			y0 = 0;
 		}
 		w = Math.floor((keypad_max_width - MARGIN_X * 2) / 3);
@@ -288,7 +298,7 @@ var JBEMBD = {};
 	JBEMBD.init = function(parent_) {
 		var e = parent_;
 
-		createSim(e);
+		body = createSim(e);
 		resize();
 		Module.ccall('jbit_init', 'number', [], []);
 		lcd_bitmap = Module.ccall('lcd_get_bitmap', 'number', [], []);
