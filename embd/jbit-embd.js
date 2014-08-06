@@ -158,10 +158,7 @@ var JBEMBD = {};
 	}
 
 	function addMouseEvents() {
-		var i,
-			b,
-			id,
-			e;
+		var i, b, id, e;
 
 		function mouseup(ev) { onMouse(false, ev); }
 		function mousedown(ev) { onMouse(true, ev); }
@@ -214,37 +211,43 @@ var JBEMBD = {};
 	}
 
 	function reflow() {
-		var MARGIN_X = 10,
-			MARGIN_Y = 5,
+		var MIN_WIDTH = 120,
+			MIN_HEIGHT = 160,
+			SCALE_MARGIN_X = (1 / 30),
+			SCALE_MARGIN_Y = (1 / 30),
+			margin_x,
+			margin_y,
 			portrait,
 			ctx,
-			display_max_width,
-			keypad_max_width,
-			keypad_max_height,
+			column_width,
+			keypad_width,
+			keypad_height,
 			sc, i, w, h, x0, y0;
 
-		if (width < 90 || height < 130) {
-			width = 90;
-			height = 130;
+		if (width < MIN_WIDTH || height < MIN_HEIGHT) {
+			width = MIN_WIDTH;
+			height = MIN_HEIGHT;
 		}
 		body.style.width = width + "px";
 		body.style.height = height + "px";
+		margin_x = Math.floor(width * SCALE_MARGIN_X);
+		margin_y = Math.floor(width * SCALE_MARGIN_Y);
 
 		if (height > width) {
 			portrait = true;
-			display_max_width = width;
+			column_width = width;
 		} else {
 			portrait = false;
-			display_max_width = width / 2;
+			column_width = width / 2;
 		}
 
 		for (sc = 1; sc < 8; sc++) {
-			if (LCD_WIDTH * (sc + 1) > display_max_width)
+			if (LCD_WIDTH * (sc + 1) > column_width - 2 * margin_x)
 				break;
 		}
-		x0 = (display_max_width - LCD_WIDTH * sc) >> 1;
+		x0 = (column_width - LCD_WIDTH * sc) >> 1;
 		if (portrait)
-			y0 = 0;
+			y0 = margin_y;
 		else
 			y0 = (height - LCD_HEIGHT * sc) >> 1;
 		reflowDisplay(x0, y0, sc);
@@ -262,19 +265,21 @@ var JBEMBD = {};
 		}
 
 		if (portrait) {
-			keypad_max_width = width;
-			keypad_max_height = height - LCD_HEIGHT * scale;
+			keypad_width = width;
+			keypad_height = height - (LCD_HEIGHT * scale + margin_y * 2);
 			x0 = 0;
-			y0 = LCD_HEIGHT * scale;
+			y0 = LCD_HEIGHT * scale + margin_y;
 		} else {
-			keypad_max_width = width / 2;
-			keypad_max_height = height;
+			keypad_width = width / 2;
+			keypad_height = height;
 			x0 = width >> 1;
 			y0 = 0;
 		}
-		w = Math.floor((keypad_max_width - MARGIN_X * 2) / 3);
-		h = Math.floor((keypad_max_height - MARGIN_Y * 3) / 4);
-		reflowKeys(x0, y0, w, h, MARGIN_X, MARGIN_Y);
+		x0 += margin_x;
+		y0 += margin_y;
+		w = Math.floor((keypad_width - margin_x * 4) / 3);
+		h = Math.floor((keypad_height - margin_y * 5) / 4);
+		reflowKeys(x0, y0, w, h, margin_x, margin_y);
 	}
 
 	function resize() {
