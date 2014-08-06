@@ -26,9 +26,15 @@
  * SUCH DAMAGE.
  */
 
-JBEMBD = {};
+/* jshint eqeqeq: true, forin: true, immed: true, latedef: true, newcap: true,
+          undef: true, unused: true, strict: true */
+/* global document, window, Module, getValue */
+
+var JBEMBD = {};
 
 (function() {
+
+	"use strict";
 
 	var scale = 1,
 		LCD_WIDTH = 84,
@@ -73,7 +79,7 @@ JBEMBD = {};
 	}
 
 	function createKeys(parent_) {
-		var i, b, id;
+		var i, b, id, e;
 
 		keys = [];
 		for (i = 0; i < buttons.length; i++) {
@@ -121,10 +127,6 @@ JBEMBD = {};
 		case 40: // DOWN
 			code = 48 + 8;
 			break;
-			code = 48 + 8;
-			break;
-			code = 48 + 8;
-			break;
 		case 170: // STAR
 		case 188: // COMMA
 			code = 42;
@@ -145,9 +147,9 @@ JBEMBD = {};
 			key;
 
 		id = e.target.id;
-		if (id == "jb_key_STAR")
+		if (id === "jb_key_STAR")
 			key = "*";
-		else if (id == "jb_key_SHARP")
+		else if (id === "jb_key_SHARP")
 			key = "#";
 		else
 			key = id.substring(7);
@@ -161,14 +163,17 @@ JBEMBD = {};
 			id,
 			e;
 
+		function mouseup(ev) { onMouse(false, ev); }
+		function mousedown(ev) { onMouse(true, ev); }
+
 		for (i = 0; i < buttons.length; i++) {
 			b = buttons[i];
 			id = b.hasOwnProperty('id') ? b.id : b.label;
 			e = document.getElementById("jb_key_" + id);
-			e.addEventListener('mouseup', function(e) { onMouse(false, e); }, false);
-			e.addEventListener('mousedown', function(e) { onMouse(true, e); }, false);
-			e.addEventListener('touchend', function(e) { onMouse(false, e); }, false);
-			e.addEventListener('touchstart', function(e) { onMouse(true, e); }, false);
+			e.addEventListener('mouseup', mouseup, false);
+			e.addEventListener('mousedown', mousedown, false);
+			e.addEventListener('touchend', mouseup, false);
+			e.addEventListener('touchstart', mousedown, false);
 		}
 	}
 
@@ -198,9 +203,9 @@ JBEMBD = {};
 			e.style.height = h + "px";
 			x += w + mx;
 			column++;
-			if (column == 3) {
+			if (column === 3) {
 				column = 0;
-				x = x0
+				x = x0;
 				y += h + my;
 			}
 		}
@@ -214,7 +219,7 @@ JBEMBD = {};
 			display_max_width,
 			keypad_max_width,
 			keypad_max_height,
-			sc, i, w, h, y0;
+			sc, i, w, h, x0, y0;
 
 		if (width < 90 || height < 130) {
 			width = 90;
@@ -266,7 +271,7 @@ JBEMBD = {};
 		var w,
 			h;
 
-		if (typeof(window.innerWidth) == 'number') {
+		if (typeof(window.innerWidth) === 'number') {
 			w = window.innerWidth;
 			h = window.innerHeight;
 		} else {
@@ -280,10 +285,9 @@ JBEMBD = {};
 		}
 	}
 
-	JBEMBD.init = function() {
-		var e;
+	JBEMBD.init = function(parent_) {
+		var e = parent_;
 
-		e = document.getElementById('sim');
 		createSim(e);
 		resize();
 		Module.ccall('jbit_init', 'number', [], []);
