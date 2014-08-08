@@ -27,6 +27,7 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 
 #include "embd.h"
 
@@ -52,13 +53,40 @@ void test_keypad() {
 uint8_t vm_vsync;
 uint16_t vm_wait;
 
+#ifdef ENABLE_TRACE
+
+void vm_tracef(const char *format, ...) {
+  char msg[64];
+  va_list ap;
+
+  va_start(ap, format);
+  vsnprintf(msg, sizeof(msg), format, ap);
+  va_end(ap);
+  msg[sizeof(msg) - 1] = '\0';
+  vm_traces(msg);
+}
+
+#endif
+
+void vm_fatal(const char *msg) {
+#ifdef ENABLE_TRACE
+	vm_traces(msg);
+#endif
+#ifdef PLATFORM_PC
+	abort();
+#else
+	// TODO
+#endif
+}
+
 static const uint8_t irqvec[] PROGMEM = {
 	// 255:240
-	141,18,2,76,240,255,0,0,0,0,
+	169,0,141,0,255,
+	169,1,141,0,255,
 	// 255:250
-	240, 255, // NMI
+	245, 255, // NMI (exit 1)
 	0, 3, // RESET
-	240, 255, // BRK
+	240, 255, // BRK (exit 0)
 };
 
 // mpages; linear search for now
@@ -69,6 +97,12 @@ static const uint8_t irqvec[] PROGMEM = {
 #define MPAGE_ADDR_MASK 0xffe0
 #define MPAGE_DATA_MASK 0x001f
 
+#define VM_STATE_RUNNING 0
+#define VM_STATE_HALTOK 1
+#define VM_STATE_HALTFAIL 2
+#define VM_STATE_INVOP 3
+#define VM_STATE_OUTOFMEM 4
+
 typedef struct {
 	uint8_t page0[PAGE_SIZE];
 	struct {
@@ -77,6 +111,7 @@ typedef struct {
 	} mpage[MAX_N_MPAGES];
 	uint16_t n_mpages;
 	uint16_t last_ro_addr;
+	uint8_t vm_state;
 } vm_context_t;
 
 static vm_context_t ctx_;
@@ -139,22 +174,31 @@ void write6502(uint16_t address, uint8_t value) {
 #endif
 		return;
 	case 255:
+		switch (offset) {
+		case 0:
+			if (value)
+				ctx->vm_state = VM_STATE_HALTFAIL;
+			else
+				ctx->vm_state = VM_STATE_HALTOK;
+			break;
+		default:
+			break;
+		}
 		return;
 	}
 	for (i = 0; i < ctx->n_mpages; i++)
 		if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
 			goto write_value;
 	if (ctx->n_mpages == MAX_N_MPAGES) {
-		// TODO: vm state: out of memory
-#ifdef PLATFORM_PC
-		printf("out of memory\n");
-		abort();
-#endif
+		ctx->vm_state = VM_STATE_OUTOFMEM;
 		return;
 	}
 	i = ctx->n_mpages++;
 	a = address & MPAGE_ADDR_MASK;
 	ctx->mpage[i].addr = a;
+#ifdef ENABLE_TRACE
+	vm_tracef("vm: mpage %2d  %3d:%03d-%03d", i, a >> 8, a & 0xff, (a & 0xff) | 0x1f);
+#endif
 	if (page != 1 && a < ctx->last_ro_addr)
 		ctx->last_ro_addr = a - 1;
 	if (page == 1 || ctx->mpage[i].addr > 0x300 + jbit_prg_size) {
@@ -197,8 +241,25 @@ uint16_t vm_step() {
 	int i = 0;
 
 	vm_vsync = 0;
-	for (i = 0; i < 1000 && !vm_vsync; i++)
+	for (i = 0; i < 10000 && !vm_vsync; i++) {
 		step6502();
+		switch (ctx->vm_state) {
+			case VM_STATE_OUTOFMEM:
+				vm_fatal("vm: out of memory");
+			case VM_STATE_RUNNING:
+				break;
+			case VM_STATE_HALTOK:
+#if defined(PLATFORM_PC) && !defined(PLATFORM_PC_SDL)
+				exit(0);
+#else
+				jbit_replace_with(MODULE_JBIT);
+#endif
+				return 0;
+			default:
+				vm_fatal("vm: unknown state");
+				break;
+		}
+	}
 #ifdef ENABLE_MICROIO
 	microio_lcd(&microio, 12, 1);
 #endif

@@ -32,9 +32,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <SDL/SDL.h>
-
 #include "embd.h"
+
+#ifdef PLATFORM_PC_SDL
+
+#include <SDL/SDL.h>
 
 #define SCALE 5
 #define BORDER 10
@@ -150,12 +152,6 @@ static void sdl_sync() {
 	sdl_update_screen();
 }
 
-static void usage() {
-	printf("usage: jbembd -r port\n");
-	printf("       jbembd [file]\n");
-	exit(1);
-}
-
 #include "../native/serial.h"
 #include "../native/serial.c"
 
@@ -210,10 +206,10 @@ static void remote(const char *port) {
 	int rc;
 	Uint32 t;
 	
-	printf("remote\n");
+	fprintf(stderr, "remote\n");
 	rc = jbit_serial_open(&serial, port, 115200);
 	assert(rc == 0);
-	printf("waiting for arduino to reset...\n");
+	fprintf(stderr, "waiting for arduino to reset...\n");
 	t = SDL_GetTicks();
 	SDL_Delay(3000);
 	sdl_init();
@@ -231,6 +227,16 @@ static void remote(const char *port) {
 	rc = jbit_serial_close(&serial);
 	assert(rc == 0);
 }
+
+#endif // PLATFORM_PC_SDL
+
+#ifdef ENABLE_TRACE
+
+void vm_traces(const char *msg) {
+	fprintf(stderr, "%s\n", msg);
+}
+
+#endif
 
 static void load_jb_file(const char *file_name) {
 	uint8_t *jb;
@@ -254,14 +260,23 @@ static void load_jb_file(const char *file_name) {
 }
 
 static void local() {
-	printf("local\n");
+#ifdef PLATFORM_PC_SDL
 	sdl_init();
+#endif
 	jbit_init();
 	while (1) {
 		jbit_step();
+#ifdef PLATFORM_PC_SDL
 		sdl_sync();
 		SDL_Delay(80);
+#endif
 	}
+}
+
+static void usage() {
+	printf("usage: jbembd [file]\n");
+	printf("       jbembd -r port\n");
+	exit(1);
 }
 
 int main(int argc, char *argv[]) {
@@ -274,11 +289,13 @@ int main(int argc, char *argv[]) {
 		load_jb_file(argv[1]);
 		local();
 		break;
+#ifdef PLATFORM_PC_SDL
 	case 3:
 		if (strcmp(argv[1], "-r"))
 			usage();
 		remote(argv[2]);
 		break;
+#endif
 	default:
 		usage();
 	}

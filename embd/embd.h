@@ -59,7 +59,7 @@
 #define ENABLE_VM
 #define ENABLE_PRIMO
 #define ENABLE_SERIAL
-#define ENABLE_SERIAL_TRACE
+#define ENABLE_TRACE
 #define LCD_NULL
 #define KEYPAD_NULL
 
@@ -70,6 +70,7 @@
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
+#define ENABLE_TRACE
 #define LCD_NULL
 #define KEYPAD_NULL
 
@@ -213,6 +214,10 @@ void trace6502(int enable);
 extern uint8_t vm_vsync;
 extern uint16_t vm_wait;
 
+void vm_fatal(const char *msg);
+void vm_traces(const char *msg);
+void vm_tracef(const char *format, ...);
+
 /* MICRO IO */
 
 #define MICROIO_CONVIDEO_SIZE 40
@@ -250,7 +255,6 @@ uint8_t primo_get(primo_context_t *ctx, uint8_t addr);
 /* EMBD */
 
 void serial_loader();
-void serial_trace(const char *format, ...);
 
 /* JBIT */
 

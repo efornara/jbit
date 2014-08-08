@@ -10,6 +10,7 @@
 
 // VM
 //#define MAX_N_MPAGES 0
+//#define ENABLE_TRACE
 
 // Devices
 //#define ENABLE_MICROIO
@@ -19,7 +20,6 @@
 // Loaders
 //#define ENABLE_AUTORUN
 //#define ENABLE_SERIAL
-//#define ENABLE_SERIAL_TRACE
 
 // LCD (if enabled, one of)
 //#define LCD_HWSIM

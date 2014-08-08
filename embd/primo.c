@@ -40,7 +40,7 @@
 
 #define FLAGS_ANALOG_SHIFTED 0x01
 
-extern "C" void primo_init(primo_context_t *ctx) {
+void primo_init(primo_context_t *ctx) {
 	ctx->analog = 0;
 	ctx->map = UNASSIGNED;
 	ctx->io = UNASSIGNED;
@@ -49,9 +49,9 @@ extern "C" void primo_init(primo_context_t *ctx) {
 	vm_wait = 0;
 }
 
-extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
-#ifdef ENABLE_SERIAL_TRACE
-	serial_trace("primo put %d %d", addr, data);
+void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
+#ifdef ENABLE_PRIMO_TRACEIO
+	vm_tracef("primo put %d %d", addr, data);
 #endif
 	switch (addr) {
 	case REG(IOID):
@@ -80,9 +80,10 @@ extern "C" void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 	}
 }
 
-extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
-#ifdef ENABLE_SERIAL_TRACE
-	serial_trace("primo get %d", addr);
+#ifdef ENABLE_PRIMO_TRACEIO
+uint8_t primo_get_impl(primo_context_t *ctx, uint8_t addr) {
+#else
+uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 #endif
 	switch (addr) {
 	case REG(IOID):
@@ -103,5 +104,15 @@ extern "C" uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 	}
 	return 0;
 }
+
+#ifdef ENABLE_PRIMO_TRACEIO
+uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
+	uint8_t value;
+
+	value = primo_get_impl(ctx, addr);
+	vm_tracef("primo get %d -> %d", addr, value);
+	return value;
+}
+#endif
 
 #endif

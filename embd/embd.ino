@@ -83,16 +83,10 @@ static void get_line(char *buf, int len) {
   }
 }
 
-#if defined(ENABLE_SERIAL_TRACE)
+// TODO serial trace without serial loader
+#if defined(ENABLE_TRACE)
 
-void serial_trace(const char *format...) {
-  char msg[64];
-  va_list ap;
-
-  va_start(ap, format);
-  vsnprintf(msg, sizeof(msg), format, ap);
-  va_end(ap);
-  msg[sizeof(msg) - 1] = '\0';
+void vm_traces(const char *msg) {
   Serial.print("# ");
   Serial.print(msg);
   Serial.print("\n\r");
