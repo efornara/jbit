@@ -33,6 +33,9 @@
 
 #ifdef ENABLE_VM
 
+uint8_t read6502(uint16_t address);
+void write6502(uint16_t address, uint8_t value);
+
 #ifdef ENABLE_MICROIO
 microio_context_t microio;
 #endif
@@ -56,14 +59,28 @@ uint16_t vm_wait;
 #ifdef ENABLE_TRACE
 
 void vm_tracef(const char *format, ...) {
-  char msg[64];
-  va_list ap;
+	char msg[64];
+	va_list ap;
 
-  va_start(ap, format);
-  vsnprintf(msg, sizeof(msg), format, ap);
-  va_end(ap);
-  msg[sizeof(msg) - 1] = '\0';
-  vm_traces(msg);
+	va_start(ap, format);
+	vsnprintf(msg, sizeof(msg), format, ap);
+	va_end(ap);
+	msg[sizeof(msg) - 1] = '\0';
+	vm_traces(msg);
+}
+
+static void vm_traceu(uint16_t address) {
+	char msg[64];
+	int i;
+	uint8_t c;
+
+	for (i = 0; i < sizeof(msg) - 1; i++) {
+		if (!(c = read6502(address++)))
+			break;
+		msg[i] = c;
+	}
+	msg[i] = '\0';
+	vm_traces(msg);
 }
 
 #endif
@@ -112,6 +129,7 @@ typedef struct {
 	uint16_t n_mpages;
 	uint16_t last_ro_addr;
 	uint8_t vm_state;
+	uint8_t vm_trchi;
 } vm_context_t;
 
 static vm_context_t ctx_;
@@ -123,6 +141,8 @@ uint8_t get_prog_byte(int offset) {
 	else
 		return jbit_prg_code[offset];
 }
+
+#define REG(x) (x - 0xff00)
 
 uint8_t read6502(uint16_t address) {
 	uint8_t page = address >> 8;
@@ -142,8 +162,13 @@ uint8_t read6502(uint16_t address) {
 #endif
 		return 0;
 	case 255:
-		if (offset >= 240)
-			return pgm_read_byte(&(irqvec[offset - 240]));
+		switch (offset) {
+		case REG(VMTRCHI):
+			return ctx->vm_trchi;
+		default:
+			if (offset >= 240)
+				return pgm_read_byte(&(irqvec[offset - 240]));
+		}
 		return 0;
 	}
 	if (page == 1 || address > ctx->last_ro_addr)
@@ -175,11 +200,19 @@ void write6502(uint16_t address, uint8_t value) {
 		return;
 	case 255:
 		switch (offset) {
-		case 0:
+		case REG(VMEXIT):
 			if (value)
 				ctx->vm_state = VM_STATE_HALTFAIL;
 			else
 				ctx->vm_state = VM_STATE_HALTOK;
+			break;
+		case REG(VMTRCLO):
+#ifdef ENABLE_TRACE
+			vm_traceu((ctx->vm_trchi << 8) | value);
+#endif
+			break;
+		case REG(VMTRCHI):
+			ctx->vm_trchi = value;
 			break;
 		default:
 			break;

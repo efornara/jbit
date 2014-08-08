@@ -57,6 +57,7 @@ const SymDef io2_symdefs[] = {
 
 const SymDef primo_symdefs[] = {
 #include "d_primo.h"
+#include "d_jbvm.h"
 { 0, 0 },
 };
 

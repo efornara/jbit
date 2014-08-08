@@ -211,6 +211,8 @@ void trace6502(int enable);
 
 /* VM */
 
+#include "_jbvm.h"
+
 extern uint8_t vm_vsync;
 extern uint16_t vm_wait;
 
