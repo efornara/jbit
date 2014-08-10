@@ -278,12 +278,13 @@ static void load_rom(const char *file_name) {
 	n = ftell(f);
 	assert(n <= 0x800);
 	rewind(f);
-	rom = (uint8_t *)malloc(0x800);
+	rom = (uint8_t *)malloc(n);
 	assert(rom);
 	rc = fread(rom, n, 1, f);
 	assert(rc == 1);
 	fclose(f);
-	jbit_rom_data = rom;
+	jbit_rom_ptr = rom;
+	jbit_rom_size = n;
 }
 
 static void local() {
@@ -312,6 +313,7 @@ int main(int argc, char *argv[]) {
 	int filename_i = -1;
 	int i;
 
+	jbit_rom_ptr = NULL;
 	for (i = 1; i < argc; i++) {
 		const char *s = argv[i];
 		if (!strcmp(s, "-r")) {

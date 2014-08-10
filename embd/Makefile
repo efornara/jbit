@@ -52,6 +52,17 @@ jbit-embd-c.js: $(EM_SRCS)
 	 AUTORUN_TMP build-cli/autorun.o
 	rm -f AUTORUN_TMP
 
+%.bin: %.rom
+	mkdir -p build-cli
+	rm -f build-cli/rom.o
+	cp $< ROM_TMP
+	avr-objcopy -I binary -O elf32-avr \
+	 --rename-section .data=.progmem.data,contents,alloc,load,readonly,data \
+	 --redefine-sym _binary_ROM_TMP_start=rom_start \
+	 --redefine-sym _binary_ROM_TMP_size=rom_size \
+	 ROM_TMP build-cli/rom.o
+	rm -f ROM_TMP
+
 clean:
 	$(RM) -r build-cli *.o jbembd jbit-embd-c.*
 

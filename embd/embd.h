@@ -67,6 +67,7 @@
 
 #define ENABLE_UI
 #define ENABLE_VM
+#define ENABLE_ROM
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
@@ -275,7 +276,8 @@ extern uint16_t jbit_prg_data_size;
 extern uint8_t jbit_prg_code_pages;
 extern uint8_t jbit_prg_pgm;
 
-extern const uint8_t *jbit_rom_data;
+extern const uint8_t *jbit_rom_ptr;
+extern uint16_t jbit_rom_size;
 
 void jbit_init();
 uint16_t jbit_step();

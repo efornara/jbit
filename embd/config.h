@@ -22,6 +22,7 @@
 // Loaders
 //#define ENABLE_AUTORUN
 //#define ENABLE_SERIAL
+//#define ENABLE_ROM
 
 // LCD (if enabled, one of)
 //#define LCD_HWSIM

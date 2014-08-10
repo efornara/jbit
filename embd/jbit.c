@@ -31,6 +31,8 @@
 #include "embd.h"
 
 extern const uint8_t autorun_jb[] PROGMEM;
+extern const uint8_t rom_start[] PROGMEM;
+extern const uint16_t rom_size PROGMEM;
 
 const uint8_t *jbit_prg_code_ptr;
 const uint8_t *jbit_prg_data_ptr;
@@ -39,7 +41,10 @@ uint16_t jbit_prg_data_size;
 uint8_t jbit_prg_code_pages;
 uint8_t jbit_prg_pgm;
 
-const uint8_t *jbit_rom_data = NULL;
+#if defined(ENABLE_ROM)
+const uint8_t *jbit_rom_ptr;
+uint16_t jbit_rom_size;
+#endif
 
 #ifndef ENABLE_UI
 uint8_t ui_state = 0;
@@ -73,6 +78,10 @@ void jbit_init() {
 	lcd_init();
 	lcd_clear();
 	keypad_init();
+#if defined(ENABLE_ROM) && !defined(PLATFORM_PC)
+	jbit_rom_ptr = rom_start;
+	jbit_rom_size = pgm_read_word(&rom_size);
+#endif
 #if defined(ENABLE_AUTORUN)
 	jbit_prg_code_ptr = &autorun_jb[SIZE_HEADER];
 	jbit_prg_code_pages = pgm_read_byte(&autorun_jb[OFFSET_CODEPAGES]);
