@@ -331,7 +331,7 @@ static void indy() { // (indirect),Y
 }
 
 static uint16_t getvalue() {
-    if (addrtable[opcode] == acc) return((uint16_t)a);
+    if (pgm_read_word(&addrtable[opcode]) == acc) return((uint16_t)a);
         else return((uint16_t)read6502(ea));
 }
 
@@ -342,7 +342,7 @@ static uint16_t getvalue16() {
 */
 
 static void putvalue(uint16_t saveval) {
-    if (addrtable[opcode] == acc) a = (uint8_t)(saveval & 0x00FF);
+    if (pgm_read_word(&addrtable[opcode]) == acc) a = (uint8_t)(saveval & 0x00FF);
         else write6502(ea, (saveval & 0x00FF));
 }
 
