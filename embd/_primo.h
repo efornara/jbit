@@ -32,6 +32,19 @@
 /*  SUCH DAMAGE.                                                           */
 /*                                                                         */
 
+#define REQPUT 0x0201
+#define REQEND 0x0202
+#define REQRES 0x0203
+
+#define REQPTRLO 0x0204
+#define REQPTRHI 0x0205
+
+/*  4 bytes only                                                           */
+#define REQDAT 0x0260
+
+#define REQ_DELAY 1
+#define REQ_MILLIS 2
+
 #define IOBIT0 0x02F0
 #define IOBIT1 0x02F1
 #define IOBIT2 0x02F2

@@ -49,11 +49,70 @@ void primo_init(primo_context_t *ctx) {
 	vm_wait = 0;
 }
 
+static void request(primo_context_t *ctx) {
+	int n = ctx->reqn;
+	ctx->reqn = 0;
+	if (n == 0)
+		goto error;
+	switch (ctx->reqdat[0]) {
+	case REQ_DELAY: {
+		uint16_t ms;
+		if (n == 2)
+			ms = ctx->reqdat[1];
+		else if (n == 3)
+			ms = ctx->reqdat[1] | (ctx->reqdat[2] << 8);
+		else
+			goto error;
+#ifdef ENABLE_PRIMO_TRACEREQ
+		vm_tracef("primo req delay %d", ms);
+#endif
+		delay(ms);
+		} break;
+	case REQ_MILLIS: {
+		uint32_t ms;
+		if (n != 1)
+			goto error;
+		ms = millis();
+#ifdef ENABLE_PRIMO_TRACEREQ
+		vm_tracef("primo req millis %ld", ms);
+#endif
+		memcpy(&ctx->reqdat[0], &ms, sizeof(ms));
+		} break;
+	}
+	ctx->reqres = 0;
+	return;
+error:
+#ifdef ENABLE_PRIMO_TRACEREQ
+	vm_tracef("primo req error");
+#endif
+	ctx->reqres = 0xff;
+}
+
+static void copy_request(primo_context_t *ctx, uint8_t lo) {
+//	uint16_t address = (ctx->reqhi << 8) | lo;
+	// TODO
+	ctx->reqn = 0;
+}
+
 void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 #ifdef ENABLE_PRIMO_TRACEIO
 	vm_tracef("primo put %d %d", addr, data);
 #endif
 	switch (addr) {
+	case REG(REQPUT):
+		if (ctx->reqn < 4)
+			ctx->reqdat[ctx->reqn++] = data;
+		break;
+	case REG(REQEND):
+		request(ctx);
+		break;
+	case REG(REQPTRLO):
+		copy_request(ctx, data);
+		request(ctx);
+		break;
+	case REG(REQPTRHI):
+		ctx->reqhi = data;
+		break;
 	case REG(IOID):
 		ctx->io = data;
 		break;
@@ -101,6 +160,9 @@ uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 			return ctx->analog >> 2;
 		else
 			return ctx->analog >> 8;
+	default:
+		if (addr >= REG(REQDAT) && addr < REG(REQDAT) + 4)
+			return ctx->reqdat[addr - REG(REQDAT)];
 	}
 	return 0;
 }
@@ -110,7 +172,7 @@ uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 	uint8_t value;
 
 	value = primo_get_impl(ctx, addr);
-	vm_tracef("primo get %d -> %d", addr, value);
+	vm_tracef("primo get %d %d", addr, value);
 	return value;
 }
 #endif
