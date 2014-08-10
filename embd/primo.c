@@ -49,7 +49,7 @@ void primo_init(primo_context_t *ctx) {
 	vm_wait = 0;
 }
 
-static void request(primo_context_t *ctx) {
+static void request_dat(primo_context_t *ctx) {
 	int n = ctx->reqn;
 	ctx->reqn = 0;
 	if (n == 0)
@@ -88,10 +88,26 @@ error:
 	ctx->reqres = 0xff;
 }
 
-static void copy_request(primo_context_t *ctx, uint8_t lo) {
-//	uint16_t address = (ctx->reqhi << 8) | lo;
-	// TODO
+static void request_ptr(primo_context_t *ctx, uint8_t lo) {
+	uint16_t address = (ctx->reqhi << 8) | lo;
+	int i, n;
+	if (ctx->reqhi == 0xff)
+		goto error;
+	n = read6502(address++);
+	n |= read6502(address++) << 8;
+	if (n > 4)
+		goto error;
+	for (i = 0; i < n; i++)
+		ctx->reqdat[i] = read6502(address++);
+	ctx->reqn = n;
+	request_dat(ctx);
+	return;
+error:
+#ifdef ENABLE_PRIMO_TRACEREQ
+	vm_tracef("primo req error");
+#endif
 	ctx->reqn = 0;
+	ctx->reqres = 0xff;
 }
 
 void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
@@ -104,11 +120,10 @@ void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 			ctx->reqdat[ctx->reqn++] = data;
 		break;
 	case REG(REQEND):
-		request(ctx);
+		request_dat(ctx);
 		break;
 	case REG(REQPTRLO):
-		copy_request(ctx, data);
-		request(ctx);
+		request_ptr(ctx, data);
 		break;
 	case REG(REQPTRHI):
 		ctx->reqhi = data;

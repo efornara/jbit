@@ -2,24 +2,24 @@
 
 	.device "primo"
 
-	; setup trace
-	lda #>msg
+	; setup
+	lda #>_data_start_
 	sta VMTRCHI
+	sta REQPTRHI
 l1:
-	; wait 2000 ms
-	lda #REQ_DELAY
-	sta REQPUT
-	lda #208
-	sta REQPUT
-	lda #7
-	sta REQPUT
-	sta REQEND
-	; trace
+	lda #<delay
+	sta REQPTRLO
 	lda #<msg
 	sta VMTRCLO
 	jmp l1
 
 	.data
+_data_start_:
+
+delay: .req
+	; wait 2000 ms
+	REQ_DELAY 7:208
+.endreq
 
 msg:
-	"CIAO" 0
+	"Tick!" 0
