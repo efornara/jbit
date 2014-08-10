@@ -230,10 +230,10 @@ static void remote(const char *port) {
 
 #endif // PLATFORM_PC_SDL
 
-#ifdef ENABLE_TRACE
+#ifdef ENABLE_VM_TRACE
 
 void vm_traces(const char *msg) {
-	fprintf(stderr, "%s\n", msg);
+	fprintf(stderr, "# %s\n", msg);
 }
 
 #endif

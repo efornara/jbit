@@ -101,7 +101,7 @@ bool set_cmd_from_state() {
 void handle_line(jbit_serial_t *ctx) {
 //	printf("< %s", serial.in);
 	if (serial.in[0] == '#') {
-		printf("%s\n", serial.in);
+		fprintf(stderr, "%s\n", serial.in);
 		return;
 	}
 	if (!strcmp(cmd, serial.in)) {

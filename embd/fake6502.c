@@ -1000,17 +1000,17 @@ void hookexternal(void *funcptr) {
     } else callexternal = 0;
 }
 
-#ifdef PLATFORM_PC
+#ifdef ENABLE_VM_TRACE_CPU
 
 static void dump() {
-	printf("%10d %3d:%03d  S %02X  A %d  X %d  Y %d  SP %d\n",
-	  instructions, pc >> 8, pc & 0xff, status, a, x, y, sp);
+	vm_tracef("cpu %ld %d:%d  S %02X  A %d  X %d  Y %d  SP %d",
+	  (long)instructions, pc >> 8, pc & 0xff, status, a, x, y, sp);
 }
 
 #endif
 
 void trace6502(int enable) {
-#ifdef PLATFORM_PC
+#ifdef ENABLE_VM_TRACE_CPU
 	if (enable)
 		hookexternal(dump);
 	else

@@ -10,7 +10,9 @@
 
 // VM
 //#define MAX_N_MPAGES 0
-//#define ENABLE_TRACE
+//#define ENABLE_VM_TRACE
+//#define ENABLE_VM_TRACE_CPU
+//#define ENABLE_VM_TRACE_MEM
 
 // Devices
 //#define ENABLE_MICROIO

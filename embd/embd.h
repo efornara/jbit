@@ -59,7 +59,9 @@
 #define ENABLE_VM
 #define ENABLE_PRIMO
 #define ENABLE_SERIAL
-#define ENABLE_TRACE
+#define ENABLE_VM_TRACE
+#define ENABLE_VM_TRACE_CPU
+#define ENABLE_VM_TRACE_MEM
 #define LCD_NULL
 #define KEYPAD_NULL
 
@@ -70,7 +72,9 @@
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
-#define ENABLE_TRACE
+#define ENABLE_VM_TRACE
+#define ENABLE_VM_TRACE_CPU
+#define ENABLE_VM_TRACE_MEM
 #define LCD_NULL
 #define KEYPAD_NULL
 

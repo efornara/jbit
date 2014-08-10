@@ -56,7 +56,7 @@ void test_keypad() {
 uint8_t vm_vsync;
 uint16_t vm_wait;
 
-#ifdef ENABLE_TRACE
+#ifdef ENABLE_VM_TRACE
 
 void vm_tracef(const char *format, ...) {
 	char msg[64];
@@ -86,7 +86,7 @@ static void vm_traceu(uint16_t address) {
 #endif
 
 void vm_fatal(const char *msg) {
-#ifdef ENABLE_TRACE
+#ifdef ENABLE_VM_TRACE
 	vm_traces(msg);
 #endif
 #ifdef PLATFORM_PC
@@ -144,7 +144,11 @@ uint8_t get_prog_byte(int offset) {
 
 #define REG(x) (x - 0xff00)
 
+#ifdef ENABLE_VM_TRACE_MEM
+uint8_t read6502_impl(uint16_t address) {
+#else
 uint8_t read6502(uint16_t address) {
+#endif
 	uint8_t page = address >> 8;
 	uint8_t offset = address & 0xff;
 	int i;
@@ -180,10 +184,26 @@ uint8_t read6502(uint16_t address) {
 	return 0;
 }
 
+#ifdef ENABLE_VM_TRACE_MEM
+uint8_t read6502(uint16_t address) {
+	uint8_t page = address >> 8;
+	uint8_t offset = address & 0xff;
+	uint8_t value;
+
+	value = read6502_impl(address);
+	vm_tracef("read %d:%d %d", page, offset, value);
+	return value;
+}
+#endif
+
 void write6502(uint16_t address, uint8_t value) {
 	uint8_t page = address >> 8;
 	uint8_t offset = address & 0xff;
-	int i, a;
+	uint16_t a;
+	int i;
+#ifdef ENABLE_VM_TRACE_MEM
+	vm_tracef("write %d:%d %d", page, offset, value);
+#endif
 	switch (page) {
 	case 0:
 		ctx->page0[offset] = value;
@@ -207,7 +227,7 @@ void write6502(uint16_t address, uint8_t value) {
 				ctx->vm_state = VM_STATE_HALTOK;
 			break;
 		case REG(VMTRCLO):
-#ifdef ENABLE_TRACE
+#ifdef ENABLE_VM_TRACE
 			vm_traceu((ctx->vm_trchi << 8) | value);
 #endif
 			break;
@@ -229,7 +249,7 @@ void write6502(uint16_t address, uint8_t value) {
 	i = ctx->n_mpages++;
 	a = address & MPAGE_ADDR_MASK;
 	ctx->mpage[i].addr = a;
-#ifdef ENABLE_TRACE
+#ifdef ENABLE_VM_TRACE
 	vm_tracef("vm: mpage %2d  %3d:%03d-%03d", i, a >> 8, a & 0xff, (a & 0xff) | 0x1f);
 #endif
 	if (page != 1 && a < ctx->last_ro_addr)
@@ -258,7 +278,7 @@ void vm_init() {
 	memset(&ctx_, 0, sizeof(ctx_));
 	ctx->last_ro_addr = 0xffff;
 	vm_wait = 100;
-	trace6502(0);
+	trace6502(1);
 	reset6502();
 	lcd_clear();
 #ifdef ENABLE_MICROIO

@@ -84,7 +84,7 @@ static void get_line(char *buf, int len) {
 }
 
 // TODO serial trace without serial loader
-#if defined(ENABLE_TRACE)
+#if defined(ENABLE_VM_TRACE)
 
 void vm_traces(const char *msg) {
   Serial.print("# ");
@@ -125,10 +125,8 @@ static int serial_loader_step() {
       return serial_loader_error("data");
     code[pos] = data;
     state++;
-    if (state == jbit_prg_size) {
-      Serial.print("# finished\n\r");
+    if (state == jbit_prg_size)
       ret = 0;
-    }
   }
   Serial.print(line);
   Serial.print("\n\r");
