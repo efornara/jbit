@@ -181,6 +181,8 @@ uint8_t read6502(uint16_t address) {
 				return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
 	if (page != 1 && address < 0x300 + jbit_prg_size)
 		return get_prog_byte(address - 0x300);
+	if (jbit_rom_data != NULL && address >= 0xf000 && address < 0xf800)
+		return jbit_rom_data[address - 0xf000];
 	return 0;
 }
 

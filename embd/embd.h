@@ -272,6 +272,8 @@ extern const uint8_t *jbit_prg_code;
 extern uint16_t jbit_prg_size;
 extern uint8_t jbit_prg_pgm;
 
+extern const uint8_t *jbit_rom_data;
+
 void jbit_init();
 uint16_t jbit_step();
 void jbit_replace_with(int module);

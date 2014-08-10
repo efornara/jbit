@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include "embd.h"
@@ -259,6 +260,25 @@ static void load_jb_file(const char *file_name) {
 	jbit_prg_size = n;
 }
 
+static void load_rom(const char *file_name) {
+	uint8_t *rom;
+	int n, rc;
+	FILE *f;
+
+	f = fopen(file_name, "r");
+	assert(f);
+	fseek(f, 0, SEEK_END);
+	n = ftell(f);
+	assert(n <= 0x800);
+	rewind(f);
+	rom = (uint8_t *)malloc(0x800);
+	assert(rom);
+	rc = fread(rom, n, 1, f);
+	assert(rc == 1);
+	fclose(f);
+	jbit_rom_data = rom;
+}
+
 static void local() {
 #ifdef PLATFORM_PC_SDL
 	sdl_init();
@@ -274,31 +294,40 @@ static void local() {
 }
 
 static void usage() {
-	printf("usage: jbembd [file]\n");
-	printf("       jbembd -r port\n");
+	printf("usage: jbembd [-r rom] [file]\n");
+#ifdef PLATFORM_PC_SDL
+	printf("       jbembd -S port\n");
+#endif
 	exit(1);
 }
 
 int main(int argc, char *argv[]) {
-	switch (argc) {
-	case 1:
-		jbit_prg_code = NULL;
-		local();
-		break;
-	case 2:
-		load_jb_file(argv[1]);
-		local();
-		break;
+	int filename_i = -1;
+	int i;
+
+	for (i = 1; i < argc; i++) {
+		const char *s = argv[i];
+		if (!strcmp(s, "-r")) {
+			if (++i == argc)
+				usage();
+			load_rom(argv[i]);
 #ifdef PLATFORM_PC_SDL
-	case 3:
-		if (strcmp(argv[1], "-r"))
-			usage();
-		remote(argv[2]);
-		break;
+		} else if (!strcmp(s, "-S")) {
+			if (i != argc + 3)
+				usage();
+			remote(argv[i + 1]);
+			exit(0);
 #endif
-	default:
-		usage();
+		} else if (filename_i == -1) {
+			filename_i = i;
+		} else {
+			usage();
+		}
 	}
+	jbit_prg_code = NULL;
+	if (filename_i != -1)
+		load_jb_file(argv[filename_i]);
+	local();
 	return 0;
 }
 

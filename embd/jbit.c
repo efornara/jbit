@@ -36,6 +36,8 @@ const uint8_t *jbit_prg_code;
 uint16_t jbit_prg_size;
 uint8_t jbit_prg_pgm;
 
+const uint8_t *jbit_rom_data = NULL;
+
 #ifndef ENABLE_UI
 uint8_t ui_state = 0;
 uint8_t ui_result = 0;
