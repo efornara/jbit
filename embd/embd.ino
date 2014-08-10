@@ -51,10 +51,6 @@ void connect_to_hwsim() {
 
 #if defined(ENABLE_SERIAL)
 
-extern const uint8_t *jbit_prg_code;
-extern uint16_t jbit_prg_size;
-extern uint8_t jbit_prg_pgm;
-
 static uint8_t *code;
 static int state;
 
@@ -108,14 +104,19 @@ static int serial_loader_step() {
   int ret = -1;
   get_line(line, sizeof(line));
   if (state == -1 || line[0] == 'P') {
-    if ((nv = sscanf(line, "P %d%c", &jbit_prg_size, &dirty)) != 1)
+    int n_code_pages;
+    if ((nv = sscanf(line, "P %d %d %d%c",
+     &n_code_pages, &jbit_prg_code_size, &jbit_prg_data_size,
+     &dirty)) != 3)
       return serial_loader_error("header");
+	jbit_prg_code_pages = n_code_pages;
     if (code)
       free(code);
-    if ((code = (uint8_t *)malloc(jbit_prg_size)) == NULL)
+    if ((code = (uint8_t *)malloc(jbit_prg_code_size + jbit_prg_data_size))
+     == NULL)
       return serial_loader_error("malloc");
     state = 0;
-  } else if (state < jbit_prg_size) {
+  } else if (state < jbit_prg_code_size + jbit_prg_data_size) {
     int pos, data;
     if ((nv = sscanf(line, "B %d %d%c", &pos, &data, &dirty)) != 2)
       return serial_loader_error("byte");
@@ -125,7 +126,7 @@ static int serial_loader_step() {
       return serial_loader_error("data");
     code[pos] = data;
     state++;
-    if (state == jbit_prg_size)
+    if (state == jbit_prg_code_size + jbit_prg_data_size)
       ret = 0;
   }
   Serial.print(line);
@@ -137,7 +138,8 @@ extern "C" void serial_loader() {
   serial_loader_init();
   while (serial_loader_step())
     ;
-  jbit_prg_code = code;
+  jbit_prg_code_ptr = code;
+  jbit_prg_data_ptr = &code[jbit_prg_code_size];
 }
 
 #endif

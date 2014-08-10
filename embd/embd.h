@@ -268,8 +268,11 @@ void serial_loader();
 #define MODULE_DEMOS 1
 #define MODULE_VM 2
 
-extern const uint8_t *jbit_prg_code;
-extern uint16_t jbit_prg_size;
+extern const uint8_t *jbit_prg_code_ptr;
+extern const uint8_t *jbit_prg_data_ptr;
+extern uint16_t jbit_prg_code_size;
+extern uint16_t jbit_prg_data_size;
+extern uint8_t jbit_prg_code_pages;
 extern uint8_t jbit_prg_pgm;
 
 extern const uint8_t *jbit_rom_data;

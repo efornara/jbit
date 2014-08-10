@@ -113,8 +113,11 @@ void demos_init() {
 }
 
 void demos_step() {
-	jbit_prg_code = demo_def[ui_result].code;
-	jbit_prg_size = demo_def[ui_result].size;
+	jbit_prg_code_ptr = demo_def[ui_result].code;
+	jbit_prg_code_size = demo_def[ui_result].size;
+	jbit_prg_code_pages = 1;
+	jbit_prg_data_ptr = NULL;
+	jbit_prg_data_size = 0;
 	jbit_prg_pgm = 1;
 	jbit_replace_with(MODULE_VM);
 }

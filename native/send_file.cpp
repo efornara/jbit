@@ -40,6 +40,9 @@
 namespace {
 
 const char *p;
+int code_size;
+int data_size;
+int n_code_pages;
 int len;
 
 char cmd[128];
@@ -47,12 +50,18 @@ char cmd[128];
 int rc;
 
 void get_program(const Program *prg) {
+	int i;
 	p = prg->get_data();
-	int i, n = (prg->n_of_code_pages + prg->n_of_data_pages) * 256;
-	for (i = n ; i > 0; i--)
+	n_code_pages = prg->n_of_code_pages;
+	for (i = prg->n_of_code_pages * 256; i > 0; i--)
 		if (p[i - 1])
 			break;
-	len = i;
+	code_size = i;
+	for (i = prg->n_of_data_pages * 256; i > 0; i--)
+		if (p[n_code_pages * 256 + i - 1])
+			break;
+	data_size = i;
+	len = code_size + data_size;
 }
 
 jbit_serial_t serial;
@@ -87,9 +96,14 @@ bool set_cmd_from_state() {
 	if (state == DONE) {
 		return false;
 	} else if (state == START) {
-		set_cmd("P %d", len);
+		set_cmd("P %d %d %d", n_code_pages, code_size, data_size);
 	} else if (state >= 0 && state < len) {
-		set_cmd("B %d %d", state, p[state] & 0xff);
+		int value;
+		if (state < code_size)
+			value = p[state];
+		else
+			value = p[n_code_pages * 256 + state - code_size];
+		set_cmd("B %d %d", state, value & 0xff);
 	} else if (state == len) {
 		printf(" ...done.\n");
 		printf("Listening for trace. Press Ctrl-C to exit.\n");

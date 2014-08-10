@@ -32,8 +32,11 @@
 
 extern const uint8_t autorun_jb[] PROGMEM;
 
-const uint8_t *jbit_prg_code;
-uint16_t jbit_prg_size;
+const uint8_t *jbit_prg_code_ptr;
+const uint8_t *jbit_prg_data_ptr;
+uint16_t jbit_prg_code_size;
+uint16_t jbit_prg_data_size;
+uint8_t jbit_prg_code_pages;
 uint8_t jbit_prg_pgm;
 
 const uint8_t *jbit_rom_data = NULL;
@@ -71,17 +74,18 @@ void jbit_init() {
 	lcd_clear();
 	keypad_init();
 #if defined(ENABLE_AUTORUN)
-	jbit_prg_code = &autorun_jb[SIZE_HEADER];
-	jbit_prg_size = \
-	  (pgm_read_byte(&autorun_jb[OFFSET_CODEPAGES])
-	  + pgm_read_byte(&autorun_jb[OFFSET_DATAPAGES])) << 8;
+	jbit_prg_code_ptr = &autorun_jb[SIZE_HEADER];
+	jbit_prg_code_pages = pgm_read_byte(&autorun_jb[OFFSET_CODEPAGES]);
+	jbit_prg_code_size = jbit_prg_code_pages << 8;
+	jbit_prg_data_ptr = &autorun_jb[SIZE_HEADER + jbit_prg_code_size];
+	jbit_prg_data_size =  pgm_read_byte(&autorun_jb[OFFSET_DATAPAGES]) << 8;
 	jbit_prg_pgm = 1;
 	jbit_replace_with(MODULE_VM);
 #elif defined(ENABLE_SERIAL)
 	serial_loader();
 	jbit_replace_with(MODULE_VM);
 #elif defined(PLATFORM_PC)
-	if (jbit_prg_code) {
+	if (jbit_prg_code_ptr) {
 		jbit_replace_with(MODULE_VM);
 		return;
 	}

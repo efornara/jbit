@@ -243,6 +243,8 @@ static void load_jb_file(const char *file_name) {
 	uint8_t *jb;
 	int n, rc;
 	FILE *f;
+	int n_code_pages;
+	int n_data_pages;
 
 	f = fopen(file_name, "r");
 	assert(f);
@@ -255,9 +257,14 @@ static void load_jb_file(const char *file_name) {
 	assert(rc == 1);
 	fclose(f);
 	n -= 12;
-	assert(n == ((jb[8] + jb[9]) << 8));
-	jbit_prg_code = &jb[12];;
-	jbit_prg_size = n;
+	n_code_pages = jb[8];
+	n_data_pages = jb[9];
+	assert(n == ((n_code_pages + n_data_pages) << 8));
+	jbit_prg_code_ptr = &jb[12];
+	jbit_prg_code_size = n_code_pages << 8;
+	jbit_prg_code_pages = n_data_pages;
+	jbit_prg_data_ptr = &jb[12 + jbit_prg_code_size];
+	jbit_prg_data_size = n_data_pages << 8;
 }
 
 static void load_rom(const char *file_name) {
@@ -324,7 +331,7 @@ int main(int argc, char *argv[]) {
 			usage();
 		}
 	}
-	jbit_prg_code = NULL;
+	jbit_prg_code_ptr = NULL;
 	if (filename_i != -1)
 		load_jb_file(argv[filename_i]);
 	local();

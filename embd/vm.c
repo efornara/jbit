@@ -136,10 +136,20 @@ static vm_context_t ctx_;
 static vm_context_t *ctx = &ctx_;
 
 uint8_t get_prog_byte(int offset) {
+	uint16_t data;
+	// in pgm the full jb is available (fast)
 	if (jbit_prg_pgm)
-		return pgm_read_byte(&(jbit_prg_code[offset]));
-	else
-		return jbit_prg_code[offset];
+		return pgm_read_byte(&(jbit_prg_code_ptr[offset]));
+	// in ram there might be holes (compact)
+	if (offset < jbit_prg_code_size)
+		return jbit_prg_code_ptr[offset];
+	data = jbit_prg_code_pages << 8;
+	if (offset < data)
+		return 0;
+	offset -= data;
+	if (offset >= jbit_prg_data_size)
+		return 0;
+	return jbit_prg_data_ptr[offset];
 }
 
 #define REG(x) (x - 0xff00)
@@ -179,7 +189,7 @@ uint8_t read6502(uint16_t address) {
 		for (i = 0; i < ctx->n_mpages; i++)
 			if ((address & MPAGE_ADDR_MASK) == ctx->mpage[i].addr)
 				return ctx->mpage[i].data[offset & MPAGE_DATA_MASK];
-	if (page != 1 && address < 0x300 + jbit_prg_size)
+	if (page != 1 && address < 0x300 + (jbit_prg_code_pages << 8) +  jbit_prg_data_size)
 		return get_prog_byte(address - 0x300);
 	if (jbit_rom_data != NULL && address >= 0xf000 && address < 0xf800)
 		return jbit_rom_data[address - 0xf000];
@@ -256,15 +266,12 @@ void write6502(uint16_t address, uint8_t value) {
 #endif
 	if (page != 1 && a < ctx->last_ro_addr)
 		ctx->last_ro_addr = a - 1;
-	if (page == 1 || ctx->mpage[i].addr > 0x300 + jbit_prg_size) {
+	if (page == 1 || ctx->mpage[i].addr > 0x300 + (jbit_prg_code_pages << 8) +  jbit_prg_data_size) {
 		memset(ctx->mpage[i].data, 0, MPAGE_SIZE);
 	} else {
 		int j;
 		for (j = 0; j < MPAGE_SIZE; j++)
-			if (a + j < 0x300 + jbit_prg_size)
-				ctx->mpage[i].data[j] = get_prog_byte(a + j - 0x300);
-			else
-				ctx->mpage[i].data[j] = 0;
+			ctx->mpage[i].data[j] = get_prog_byte(a + j - 0x300);
 	}
 write_value:
 	ctx->mpage[i].data[offset & MPAGE_DATA_MASK] = value;
