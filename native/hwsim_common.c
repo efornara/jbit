@@ -48,9 +48,12 @@ static struct color_t {
 	{ HWSIM_C_BODY,         { 0x30,0x30,0x30 } },
 	{ HWSIM_C_DISPLAY_BG,   { 0x96,0xbb,0xa4 } },
 	{ HWSIM_C_DISPLAY_FG,   { 0x00,0x00,0x00 } },
+	{ HWSIM_C_KEY_BG,       { 0xcb,0xcf,0x88 } },
 };
 
 #define N_OF_COLORS (sizeof(colors) / sizeof(struct color_t))
+
+const char *hwsim_keypad_labels = "0123456789*#";
 
 void hwsim_init(hwsim_t *hw) {
 	memset(hw, 0, sizeof(hw->video));
@@ -61,7 +64,8 @@ void hwsim_cleanup(hwsim_t *hw) {
 }
 
 int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m) {
-	int i;
+	const char *p;
+	int i, col, row;
 
 	for (i = 0; i < N_OF_METRICS; i++) {
 		if (metrics[i].key == element) {
@@ -69,7 +73,21 @@ int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m) {
 			return 1;
 		}
 	}
-	return 0;
+	if ((p = strchr(hwsim_keypad_labels, (char)element)) == NULL)
+		return 0;
+	i = p - hwsim_keypad_labels;
+	// swap '9' and '*', if needed
+	if (i == 9)
+		i = 10;
+	else if (i == 10)
+		i = 9;
+	col = i % 3;
+	row = i / 3;
+	m->x = 10 + col * 60;
+	m->y = 118 + row * 38;
+	m->w = 48;
+	m->h = 30;
+	return 1;
 }
 
 int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c) {

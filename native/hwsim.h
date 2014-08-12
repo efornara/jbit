@@ -39,6 +39,7 @@ typedef struct {
 #define HWSIM_C_BODY 1
 #define HWSIM_C_DISPLAY_BG 2
 #define HWSIM_C_DISPLAY_FG 3
+#define HWSIM_C_KEY_BG 4
 
 typedef struct {
 	uint8_t r;
@@ -58,6 +59,7 @@ void hwsim_init(hwsim_t *hw);
 void hwsim_cleanup(hwsim_t *hw);
 int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m);
 int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c);
+extern const char *hwsim_keypad_labels;
 
 #ifdef __cplusplus
 };

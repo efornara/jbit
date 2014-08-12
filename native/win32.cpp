@@ -39,6 +39,7 @@ hwsim_t hw;
 const char *szClassName = "jbit";
 LPBITMAPINFO pDIB;
 HBRUSH body_brush;
+HBRUSH key_brush;
 
 void create() {
 }
@@ -51,6 +52,16 @@ void paint(HDC dc) {
 	  0, 0, LCD_WIDTH, LCD_HEIGHT,
 	  hw.video, pDIB,
 	  DIB_RGB_COLORS, SRCCOPY);
+	for (int i = 0; hwsim_keypad_labels[i]; i++) {
+		char c = hwsim_keypad_labels[i];
+		hwsim_get_metrics(&hw, c, &m);
+		RECT rc;
+		rc.left = m.x;
+		rc.top = m.y;
+		rc.right = m.x + m.w;
+		rc.bottom = m.y + m.h;
+		FillRect(dc, &rc, key_brush);
+	}
 }
 
 void dib_create() {
@@ -117,6 +128,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hwsim_color_t c;
 	hwsim_get_color(&hw, HWSIM_C_BODY, &c);
 	body_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
+	hwsim_get_color(&hw, HWSIM_C_KEY_BG, &c);
+	key_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -155,6 +168,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		DispatchMessage(&msg);
 	}
 
+	DeleteObject(key_brush);
 	DeleteObject(body_brush);
 
 	hwsim_cleanup(&hw);
