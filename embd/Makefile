@@ -18,6 +18,7 @@ OBJS = \
 	microio.o \
 	vm.o \
 	fake6502.o \
+	opcodes.o \
 	ui.o \
 	keypad.o \
 	lcd.o \
@@ -29,6 +30,7 @@ EM_SRCS = \
 	microio.c \
 	vm.c \
 	fake6502.c \
+	opcodes.c \
 	ui.c \
 	keypad.c \
 	lcd.c \

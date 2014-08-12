@@ -1003,8 +1003,15 @@ void hookexternal(void *funcptr) {
 #ifdef ENABLE_VM_TRACE_CPU
 
 static void dump() {
-	vm_tracef("cpu %ld %d:%d  S %02X  A %d  X %d  Y %d  SP %d",
-	  (long)instructions, pc >> 8, pc & 0xff, status, a, x, y, sp);
+	char buf[20];
+	uint8_t m0 = read6502(pc);
+	uint8_t m1 = read6502(pc+1);
+	uint8_t m2 = read6502(pc+2);
+	opcDisassembly(buf, pc, m0, m1, m2);
+	vm_tracef("cpu #%ld %d:%d  %s",
+	  (long)instructions, pc >> 8, pc & 0xff, buf);
+	vm_tracef("cpu S %02X  A %d  X %d  Y %d  SP %d",
+	  status, a, x, y, sp);
 }
 
 #endif

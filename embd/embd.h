@@ -186,6 +186,10 @@ void keypad_process();
 
 int sys_get_random_seed();
 
+/* OPCODES */
+
+void opcDisassembly(char *s, uint16_t pc, uint8_t m0, uint8_t m1, uint8_t m2);
+
 /* UI */
 
 extern uint8_t ui_state;
