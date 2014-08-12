@@ -36,11 +36,22 @@ typedef struct {
 	uint16_t h;
 } hwsim_rect_t;
 
+#define HWSIM_C_BODY 1
+#define HWSIM_C_DISPLAY_BG 2
+#define HWSIM_C_DISPLAY_FG 3
+
+typedef struct {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} hwsim_color_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int hwsim_get_metrics(int element, hwsim_rect_t *m);
+int hwsim_get_color(int element, hwsim_color_t *c);
 
 #ifdef __cplusplus
 };

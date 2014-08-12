@@ -30,19 +30,26 @@
 
 #include "hwsim.h"
 
-
-#define HWSIM_M_DISPLAY 'd'
-#define HWSIM_M_WINDOW 'w'
-
 static struct metric_t {
 	char key;
 	hwsim_rect_t value;
 } metrics[] = {
-	{ 'w', { 0, 0, 200, 300 } },
-	{ 'd', { 10, 10, 168, 96 } },
+	{ HWSIM_M_WINDOW,       {   0,   0, 200, 300 } },
+	{ HWSIM_M_DISPLAY,      {  10,  10, 168,  96 } },
 };
 
 #define N_OF_METRICS (sizeof(metrics) / sizeof(struct metric_t))
+
+static struct color_t {
+	char key;
+	hwsim_color_t value;
+} colors[] = {
+	{ HWSIM_C_BODY,         { 0x30,0x30,0x30 } },
+	{ HWSIM_C_DISPLAY_BG,   { 0x96,0xbb,0xa4 } },
+	{ HWSIM_C_DISPLAY_FG,   { 0x00,0x00,0x00 } },
+};
+
+#define N_OF_COLORS (sizeof(colors) / sizeof(struct color_t))
 
 int hwsim_get_metrics(int element, hwsim_rect_t *m) {
 	int i;
@@ -50,6 +57,18 @@ int hwsim_get_metrics(int element, hwsim_rect_t *m) {
 	for (i = 0; i < N_OF_METRICS; i++) {
 		if (metrics[i].key == element) {
 			*m = metrics[i].value;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int hwsim_get_color(int element, hwsim_color_t *c) {
+	int i;
+
+	for (i = 0; i < N_OF_COLORS; i++) {
+		if (colors[i].key == element) {
+			*c = colors[i].value;
 			return 1;
 		}
 	}
