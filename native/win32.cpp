@@ -30,6 +30,7 @@
 #include <windows.h>
 
 #include "../embd/embd.h"
+#include "hwsim.h"
 
 namespace {
 
@@ -45,8 +46,10 @@ void create() {
 }
 
 void paint(HDC dc) {
+	hwsim_rect_t m;
+	hwsim_get_metrics(HWSIM_M_DISPLAY, &m);
 	StretchDIBits(dc,
-	  10, 10, LCD_WIDTH * 2, LCD_HEIGHT * 2,
+	  m.x, m.y, m.w, m.h,
 	  0, 0, LCD_WIDTH, LCD_HEIGHT,
 	  video, pDIB,
 	  DIB_RGB_COLORS, SRCCOPY);
@@ -123,12 +126,14 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wcex.hIconSm        = LoadIcon(wcex.hInstance, (char *)IDI_APPLICATION);
 	RegisterClassEx(&wcex);
 
+	hwsim_rect_t m;
+	hwsim_get_metrics(HWSIM_M_WINDOW, &m);
 	HWND hWnd = CreateWindow(
 		szClassName,
 		"JBit " JBIT_VERSION,
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		200, 300,
+		m.w, m.h,
 		NULL,
 		NULL,
 		hInstance,
