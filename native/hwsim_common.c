@@ -57,6 +57,7 @@ const char *hwsim_keypad_labels = "0123456789*#";
 
 const char *hwsim_keypad_subs[] = {
 	"",
+	"",
 	"abc",
 	"def",
 	"ghi",
@@ -65,7 +66,6 @@ const char *hwsim_keypad_subs[] = {
 	"pqrs",
 	"tuv",
 	"wxyz",
-	"",
 	"",
 	"",
 };
@@ -90,12 +90,12 @@ int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m) {
 	}
 	if ((p = strchr(hwsim_keypad_labels, (char)element)) == NULL)
 		return 0;
-	i = p - hwsim_keypad_labels;
-	// swap '9' and '*', if needed
-	if (i == 9)
+	i = p - hwsim_keypad_labels - 1;
+	// swap '0' and '*', if needed
+	if (i == -1)
 		i = 10;
 	else if (i == 10)
-		i = 9;
+		i = 11;
 	col = i % 3;
 	row = i / 3;
 	m->x = 10 + col * 60;
