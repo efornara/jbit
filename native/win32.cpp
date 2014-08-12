@@ -26,25 +26,66 @@
  * SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include <windows.h>
+
+#include "../embd/embd.h"
 
 namespace {
 
+uint8_t video[LCD_WIDTH * LCD_HEIGHT]; // TODO: padding
+
+const char *szClassName = "jbit";
+LPBITMAPINFO pDIB;
+
 void create() {
+	memset(video, 0, sizeof(video));
+	for (int i = 0; i < 200; i++)
+		video[i] = i;
 }
 
 void paint(HDC dc) {
-	const char *msg = "Hello, World!";
-	TextOut(dc, 10, 10, msg, strlen(msg));
+	StretchDIBits(dc,
+	  10, 10, LCD_WIDTH * 2, LCD_HEIGHT * 2,
+	  0, 0, LCD_WIDTH, LCD_HEIGHT,
+	  video, pDIB,
+	  DIB_RGB_COLORS, SRCCOPY);
+}
+
+void dib_create() {
+	DWORD size = sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 2;
+	pDIB = (LPBITMAPINFO)new BYTE[size];
+	pDIB->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	pDIB->bmiHeader.biWidth = LCD_WIDTH;
+	pDIB->bmiHeader.biHeight = -LCD_HEIGHT;
+	pDIB->bmiHeader.biBitCount = 1;
+	pDIB->bmiHeader.biPlanes = 1;
+	pDIB->bmiHeader.biCompression = BI_RGB;
+	pDIB->bmiHeader.biXPelsPerMeter = 1000;
+	pDIB->bmiHeader.biYPelsPerMeter = 1000;
+	pDIB->bmiHeader.biClrUsed = 0;
+	pDIB->bmiHeader.biClrImportant = 0;
+	RGBQUAD *pColors = (RGBQUAD *)&((BYTE *)pDIB)[sizeof(BITMAPINFOHEADER)];
+	pColors[0].rgbRed = 0x96;
+	pColors[0].rgbGreen = 0xbb;
+	pColors[0].rgbBlue = 0xa4;
+	pColors[0].rgbReserved = 0;
+	pColors[1].rgbRed = 0x00;
+	pColors[1].rgbGreen = 0x00;
+	pColors[1].rgbBlue = 0x00;
+	pColors[1].rgbReserved = 0;
+}
+
+void dib_destroy() {
+	delete[] (BYTE *)pDIB;
 }
 
 } // namespace;
 
-static const char *szClassName = "jbit";
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
 	case WM_CREATE:
+		dib_create();
 		create();
 		break;
 	case WM_PAINT: {
@@ -54,6 +95,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		EndPaint(hWnd, &ps);
 		} break;
 	case WM_DESTROY:
+		dib_destroy();
 		PostQuitMessage(0);
 		break;
 	default:
