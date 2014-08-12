@@ -27,6 +27,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 #include "hwsim.h"
 
@@ -51,7 +52,15 @@ static struct color_t {
 
 #define N_OF_COLORS (sizeof(colors) / sizeof(struct color_t))
 
-int hwsim_get_metrics(int element, hwsim_rect_t *m) {
+void hwsim_init(hwsim_t *hw) {
+	memset(hw, 0, sizeof(hw->video));
+	hw->video[0] = 0xff;
+}
+
+void hwsim_cleanup(hwsim_t *hw) {
+}
+
+int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m) {
 	int i;
 
 	for (i = 0; i < N_OF_METRICS; i++) {
@@ -63,7 +72,7 @@ int hwsim_get_metrics(int element, hwsim_rect_t *m) {
 	return 0;
 }
 
-int hwsim_get_color(int element, hwsim_color_t *c) {
+int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c) {
 	int i;
 
 	for (i = 0; i < N_OF_COLORS; i++) {

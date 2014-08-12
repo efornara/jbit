@@ -46,12 +46,18 @@ typedef struct {
 	uint8_t b;
 } hwsim_color_t;
 
+typedef struct {
+	uint8_t video[10000]; // TODO
+} hwsim_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int hwsim_get_metrics(int element, hwsim_rect_t *m);
-int hwsim_get_color(int element, hwsim_color_t *c);
+void hwsim_init(hwsim_t *hw);
+void hwsim_cleanup(hwsim_t *hw);
+int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m);
+int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c);
 
 #ifdef __cplusplus
 };

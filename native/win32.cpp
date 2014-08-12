@@ -34,25 +34,22 @@
 
 namespace {
 
-uint8_t video[LCD_WIDTH * LCD_HEIGHT]; // TODO: padding
+hwsim_t hw;
 
 const char *szClassName = "jbit";
 LPBITMAPINFO pDIB;
 HBRUSH body_brush;
 
 void create() {
-	memset(video, 0, sizeof(video));
-	for (int i = 0; i < 200; i++)
-		video[i] = i;
 }
 
 void paint(HDC dc) {
 	hwsim_rect_t m;
-	hwsim_get_metrics(HWSIM_M_DISPLAY, &m);
+	hwsim_get_metrics(&hw, HWSIM_M_DISPLAY, &m);
 	StretchDIBits(dc,
 	  m.x, m.y, m.w, m.h,
 	  0, 0, LCD_WIDTH, LCD_HEIGHT,
-	  video, pDIB,
+	  hw.video, pDIB,
 	  DIB_RGB_COLORS, SRCCOPY);
 }
 
@@ -71,12 +68,12 @@ void dib_create() {
 	pDIB->bmiHeader.biClrImportant = 0;
 	RGBQUAD *pColors = (RGBQUAD *)&((BYTE *)pDIB)[sizeof(BITMAPINFOHEADER)];
 	hwsim_color_t c;
-	hwsim_get_color(HWSIM_C_DISPLAY_BG, &c);
+	hwsim_get_color(&hw, HWSIM_C_DISPLAY_BG, &c);
 	pColors[0].rgbRed = c.r;
 	pColors[0].rgbGreen = c.g;
 	pColors[0].rgbBlue = c.b;
 	pColors[0].rgbReserved = 0;
-	hwsim_get_color(HWSIM_C_DISPLAY_FG, &c);
+	hwsim_get_color(&hw, HWSIM_C_DISPLAY_FG, &c);
 	pColors[1].rgbRed = c.r;
 	pColors[1].rgbGreen = c.g;
 	pColors[1].rgbBlue = c.b;
@@ -115,8 +112,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LPSTR lpCmdLine, int nCmdShow) {
 
+	hwsim_init(&hw);
+
 	hwsim_color_t c;
-	hwsim_get_color(HWSIM_C_BODY, &c);
+	hwsim_get_color(&hw, HWSIM_C_BODY, &c);
 	body_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
 
 	WNDCLASSEX wcex;
@@ -135,7 +134,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	RegisterClassEx(&wcex);
 
 	hwsim_rect_t m;
-	hwsim_get_metrics(HWSIM_M_WINDOW, &m);
+	hwsim_get_metrics(&hw, HWSIM_M_WINDOW, &m);
 	HWND hWnd = CreateWindow(
 		szClassName,
 		"JBit " JBIT_VERSION,
@@ -157,5 +156,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
 
 	DeleteObject(body_brush);
+
+	hwsim_cleanup(&hw);
+
 	return msg.wParam;
 }
