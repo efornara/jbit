@@ -55,11 +55,13 @@ typedef struct {
 extern "C" {
 #endif
 
+extern const char *hwsim_keypad_labels;
+extern const char *hwsim_keypad_subs[];
+
 void hwsim_init(hwsim_t *hw);
 void hwsim_cleanup(hwsim_t *hw);
 int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m);
 int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c);
-extern const char *hwsim_keypad_labels;
 
 #ifdef __cplusplus
 };

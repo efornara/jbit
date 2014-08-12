@@ -52,6 +52,9 @@ void paint(HDC dc) {
 	  0, 0, LCD_WIDTH, LCD_HEIGHT,
 	  hw.video, pDIB,
 	  DIB_RGB_COLORS, SRCCOPY);
+	hwsim_color_t c;
+	hwsim_get_color(&hw, HWSIM_C_KEY_BG, &c);
+	SetBkColor(dc, RGB(c.r, c.g, c.b));
 	for (int i = 0; hwsim_keypad_labels[i]; i++) {
 		char c = hwsim_keypad_labels[i];
 		hwsim_get_metrics(&hw, c, &m);
@@ -61,6 +64,11 @@ void paint(HDC dc) {
 		rc.right = m.x + m.w;
 		rc.bottom = m.y + m.h;
 		FillRect(dc, &rc, key_brush);
+		SetTextAlign(dc, TA_LEFT | TA_TOP);
+		TextOut(dc, rc.left + 2, rc.top + 2, &c, 1);
+		SetTextAlign(dc, TA_RIGHT | TA_BOTTOM);
+		const char *sub = hwsim_keypad_subs[i];
+		TextOut(dc, rc.right - 2, rc.bottom - 2, sub, strlen(sub));
 	}
 }
 

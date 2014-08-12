@@ -55,6 +55,21 @@ static struct color_t {
 
 const char *hwsim_keypad_labels = "0123456789*#";
 
+const char *hwsim_keypad_subs[] = {
+	"",
+	"abc",
+	"def",
+	"ghi",
+	"jkl",
+	"mno",
+	"pqrs",
+	"tuv",
+	"wxyz",
+	"",
+	"",
+	"",
+};
+
 void hwsim_init(hwsim_t *hw) {
 	memset(hw, 0, sizeof(hw->video));
 	hw->video[0] = 0xff;
