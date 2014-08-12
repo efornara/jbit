@@ -5,12 +5,12 @@
 *.o
 *.swp
 *.map
+*.exe
 jbit-core.js
 js/libs
 js/images
 js/res
 native/jbit
-native/jbit.exe
 jbembd
 jbit-embd-c.js
 build-cli
