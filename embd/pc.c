@@ -266,7 +266,7 @@ static void load_jb_file(const char *file_name) {
 	fclose(f);
 	jbit_prg_code_ptr = &jb[0];
 	jbit_prg_code_size = n_code_pages << 8;
-	jbit_prg_code_pages = n_data_pages;
+	jbit_prg_code_pages = n_code_pages;
 	jbit_prg_data_ptr = &jb[jbit_prg_code_size];
 	jbit_prg_data_size = n_data_pages << 8;
 }
