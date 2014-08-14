@@ -48,6 +48,8 @@ typedef struct {
 } hwsim_color_t;
 
 typedef struct {
+	uint16_t key_pressed[12];
+	uint16_t keypad_state;
 	uint8_t video[10000]; // TODO
 } hwsim_t;
 
@@ -62,6 +64,7 @@ void hwsim_init(hwsim_t *hw);
 void hwsim_cleanup(hwsim_t *hw);
 int hwsim_get_metrics(hwsim_t *hw, int element, hwsim_rect_t *m);
 int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c);
+int hwsim_keypad_update(hwsim_t *hw, int key_down, int value);
 
 #ifdef __cplusplus
 };

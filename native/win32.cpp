@@ -44,6 +44,38 @@ HBRUSH key_brush;
 void create() {
 }
 
+int key(int key_down, int code) {
+	// "magic" mapping (same as javascript! should it be merged?)
+	switch (code) {
+	case 13: // RETURN
+		code = 48 + 5;
+		break;
+	case 37: // LEFT
+		code = 48 + 4;
+		break;
+	case 38: // UP
+		code = 48 + 2;
+		break;
+	case 39: // RIGHT
+		code = 48 + 6;
+		break;
+	case 40: // DOWN
+		code = 48 + 8;
+		break;
+	case 170: // STAR
+	case 188: // COMMA
+		code = 42;
+		break;
+	case 163: // HASH
+	case 190: // PERIOD
+		code = 35;
+		break;
+	}
+	if (code < ' ' || code > '~')
+		return 0;
+	return hwsim_keypad_update(&hw, key_down, code);
+}
+
 void paint(HDC dc) {
 	hwsim_rect_t m;
 	hwsim_get_metrics(&hw, HWSIM_M_DISPLAY, &m);
@@ -117,6 +149,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		paint(hdc);
 		EndPaint(hWnd, &ps);
 		} break;
+	case WM_KEYDOWN:
+		if (key(1, wParam))
+			InvalidateRect(hWnd, NULL, TRUE);
+		break;
+	case WM_KEYUP:
+		if (key(0, wParam))
+			InvalidateRect(hWnd, NULL, TRUE);
+		break;
 	case WM_DESTROY:
 		dib_destroy();
 		PostQuitMessage(0);

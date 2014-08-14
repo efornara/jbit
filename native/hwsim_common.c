@@ -66,13 +66,27 @@ const char *hwsim_keypad_subs[] = {
 	"pqrs",
 	"tuv",
 	"wxyz",
-	"",
-	"",
+	",",
+	".",
+};
+
+const char *hwsim_keypad_keys[] = {
+	"0",
+	"1",
+	"2abcABC",
+	"3defDEF",
+	"4ghiGHI",
+	"5jklJKL",
+	"6mnoMNO",
+	"7pqrsPQRS",
+	"8tuvTUV",
+	"9wxyzWXYZ",
+	"*,",
+	"#.",
 };
 
 void hwsim_init(hwsim_t *hw) {
-	memset(hw, 0, sizeof(hw->video));
-	hw->video[0] = 0xff;
+	memset(hw, 0, sizeof(hwsim_t));
 }
 
 void hwsim_cleanup(hwsim_t *hw) {
@@ -115,4 +129,41 @@ int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c) {
 		}
 	}
 	return 0;
+}
+
+static void test(hwsim_t *hw) {
+	int i;
+	uint16_t keypad_mask = 1;
+
+	for (i = 0; i < 12; i++) {
+		hw->video[i * 12] = (hw->keypad_state & keypad_mask) ? 0xff : 0x00;
+		keypad_mask <<= 1;
+	}
+}
+
+int hwsim_keypad_update(hwsim_t *hw, int key_down, int value) {
+	int i;
+	const char *p;
+	uint16_t key_mask = 0, keypad_mask, old_state;
+
+	for (i = 0; i < 12; i++) {
+		if ((p = strchr(hwsim_keypad_keys[i], value)) != NULL) {
+			key_mask = (1 << (p - hwsim_keypad_keys[i]));
+			break;
+		}
+	}
+	if (i == 12)
+		return 0;
+	if (key_down)
+		hw->key_pressed[i] |= key_mask;
+	else
+		hw->key_pressed[i] &= ~key_mask;
+	keypad_mask = (1 << i);
+	old_state = hw->keypad_state;
+	if (hw->key_pressed[i])
+		hw->keypad_state |= keypad_mask;
+	else
+		hw->keypad_state &= ~keypad_mask;
+	test(hw);
+	return hw->keypad_state != old_state;
 }
