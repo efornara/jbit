@@ -40,6 +40,9 @@ typedef struct {
 #define HWSIM_C_DISPLAY_BG 2
 #define HWSIM_C_DISPLAY_FG 3
 #define HWSIM_C_KEY_BG 4
+#define HWSIM_C_KEY_FG 5
+#define HWSIM_C_KEY_P_BG 6
+#define HWSIM_C_KEY_P_FG 7
 
 typedef struct {
 	uint8_t r;

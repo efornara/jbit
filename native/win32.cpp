@@ -40,6 +40,7 @@ const char *szClassName = "jbit";
 LPBITMAPINFO pDIB;
 HBRUSH body_brush;
 HBRUSH key_brush;
+HBRUSH key_p_brush;
 
 void create() {
 }
@@ -81,6 +82,7 @@ int mouse(int mouse_down, int x, int y) {
 }
 
 void paint(HDC dc) {
+	uint16_t mask = 1;
 	hwsim_rect_t m;
 	hwsim_get_metrics(&hw, HWSIM_M_DISPLAY, &m);
 	StretchDIBits(dc,
@@ -88,10 +90,19 @@ void paint(HDC dc) {
 	  0, 0, LCD_WIDTH, LCD_HEIGHT,
 	  hw.video, pDIB,
 	  DIB_RGB_COLORS, SRCCOPY);
-	hwsim_color_t c;
-	hwsim_get_color(&hw, HWSIM_C_KEY_BG, &c);
-	SetBkColor(dc, RGB(c.r, c.g, c.b));
 	for (int i = 0; hwsim_keypad_labels[i]; i++) {
+		int pressed = hw.keypad_state & mask;
+		hwsim_color_t col;
+		if (pressed)
+			hwsim_get_color(&hw, HWSIM_C_KEY_P_BG, &col);
+		else
+			hwsim_get_color(&hw, HWSIM_C_KEY_BG, &col);
+		SetBkColor(dc, RGB(col.r, col.g, col.b));
+		if (pressed)
+			hwsim_get_color(&hw, HWSIM_C_KEY_P_FG, &col);
+		else
+			hwsim_get_color(&hw, HWSIM_C_KEY_FG, &col);
+		SetTextColor(dc, RGB(col.r, col.g, col.b));
 		char c = hwsim_keypad_labels[i];
 		hwsim_get_metrics(&hw, c, &m);
 		RECT rc;
@@ -99,12 +110,16 @@ void paint(HDC dc) {
 		rc.top = m.y;
 		rc.right = m.x + m.w;
 		rc.bottom = m.y + m.h;
-		FillRect(dc, &rc, key_brush);
+		if (pressed)
+			FillRect(dc, &rc, key_p_brush);
+		else
+			FillRect(dc, &rc, key_brush);
 		SetTextAlign(dc, TA_LEFT | TA_TOP);
 		TextOut(dc, rc.left + 2, rc.top + 2, &c, 1);
 		SetTextAlign(dc, TA_RIGHT | TA_BOTTOM);
 		const char *sub = hwsim_keypad_subs[i];
 		TextOut(dc, rc.right - 2, rc.bottom - 2, sub, strlen(sub));
+		mask <<= 1;
 	}
 }
 
@@ -194,6 +209,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	body_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
 	hwsim_get_color(&hw, HWSIM_C_KEY_BG, &c);
 	key_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
+	hwsim_get_color(&hw, HWSIM_C_KEY_P_BG, &c);
+	key_p_brush = CreateSolidBrush(RGB(c.r, c.g, c.b));
 
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -232,6 +249,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		DispatchMessage(&msg);
 	}
 
+	DeleteObject(key_p_brush);
 	DeleteObject(key_brush);
 	DeleteObject(body_brush);
 

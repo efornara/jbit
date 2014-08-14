@@ -49,6 +49,9 @@ static struct color_t {
 	{ HWSIM_C_DISPLAY_BG,   { 0x96,0xbb,0xa4 } },
 	{ HWSIM_C_DISPLAY_FG,   { 0x00,0x00,0x00 } },
 	{ HWSIM_C_KEY_BG,       { 0xcb,0xcf,0x88 } },
+	{ HWSIM_C_KEY_FG,       { 0x00,0x00,0x00 } },
+	{ HWSIM_C_KEY_P_BG,     { 0x00,0x00,0x00 } },
+	{ HWSIM_C_KEY_P_FG,     { 0xcb,0xcf,0x88 } },
 };
 
 #define N_OF_COLORS (sizeof(colors) / sizeof(struct color_t))
@@ -133,16 +136,6 @@ int hwsim_get_color(hwsim_t *hw, int element, hwsim_color_t *c) {
 	return 0;
 }
 
-static void test(hwsim_t *hw) {
-	int i;
-	uint16_t keypad_mask = 1;
-
-	for (i = 0; i < 12; i++) {
-		hw->video[i * 12] = (hw->keypad_state & keypad_mask) ? 0xff : 0x00;
-		keypad_mask <<= 1;
-	}
-}
-
 static int keypad_update(hwsim_t *hw, int i, int down, uint16_t key_mask) {
 	uint16_t keypad_mask, old_state;
 
@@ -156,7 +149,6 @@ static int keypad_update(hwsim_t *hw, int i, int down, uint16_t key_mask) {
 		hw->keypad_state |= keypad_mask;
 	else
 		hw->keypad_state &= ~keypad_mask;
-	test(hw);
 	return hw->keypad_state != old_state;
 }
 
