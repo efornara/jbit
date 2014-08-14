@@ -10,15 +10,16 @@ CFLAGS += -txv65
 endif
 
 OBJS = \
+	pc.o \
 	jbit.o \
 	vm.o \
-	pc.o \
-	fake6502.o
+	fake6502.o \
+	opcodes.o
 
 all: jbembd.jb
 
 jbembd.jb: $(OBJS)
-	$(CC) $(LDFLAGS) -o jbembd.jb $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o jbembd.jb $(OBJS) $(LIBS)
 
 clean:
 	$(RM) *.o jbembd.jb

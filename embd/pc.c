@@ -240,6 +240,7 @@ void vm_traces(const char *msg) {
 #endif
 
 static void load_jb_file(const char *file_name) {
+	uint8_t header[12];
 	uint8_t *jb;
 	int n, rc;
 	FILE *f;
@@ -248,22 +249,25 @@ static void load_jb_file(const char *file_name) {
 
 	f = fopen(file_name, "r");
 	assert(f);
-	fseek(f, 0, SEEK_END);
-	n = ftell(f);
-	rewind(f);
+	rc = fread(header, 12, 1, f);
+	assert(rc == 1);
+	fclose(f);
+	n_code_pages = header[8];
+	n_data_pages = header[9];
+	n = ((n_code_pages + n_data_pages) << 8);
 	jb = (uint8_t *)malloc(n);
 	assert(jb);
+	f = fopen(file_name, "r");
+	assert(f);
+	rc = fread(header, 12, 1, f);
+	assert(rc == 1);
 	rc = fread(jb, n, 1, f);
 	assert(rc == 1);
 	fclose(f);
-	n -= 12;
-	n_code_pages = jb[8];
-	n_data_pages = jb[9];
-	assert(n == ((n_code_pages + n_data_pages) << 8));
-	jbit_prg_code_ptr = &jb[12];
+	jbit_prg_code_ptr = &jb[0];
 	jbit_prg_code_size = n_code_pages << 8;
 	jbit_prg_code_pages = n_data_pages;
-	jbit_prg_data_ptr = &jb[12 + jbit_prg_code_size];
+	jbit_prg_data_ptr = &jb[jbit_prg_code_size];
 	jbit_prg_data_size = n_data_pages << 8;
 }
 
@@ -274,17 +278,13 @@ static void load_rom(const char *file_name) {
 
 	f = fopen(file_name, "r");
 	assert(f);
-	fseek(f, 0, SEEK_END);
-	n = ftell(f);
-	assert(n <= 0x800);
-	rewind(f);
-	rom = (uint8_t *)malloc(n);
+	rom = (uint8_t *)malloc(0x800 + 1);
 	assert(rom);
-	rc = fread(rom, n, 1, f);
-	assert(rc == 1);
+	rc = fread(rom, 1, 0x800 + 1, f);
+	assert(rc > 0 && rc <= 0x800);
 	fclose(f);
 	jbit_rom_ptr = rom;
-	jbit_rom_size = n;
+	jbit_rom_size = rc;
 }
 
 static void local() {

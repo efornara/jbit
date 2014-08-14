@@ -68,6 +68,8 @@
 #define ENABLE_VM
 #define ENABLE_ROM
 #define ENABLE_VM_TRACE
+#define ENABLE_VM_TRACE_CPU
+#define ENABLE_VM_TRACE_MEM
 #define LCD_NULL
 #define KEYPAD_NULL
 
