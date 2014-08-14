@@ -66,7 +66,7 @@ jbit-embd-c.js: $(EM_SRCS)
 	rm -f ROM_TMP
 
 clean:
-	$(RM) -r build-cli *.o jbembd jbit-embd-c.*
+	rm -rf build-cli *.o jbembd jbit-embd-c.* *.exe *.jb
 
 remote: jbembd
 	./jbembd /dev/ttyACM0

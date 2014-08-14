@@ -147,12 +147,6 @@ extern "C" void serial_loader() {
 
 #if defined(LCD_NULL)
 
-extern "C" void lcd_init() {
-}
-
-extern "C" void lcd_write(unsigned char dc, unsigned char data) {
-}
-
 #elif defined(LCD_HWSIM)
 
 extern "C" void lcd_init() {
@@ -177,15 +171,6 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
 
 
 #if defined(KEYPAD_NULL)
-
-uint16_t keypad_state;
-
-extern "C" void keypad_init() {
-  keypad_state = 0;
-}
-
-extern "C" void keypad_scan() {
-}
 
 #elif defined(KEYPAD_HWSIM)
 

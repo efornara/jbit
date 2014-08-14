@@ -44,6 +44,7 @@ microio_context_t microio;
 primo_context_t primo;
 #endif
 
+/*
 void test_keypad() {
 	int i, mask;
 
@@ -52,6 +53,7 @@ void test_keypad() {
 	for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
 		lcd_char((keypad_state & mask) ? keypad_labels[i] : ' ');
 }
+*/
 
 uint8_t vm_vsync;
 uint16_t vm_wait;
@@ -292,14 +294,18 @@ void vm_init() {
 	vm_wait = 100;
 	trace6502(1);
 	reset6502();
+#ifndef LCD_NULL
 	lcd_clear();
+#endif
 #ifdef ENABLE_MICROIO
 	microio_init(&microio);
 #endif
 #ifdef ENABLE_PRIMO
 	primo_init(&primo);
 #endif
+#ifndef KEYPAD_NULL
 	keypad_handler = process_events;
+#endif
 }
 
 uint16_t vm_step() {

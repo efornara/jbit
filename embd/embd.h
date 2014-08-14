@@ -54,12 +54,18 @@
 
 #ifndef LOCAL_CONFIG
 
-#ifdef __AVR
+#if defined(__AVR)
 
 #define ENABLE_VM
 #define ENABLE_PRIMO
 #define ENABLE_SERIAL
 #define ENABLE_VM_TRACE
+#define LCD_NULL
+#define KEYPAD_NULL
+
+#elif defined(__CC65__)
+
+#define ENABLE_VM
 #define LCD_NULL
 #define KEYPAD_NULL
 
@@ -72,8 +78,8 @@
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
 #define ENABLE_VM_TRACE
-#define LCD_NULL
-#define KEYPAD_NULL
+#define LCD_HWSIM
+#define KEYPAD_HWSIM
 
 #endif
 
@@ -230,6 +236,8 @@ void vm_tracef(const char *format, ...);
 #define MICROIO_CONVIDEO_SIZE 40
 #define MICROIO_KEYBUF_SIZE 8
 
+#ifdef ENABLE_MICROIO
+
 typedef struct {
 	uint8_t convideo[MICROIO_CONVIDEO_SIZE];
 	uint8_t keybuf[MICROIO_KEYBUF_SIZE];
@@ -245,7 +253,11 @@ uint8_t microio_get(microio_context_t *ctx, uint8_t addr);
 void microio_lcd(microio_context_t *ctx, uint8_t x, uint8_t y);
 void microio_keypress(microio_context_t *ctx, uint8_t code);
 
+#endif
+
 /* PRIMO */
+
+#ifdef ENABLE_PRIMO
 
 typedef struct {
 	uint16_t analog;
@@ -262,6 +274,8 @@ typedef struct {
 void primo_init(primo_context_t *ctx);
 void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data);
 uint8_t primo_get(primo_context_t *ctx, uint8_t addr);
+
+#endif
 
 /* EMBD */
 

@@ -75,9 +75,13 @@ static const char *const modules[] = {
 #define OFFSET_DATAPAGES 9
 
 void jbit_init() {
+#ifndef LCD_NULL
 	lcd_init();
 	lcd_clear();
+#endif
+#ifndef KEYPAD_NULL
 	keypad_init();
+#endif
 #if defined(ENABLE_ROM) && !defined(PLATFORM_PC)
 	jbit_rom_ptr = rom_start;
 	jbit_rom_size = pgm_read_word(&rom_size);
@@ -105,7 +109,9 @@ void jbit_init() {
 
 void jbit_replace_with(int module_) {
 	module = module_;
+#ifndef KEYPAD_NULL
 	keypad_handler = 0;
+#endif
 	switch (module) {
 	case MODULE_JBIT:
 #ifdef ENABLE_UI
@@ -140,8 +146,10 @@ static int item_selected() {
 
 uint16_t jbit_step() {
 	uint16_t w = 100;
+#ifndef KEYPAD_NULL
 	keypad_scan();
 	keypad_process();
+#endif
 	if (ui_state)
 		return w;
 	switch (module) {
