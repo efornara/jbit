@@ -70,6 +70,7 @@ const char *hwsim_keypad_subs[] = {
 	".",
 };
 
+// max 15 keys per label
 const char *hwsim_keypad_keys[] = {
 	"0",
 	"1",
@@ -87,6 +88,7 @@ const char *hwsim_keypad_keys[] = {
 
 void hwsim_init(hwsim_t *hw) {
 	memset(hw, 0, sizeof(hwsim_t));
+	hw->mouse_state = -1;
 }
 
 void hwsim_cleanup(hwsim_t *hw) {
@@ -141,20 +143,10 @@ static void test(hwsim_t *hw) {
 	}
 }
 
-int hwsim_keypad_update(hwsim_t *hw, int key_down, int value) {
-	int i;
-	const char *p;
-	uint16_t key_mask = 0, keypad_mask, old_state;
+static int keypad_update(hwsim_t *hw, int i, int down, uint16_t key_mask) {
+	uint16_t keypad_mask, old_state;
 
-	for (i = 0; i < 12; i++) {
-		if ((p = strchr(hwsim_keypad_keys[i], value)) != NULL) {
-			key_mask = (1 << (p - hwsim_keypad_keys[i]));
-			break;
-		}
-	}
-	if (i == 12)
-		return 0;
-	if (key_down)
+	if (down)
 		hw->key_pressed[i] |= key_mask;
 	else
 		hw->key_pressed[i] &= ~key_mask;
@@ -166,4 +158,52 @@ int hwsim_keypad_update(hwsim_t *hw, int key_down, int value) {
 		hw->keypad_state &= ~keypad_mask;
 	test(hw);
 	return hw->keypad_state != old_state;
+}
+
+int hwsim_key_update(hwsim_t *hw, int key_down, int value) {
+	int i;
+	const char *p;
+	uint16_t key_mask = 0;
+
+	for (i = 0; i < 12; i++) {
+		if ((p = strchr(hwsim_keypad_keys[i], value)) != NULL) {
+			key_mask = (1 << (p - hwsim_keypad_keys[i]));
+			break;
+		}
+	}
+	if (i == 12)
+		return 0;
+	return keypad_update(hw, i, key_down, key_mask);
+}
+
+int hwsim_mouse_update(hwsim_t *hw, int mouse_down, int x, int y) {
+	const uint16_t key_mask = 0x8000;
+	int i, force_update = 0;
+
+	if (mouse_down) {
+		if (hw->mouse_state != -1) {
+			/*
+			 It happens, for example, when the user leaves the window holding
+			 the mouse button pressed (no WM_MOUSELEAVE is generated in win32)
+			*/
+			keypad_update(hw, hw->mouse_state, 0, key_mask);
+			hw->mouse_state = -1;
+			force_update = 1;
+		}
+		for (i = 0; i < 12; i++) {
+			hwsim_rect_t m;
+			hwsim_get_metrics(hw, hwsim_keypad_labels[i], &m);
+			if (x >= m.x && x < m.x + m.w && y >= m.y && y < m.y + m.h)
+				break;
+		}
+		if (i == 12)
+			return force_update;
+		hw->mouse_state = i;
+	} else {
+		if (hw->mouse_state == -1)
+			return 0;
+		i = hw->mouse_state;
+		hw->mouse_state = -1;
+	}
+	return keypad_update(hw, i, mouse_down, key_mask) || force_update;
 }

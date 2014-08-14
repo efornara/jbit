@@ -73,7 +73,11 @@ int key(int key_down, int code) {
 	}
 	if (code < ' ' || code > '~')
 		return 0;
-	return hwsim_keypad_update(&hw, key_down, code);
+	return hwsim_key_update(&hw, key_down, code);
+}
+
+int mouse(int mouse_down, int x, int y) {
+	return hwsim_mouse_update(&hw, mouse_down, x, y);
 }
 
 void paint(HDC dc) {
@@ -152,9 +156,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_KEYDOWN:
 		if (key(1, wParam))
 			InvalidateRect(hWnd, NULL, TRUE);
+		if (wParam == VK_ESCAPE) // TODO: remove (quick shortcut for testing)
+			PostQuitMessage(0);
 		break;
 	case WM_KEYUP:
 		if (key(0, wParam))
+			InvalidateRect(hWnd, NULL, TRUE);
+		break;
+	case WM_LBUTTONDOWN:
+		if (mouse(1, LOWORD(lParam), HIWORD(lParam)))
+			InvalidateRect(hWnd, NULL, TRUE);
+		break;
+	case WM_LBUTTONUP:
+	case WM_MOUSELEAVE:
+		// non-standard handling, but good enough for me
+		if (mouse(0, -1, -1))
 			InvalidateRect(hWnd, NULL, TRUE);
 		break;
 	case WM_DESTROY:
