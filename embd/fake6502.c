@@ -240,8 +240,8 @@ void reset6502() {
 }
 
 
-static void (*const addrtable[256])() PROGMEM;
-static void (*const optable[256])() PROGMEM;
+extern void (*const addrtable[256])() PROGMEM;
+extern void (*const optable[256])() PROGMEM;
 uint8_t penaltyop, penaltyaddr;
 
 //addressing mode functions, calculates effective addresses
@@ -331,8 +331,10 @@ static void indy() { // (indirect),Y
 }
 
 static uint16_t getvalue() {
-    if (pgm_read_word(&addrtable[opcode]) == acc) return((uint16_t)a);
-        else return((uint16_t)read6502(ea));
+	if ((void *)pgm_read_word(&addrtable[opcode]) == (void *)acc)
+		return((uint16_t)a);
+	else
+		return((uint16_t)read6502(ea));
 }
 
 /* NOT USED
@@ -342,8 +344,10 @@ static uint16_t getvalue16() {
 */
 
 static void putvalue(uint16_t saveval) {
-    if (pgm_read_word(&addrtable[opcode]) == acc) a = (uint8_t)(saveval & 0x00FF);
-        else write6502(ea, (saveval & 0x00FF));
+	if ((void *)pgm_read_word(&addrtable[opcode]) == (void *)acc)
+		a = (uint8_t)(saveval & 0x00FF);
+	else
+		write6502(ea, (saveval & 0x00FF));
 }
 
 
