@@ -66,6 +66,8 @@
 #elif defined(__CC65__)
 
 #define ENABLE_VM
+#define ENABLE_ROM
+#define ENABLE_VM_TRACE
 #define LCD_NULL
 #define KEYPAD_NULL
 
