@@ -6,6 +6,7 @@
 *.swp
 *.map
 *.exe
+*.zip
 jbit-core.js
 js/libs
 js/images
