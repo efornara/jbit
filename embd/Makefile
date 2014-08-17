@@ -61,7 +61,7 @@ jbit-embd-c.js: $(EM_SRCS)
 	avr-objcopy -I binary -O elf32-avr \
 	 --rename-section .data=.progmem.data,contents,alloc,load,readonly,data \
 	 --redefine-sym _binary_ROM_TMP_start=rom_start \
-	 --redefine-sym _binary_ROM_TMP_size=rom_size \
+	 --redefine-sym _binary_ROM_TMP_end=rom_end \
 	 ROM_TMP build-cli/rom.o
 	rm -f ROM_TMP
 

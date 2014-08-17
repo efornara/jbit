@@ -32,7 +32,7 @@
 
 extern const uint8_t autorun_jb[] PROGMEM;
 extern const uint8_t rom_start[] PROGMEM;
-extern const uint16_t rom_size PROGMEM;
+extern const uint8_t rom_end[] PROGMEM;
 
 const uint8_t *jbit_prg_code_ptr;
 const uint8_t *jbit_prg_data_ptr;
@@ -84,7 +84,7 @@ void jbit_init() {
 #endif
 #if defined(ENABLE_ROM) && !defined(PLATFORM_PC)
 	jbit_rom_ptr = rom_start;
-	jbit_rom_size = pgm_read_word(&rom_size);
+	jbit_rom_size = rom_end - rom_start;
 #endif
 #if defined(ENABLE_AUTORUN)
 	jbit_prg_code_ptr = &autorun_jb[SIZE_HEADER];
