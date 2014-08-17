@@ -266,7 +266,7 @@ void write6502(uint16_t address, uint8_t value) {
 	i = ctx->n_mpages++;
 	a = address & MPAGE_ADDR_MASK;
 	ctx->mpage[i].addr = a;
-#ifdef ENABLE_VM_TRACE
+#ifdef ENABLE_VM_TRACE_MPAGE
 	vm_tracef("vm: mpage %2d  %3d:%03d-%03d", i, a >> 8, a & 0xff, (a & 0xff) | 0x1f);
 #endif
 	if (page != 1 && a < ctx->last_ro_addr)
