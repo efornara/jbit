@@ -16,11 +16,11 @@ l1:	lda #DIGVAL_LOW
 	jmp l1
 
 pause:
-	ldy #20
-l3:	ldx #0
-l2: nop
-	dex
-	bne l2
-	dey
-	bne l3
+	lda #REQ_DELAY
+	sta REQPUT
+	lda #232
+	sta REQPUT
+	lda #3 ; 3*256+232 = 1000ms
+	sta REQPUT
+	sta REQEND
 	rts
