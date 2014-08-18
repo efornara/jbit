@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include <stdio.h>
+
 #include "embd.h"
 
 #ifdef ENABLE_DEMOS

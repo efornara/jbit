@@ -321,12 +321,12 @@ private:
 			if (i == -1)
 				return ERR;
 			const char *arg = &r[arg_i];
-			char *slot = arr_buf.append_raw(sizeof(char *));
+			char **slot = (char **)arr_buf.append_raw(sizeof(char *));
 			memcpy(slot, &arg, sizeof(char *));
 			n_of_args++;
 		}
 		const char *null = 0;
-		char *slot = arr_buf.append_raw(sizeof(char *));
+		char **slot = (char **)arr_buf.append_raw(sizeof(char *));
 		memcpy(slot, &null, sizeof(char *));
 		execvp(filename, (char* const*)arr_buf.get_data());
 		return errno;

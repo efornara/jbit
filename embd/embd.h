@@ -81,7 +81,9 @@
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
 #define ENABLE_MICROIO_RANDOM
+#ifndef PLATFORM_JS
 #define ENABLE_VM_TRACE
+#endif
 #define LCD_HWSIM
 #define KEYPAD_HWSIM
 

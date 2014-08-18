@@ -26,9 +26,10 @@
  * SUCH DAMAGE.
  */
 
-#include "embd.h"
-
+#include <stdio.h>
 #include <string.h>
+
+#include "embd.h"
 
 // mostly a search & replace and type optimization starting from LibView.java
 

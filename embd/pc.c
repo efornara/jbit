@@ -273,7 +273,7 @@ static void load_jb_file(const char *file_name) {
 
 static void load_rom(const char *file_name) {
 	uint8_t *rom;
-	int n, rc;
+	int rc;
 	FILE *f;
 
 	f = fopen(file_name, "r");
