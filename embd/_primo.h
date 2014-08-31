@@ -39,11 +39,12 @@
 #define REQPTRLO 0x0204
 #define REQPTRHI 0x0205
 
-/*  4 bytes only                                                           */
 #define REQDAT 0x0260
 
 #define REQ_DELAY 1
 #define REQ_MILLIS 2
+#define REQ_SHIFTIN 3
+#define REQ_SHIFTOUT 4
 
 #define IOBIT0 0x02F0
 #define IOBIT1 0x02F1
@@ -69,3 +70,6 @@
 
 #define DIGVAL_HIGH 1
 #define DIGVAL_LOW 0
+
+#define SHIFT_LSBFIRST 0
+#define SHIFT_MSBFIRST 1

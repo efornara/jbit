@@ -271,7 +271,7 @@ typedef struct {
 	uint8_t io;
 	uint8_t digital;
 	uint8_t flags;
-	uint8_t reqdat[4];
+	uint8_t reqdat[8];
 	uint8_t reqres;
 	uint8_t reqhi;
 	uint8_t reqn;

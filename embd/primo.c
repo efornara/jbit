@@ -78,6 +78,26 @@ static void request_dat(primo_context_t *ctx) {
 #endif
 		memcpy(&ctx->reqdat[0], &ms, sizeof(ms));
 		} break;
+	case REQ_SHIFTIN: {
+		if (n != 4)
+			goto error;
+		ctx->reqdat[0] = shiftIn(ctx->reqdat[1], ctx->reqdat[2],
+		  ctx->reqdat[3]);
+#ifdef ENABLE_PRIMO_TRACEREQ
+		vm_tracef("primo req shiftin %d %d %d %d", ctx->reqdat[1],
+		  ctx->reqdat[2], ctx->reqdat[3], ctx->reqdat[0]);
+#endif
+		} break;
+	case REQ_SHIFTOUT: {
+		if (n != 5)
+			goto error;
+#ifdef ENABLE_PRIMO_TRACEREQ
+		vm_tracef("primo req shiftout %d %d %d %d", ctx->reqdat[1],
+		  ctx->reqdat[2], ctx->reqdat[3], ctx->reqdat[4]);
+#endif
+		shiftOut(ctx->reqdat[1], ctx->reqdat[2], ctx->reqdat[3],
+		  ctx->reqdat[4]);
+		} break;
 	}
 	ctx->reqres = 0;
 	return;
@@ -95,7 +115,7 @@ static void request_ptr(primo_context_t *ctx, uint8_t lo) {
 		goto error;
 	n = read6502(address++);
 	n |= read6502(address++) << 8;
-	if (n > 4)
+	if (n > 8)
 		goto error;
 	for (i = 0; i < n; i++)
 		ctx->reqdat[i] = read6502(address++);
@@ -116,7 +136,7 @@ void primo_put(primo_context_t *ctx, uint8_t addr, uint8_t data) {
 #endif
 	switch (addr) {
 	case REG(REQPUT):
-		if (ctx->reqn < 4)
+		if (ctx->reqn < 8)
 			ctx->reqdat[ctx->reqn++] = data;
 		break;
 	case REG(REQEND):
@@ -176,7 +196,7 @@ uint8_t primo_get(primo_context_t *ctx, uint8_t addr) {
 		else
 			return ctx->analog >> 8;
 	default:
-		if (addr >= REG(REQDAT) && addr < REG(REQDAT) + 4)
+		if (addr >= REG(REQDAT) && addr < REG(REQDAT) + 8)
 			return ctx->reqdat[addr - REG(REQDAT)];
 	}
 	return 0;
