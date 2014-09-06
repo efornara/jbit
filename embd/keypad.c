@@ -28,21 +28,48 @@
 
 #include "embd.h"
 
+#define LONGPRESS_TIMEOUT 1000
+#define LONGPRESS_FIRED 0xffffffffU
+
 const char *const keypad_labels = "0123456789*#";
 
 keypad_handler_t keypad_handler = 0;
 
 static uint16_t oldstate = 0;
+static int8_t pressed_key = -1;
+static uint32_t pressed_time;
 
 void keypad_process() {
-	if (keypad_handler) {
-		uint16_t changed = keypad_state ^ oldstate;
-		uint16_t released = changed & ~keypad_state;
-		uint16_t mask;
-		int i;
-		for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
-			if (released & mask)
-				keypad_handler(KEYPAD_EVENT_RELEASE, keypad_labels[i]);
+	uint32_t t = sys_get_millis();
+	uint16_t changed = keypad_state ^ oldstate;
+	uint16_t released = changed & ~keypad_state;
+	uint16_t mask;
+	int i;
+
+	for (i = 0, mask = 1; i < 12; i++, mask <<= 1) {
+		if (keypad_state & mask) {
+			if (pressed_key == -1) {
+				pressed_key = i;
+				pressed_time = t;
+			} else if (pressed_key == i) {
+				if (pressed_time != LONGPRESS_FIRED &&
+				  t - pressed_time > LONGPRESS_TIMEOUT) {
+					if (keypad_handler)
+						keypad_handler(KEYPAD_EVENT_LONGPRESS,
+						  keypad_labels[i]);
+					pressed_time = LONGPRESS_FIRED;
+				}
+			} else {
+				/* ignored (LONGPRESS only supported on 1st key) */
+			}
+		}
+		if (released & mask) {
+			if (i != pressed_key || pressed_time != LONGPRESS_FIRED)
+				if (keypad_handler)
+					keypad_handler(KEYPAD_EVENT_RELEASE, keypad_labels[i]);
+			if (i == pressed_key)
+				pressed_key = -1;
+		}
 	}
 	oldstate = keypad_state;
 }

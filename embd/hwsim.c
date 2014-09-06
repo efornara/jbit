@@ -31,6 +31,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <sys/time.h>
+
 #include "embd.h"
 
 uint8_t lcd_bitmap[LCD_BITMAP_SIZE];
@@ -161,6 +163,18 @@ void keypad_update(int key_down, int value) {
 		keypad_state |= mask;
 	else
 		keypad_state &= ~mask;
+}
+
+uint32_t sys_get_millis() {
+	static struct timeval epoch = { 0, 0 };
+	struct timeval tv;
+	uint32_t dt;
+	gettimeofday(&tv, NULL);
+	if (epoch.tv_sec == 0)
+		epoch = tv;
+	dt = (tv.tv_sec - epoch.tv_sec) * 1000;
+	dt += ((int)tv.tv_usec - epoch.tv_usec) / 1000;
+	return dt;
 }
 
 int sys_get_random_seed() {

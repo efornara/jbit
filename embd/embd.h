@@ -97,6 +97,10 @@
 #define MAX_N_MPAGES 8
 #endif
 
+#ifndef LONGPRESS_TIMEOUT
+#define LONGPRESS_TIMEOUT 1000
+#endif
+
 // derived values
 
 #if !defined(LCD_HWSIM) && !defined(LCD_REAL)
@@ -196,6 +200,7 @@ void keypad_process();
 
 /* SYS */
 
+uint32_t sys_get_millis();
 int sys_get_random_seed();
 
 /* OPCODES */

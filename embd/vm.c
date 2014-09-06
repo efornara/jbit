@@ -129,12 +129,14 @@ static const uint8_t irqvec[] PROGMEM = {
 #define MPAGE_ADDR_MASK 0xffe0
 #define MPAGE_DATA_MASK 0x001f
 
+#define VM_WAIT_MS 50
+
 #define VM_STATE_RUNNING 0
 #define VM_STATE_HALTOK 1
 #define VM_STATE_HALTFAIL 2
 #define VM_STATE_INVOP 3
 #define VM_STATE_OUTOFMEM 4
-#define VM_STATE_INTERNAL 5
+#define VM_STATE_BREAK 5
 
 typedef struct {
 	uint8_t page0[PAGE_SIZE];
@@ -302,6 +304,13 @@ write_value:
 
 static void process_events(uint8_t event, char c) {
 #ifdef ENABLE_MICROIO
+	if (event == KEYPAD_EVENT_LONGPRESS) {
+		if (ctx->vm_state == VM_STATE_RUNNING) {
+			ctx->vm_state = VM_STATE_BREAK;
+			vm_stop("BRK");
+		}
+		return;
+	}
 	microio_keypress(&microio, c);
 #endif
 }
@@ -309,7 +318,7 @@ static void process_events(uint8_t event, char c) {
 void vm_init() {
 	memset(&ctx_, 0, sizeof(ctx_));
 	ctx->last_ro_addr = 0xffff;
-	vm_wait = 100;
+	vm_wait = VM_WAIT_MS;
 	trace6502(1);
 	reset6502();
 #ifndef LCD_NULL
@@ -330,7 +339,7 @@ uint16_t vm_step() {
 	int i = 0;
 
 	if (ctx->vm_state != VM_STATE_RUNNING)
-		return 100;
+		return VM_WAIT_MS;
 	vm_vsync = 0;
 	for (i = 0; i < 10000 && !vm_vsync; i++) {
 		step6502();

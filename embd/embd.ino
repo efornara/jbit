@@ -224,6 +224,10 @@ extern "C" void keypad_scan() {
 #error "no keypad configured"
 #endif
 
+extern "C" uint32_t sys_get_millis() {
+  return millis();
+}
+
 extern "C" int sys_get_random_seed() {
   return analogRead(0);
 }
