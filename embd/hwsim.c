@@ -103,6 +103,7 @@ void keypad_scan() {
 
 void keypad_update(int key_down, int value) {
 	unsigned short mask = 0;
+	const char *p;
 	switch (value) {
 	case 'a': case 'b': case 'c':
 	case 'A': case 'B': case 'C':
@@ -137,28 +138,9 @@ void keypad_update(int key_down, int value) {
 		value = '9';
 		break;
 	}
-	switch (value) {
-	case '*':
-		mask = KEYPAD_MASK_STAR;
-		break;
-	case '#':
-		mask = KEYPAD_MASK_HASH;
-		break;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		mask = (1 << (value - '0'));
-		break;
-	default:
+	if ((p = strchr(keypad_labels, value)) == NULL)
 		return;
-	}
+	mask = 1 << (p - keypad_labels);
 	if (key_down)
 		keypad_state |= mask;
 	else

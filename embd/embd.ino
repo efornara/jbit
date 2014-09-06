@@ -218,7 +218,67 @@ extern "C" void keypad_scan() {
 
 #elif defined(KEYPAD_REAL)
 
-#error "not implemented"
+/*
+
+ COL0  COL1  COL2 |
+ -----------------+--------
+   1     2     3  |  ROW0
+   4     5     6  |  ROW1
+   7     8     9  |  ROW2
+   *     0     #  |  ROW3
+
+ */
+
+#define PIN_ROW0_IN 7
+#define PIN_ROW1_IN 8
+#define PIN_ROW2_IN 9
+#define PIN_ROW3_IN 10
+
+#define PIN_COL0_OUT 17 /* A3 */
+#define PIN_COL1_OUT 16 /* A2 */
+#define PIN_COL2_OUT 15 /* A1 */
+
+#define N_OF_COLS 3
+#define N_OF_ROWS 4
+
+uint8_t rows[] = {
+  PIN_ROW0_IN,
+  PIN_ROW1_IN,
+  PIN_ROW2_IN,
+  PIN_ROW3_IN,
+};
+
+uint8_t cols[] = {
+  PIN_COL0_OUT,
+  PIN_COL1_OUT,
+  PIN_COL2_OUT,
+};
+
+uint16_t keypad_state;
+
+extern "C" void keypad_init() {
+  pinMode(PIN_ROW0_IN, INPUT_PULLUP);
+  pinMode(PIN_ROW1_IN, INPUT_PULLUP);
+  pinMode(PIN_ROW2_IN, INPUT_PULLUP);
+  pinMode(PIN_ROW3_IN, INPUT_PULLUP);
+  keypad_state = 0;
+}
+
+extern "C" void keypad_scan() {
+  uint8_t c, r, n;
+
+  keypad_state = 0;
+  for (c = 0; c < N_OF_COLS; c++) {
+    pinMode(cols[c], OUTPUT);
+    digitalWrite(cols[c], LOW);
+    for (r = 0, n = 0; r < N_OF_ROWS; r++, n += 3) {
+      if (digitalRead(rows[r]) == LOW)
+        keypad_state |= (1 << (c + n));
+    }
+    digitalWrite(cols[c], HIGH);
+    pinMode(cols[c], INPUT);
+  }
+}
 
 #else
 #error "no keypad configured"

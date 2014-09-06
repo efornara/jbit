@@ -63,7 +63,7 @@
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
 #define LCD_HWSIM
-#define KEYPAD_HWSIM
+#define KEYPAD_REAL
 
 #else /* DIST_PRIMO */
 
@@ -181,19 +181,6 @@ void lcd_char(char c);
 #define LEFT '4'
 #define RIGHT '6'
 #define SELECT '5'
-
-#define KEYPAD_MASK_0 (1 << 0)
-#define KEYPAD_MASK_1 (1 << 1)
-#define KEYPAD_MASK_2 (1 << 2)
-#define KEYPAD_MASK_3 (1 << 3)
-#define KEYPAD_MASK_4 (1 << 4)
-#define KEYPAD_MASK_5 (1 << 5)
-#define KEYPAD_MASK_6 (1 << 6)
-#define KEYPAD_MASK_7 (1 << 7)
-#define KEYPAD_MASK_8 (1 << 8)
-#define KEYPAD_MASK_9 (1 << 9)
-#define KEYPAD_MASK_STAR (1 << 10)
-#define KEYPAD_MASK_HASH (1 << 11)
 
 #define KEYPAD_EVENT_RELEASE 0
 #define KEYPAD_EVENT_LONGPRESS 1

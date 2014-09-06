@@ -31,7 +31,7 @@
 #define LONGPRESS_TIMEOUT 1000
 #define LONGPRESS_FIRED 0xffffffffU
 
-const char *const keypad_labels = "0123456789*#";
+const char *const keypad_labels = "123456789*0#";
 
 keypad_handler_t keypad_handler = 0;
 

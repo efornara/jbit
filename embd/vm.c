@@ -45,17 +45,6 @@ microio_context_t microio;
 primo_context_t primo;
 #endif
 
-/*
-void test_keypad() {
-	int i, mask;
-
-	lcd_goto(4, 5);
-	keypad_scan();
-	for (i = 0, mask = 1; i < 12; i++, mask <<= 1)
-		lcd_char((keypad_state & mask) ? keypad_labels[i] : ' ');
-}
-*/
-
 uint8_t vm_vsync;
 uint16_t vm_wait;
 
