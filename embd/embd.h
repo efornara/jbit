@@ -56,12 +56,25 @@
 
 #if defined(__AVR)
 
+#if defined(DIST_NANO)
+
+#define ENABLE_UI
+#define ENABLE_VM
+#define ENABLE_DEMOS
+#define ENABLE_MICROIO
+#define LCD_HWSIM
+#define KEYPAD_HWSIM
+
+#else /* DIST_PRIMO */
+
 #define ENABLE_VM
 #define ENABLE_PRIMO
 #define ENABLE_SERIAL
 #define ENABLE_VM_TRACE
 #define LCD_NULL
 #define KEYPAD_NULL
+
+#endif
 
 #elif defined(__CC65__)
 

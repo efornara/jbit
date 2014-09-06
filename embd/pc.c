@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
 			load_rom(argv[i]);
 #ifdef PLATFORM_PC_SDL
 		} else if (!strcmp(s, "-S")) {
-			if (i != argc + 3)
+			if (i != 1 || argc != 3)
 				usage();
 			remote(argv[i + 1]);
 			exit(0);
