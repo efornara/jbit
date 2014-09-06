@@ -115,7 +115,13 @@ void jbit_replace_with(int module_) {
 	switch (module) {
 	case MODULE_JBIT:
 #ifdef ENABLE_UI
+		/* force demos until there are more than one item to show */
+#ifdef ENABLE_DEMOS
+		module = MODULE_DEMOS;
+		demos_init();
+#else
 		ui_menu("JBit", modules);
+#endif
 #endif
 		break;
 #ifdef ENABLE_VM
