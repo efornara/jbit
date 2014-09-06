@@ -3,9 +3,9 @@ CFLAGS = -DPLATFORM_PC -Wall -ggdb
 LDFLAGS = -ggdb
 LIBS =
 
-# enable SDL
-#CFLAGS += -DPLATFORM_PC_SDL
-#LIBS += -lSDL
+# comment out if you don't have SDL
+CFLAGS += -DPLATFORM_PC_SDL
+LIBS += -lSDL
 
 EM_CC = emcc
 EM_CFLAGS = -DPLATFORM_JS -Wall -O2

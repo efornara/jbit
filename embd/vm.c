@@ -88,14 +88,26 @@ static void vm_traceu(uint16_t address) {
 
 #endif
 
-void vm_fatal(const char *msg) {
-#ifdef ENABLE_VM_TRACE
-	vm_traces(msg);
+static void wait_for_key(uint8_t event, char c) {
+	jbit_replace_with(MODULE_JBIT);
+}
+
+void vm_stop(const char *tag) {
+#ifndef LCD_NULL
+	int i;
+
+	lcd_goto(0, 0);
+	for (i = 0; tag[i]; i++)
+		lcd_char(tag[i]);
+#elif defined(ENABLE_VM_TRACE)
+	vm_tracef("vm_stop: %s", tag);
 #endif
-#ifdef PLATFORM_PC
-	abort();
+#if defined(PLATFORM_PC) && !defined(PLATFORM_PC_SDL)
+	exit(0);
 #else
-	// TODO
+#ifndef KEYPAD_NULL
+	keypad_handler = wait_for_key;
+#endif
 #endif
 }
 
@@ -122,6 +134,7 @@ static const uint8_t irqvec[] PROGMEM = {
 #define VM_STATE_HALTFAIL 2
 #define VM_STATE_INVOP 3
 #define VM_STATE_OUTOFMEM 4
+#define VM_STATE_INTERNAL 5
 
 typedef struct {
 	uint8_t page0[PAGE_SIZE];
@@ -141,8 +154,12 @@ static vm_context_t *ctx = &ctx_;
 uint8_t get_prog_byte(int offset) {
 	uint16_t data;
 	// in pgm the full jb is available (fast)
-	if (jbit_prg_pgm)
-		return pgm_read_byte(&(jbit_prg_code_ptr[offset]));
+	if (jbit_prg_pgm) {
+		if (offset < jbit_prg_code_size)
+			return pgm_read_byte(&(jbit_prg_code_ptr[offset]));
+		else
+			return 0; // demos
+	}
 	// in ram there might be holes (compact)
 	if (offset < jbit_prg_code_size)
 		return jbit_prg_code_ptr[offset];
@@ -312,24 +329,24 @@ void vm_init() {
 uint16_t vm_step() {
 	int i = 0;
 
+	if (ctx->vm_state != VM_STATE_RUNNING)
+		return 100;
 	vm_vsync = 0;
 	for (i = 0; i < 10000 && !vm_vsync; i++) {
 		step6502();
-		switch (ctx->vm_state) {
+		if (ctx->vm_state != VM_STATE_RUNNING) {
+			switch (ctx->vm_state) {
 			case VM_STATE_OUTOFMEM:
-				vm_fatal("vm: out of memory");
-			case VM_STATE_RUNNING:
+				vm_stop("MEM");
 				break;
 			case VM_STATE_HALTOK:
-#if defined(PLATFORM_PC) && !defined(PLATFORM_PC_SDL)
-				exit(0);
-#else
-				jbit_replace_with(MODULE_JBIT);
-#endif
-				return 0;
-			default:
-				vm_fatal("vm: unknown state");
+				vm_stop("HLT");
 				break;
+			default:
+				vm_stop("???");
+				break;
+			}
+			break;
 		}
 	}
 #ifdef ENABLE_MICROIO

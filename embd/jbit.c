@@ -98,10 +98,10 @@ void jbit_init() {
 	serial_loader();
 	jbit_replace_with(MODULE_VM);
 #elif defined(PLATFORM_PC)
-	if (jbit_prg_code_ptr) {
+	if (jbit_prg_code_ptr)
 		jbit_replace_with(MODULE_VM);
-		return;
-	}
+	else
+		jbit_replace_with(MODULE_JBIT);
 #else
 	jbit_replace_with(MODULE_JBIT);
 #endif
