@@ -163,7 +163,44 @@ extern "C" void lcd_write(unsigned char dc, unsigned char data) {
 
 #elif defined(LCD_REAL)
 
-#error "not implemented"
+#define PIN_RESET 2
+#define PIN_SCE   3
+#define PIN_DC    4
+#define PIN_SDIN  5
+#define PIN_SCLK  6
+
+#define LCD_C     LOW
+#define LCD_D     HIGH
+
+/* These parameters might need to be tuned (see datasheet) */
+#define LCD_PRMS_VOP  0xB1
+#define LCD_PRMS_TEMP 0x04
+#define LCD_PRMS_BIAS 0x11
+
+extern "C" void lcd_init() {
+  pinMode(PIN_SCE, OUTPUT);
+  pinMode(PIN_RESET, OUTPUT);
+  pinMode(PIN_DC, OUTPUT);
+  pinMode(PIN_SDIN, OUTPUT);
+  pinMode(PIN_SCLK, OUTPUT);
+  digitalWrite(PIN_RESET, LOW);
+  delay(1);
+  digitalWrite(PIN_RESET, HIGH);
+  lcd_write(LCD_C, 0x21); /* LCD Extended Commands. */
+  lcd_write(LCD_C, LCD_PRMS_VOP);
+  lcd_write(LCD_C, LCD_PRMS_TEMP);
+  lcd_write(LCD_C, LCD_PRMS_BIAS);
+  lcd_write(LCD_C, 0x0C); /* LCD in normal mode. */
+  lcd_write(LCD_C, 0x20);
+  lcd_write(LCD_C, 0x0C);
+}
+
+extern "C" void lcd_write(unsigned char dc, unsigned char data) {
+  digitalWrite(PIN_DC, dc);
+  digitalWrite(PIN_SCE, LOW);
+  shiftOut(PIN_SDIN, PIN_SCLK, MSBFIRST, data);
+  digitalWrite(PIN_SCE, HIGH);
+}
 
 #else
 #error "no lcd configured"

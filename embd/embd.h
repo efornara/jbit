@@ -62,7 +62,7 @@
 #define ENABLE_VM
 #define ENABLE_DEMOS
 #define ENABLE_MICROIO
-#define LCD_HWSIM
+#define LCD_REAL
 #define KEYPAD_REAL
 
 #else /* DIST_PRIMO */
