@@ -333,15 +333,7 @@ private:
 		return c;
 	}
 	void wait(int ms) {
-		struct timespec ts;
-		if (ms < 1000) {
-			ts.tv_sec = 0;
-			ts.tv_nsec = 1000000 * ms;
-		} else {
-			ts.tv_sec = ms / 1000;
-			ts.tv_nsec = 1000000 * (ms % 1000);
-		}
-		nanosleep(&ts, NULL);
+		napms(ms);
 	}
 public:
 	CursesDevice() {

@@ -4,10 +4,11 @@
 
 include ../Version.defs
 
-VPATH = .:../core
+# on std. make, replace space separator with : (or ;)
+VPATH = . ../core
 
 CFLAGS = -Wall
-CXXFLAGS = -I../core -std=c++98 -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
+CXXFLAGS = -I../core -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
 LDFLAGS =
 LIBS =
 
@@ -19,9 +20,9 @@ EXE = jbit
 # COMPILATION FLAGS
 #
 
-# development
+# development - on djgpp/mingw, remove -std=c++98
 #CFLAGS += -ggdb
-#CXXFLAGS += -ggdb
+#CXXFLAGS += -ggdb -std=c++98
 
 # release
 CFLAGS += -O2 -fomit-frame-pointer
@@ -38,10 +39,11 @@ OBJS += stdout.o
 
 # microio: comment out if you don't have ncurses
 #          on BSD replace -lncurses with -lcurses
+#          on DJGPP replace -lncurses with -lpdcurses (very slow)
 OBJS += microio.o
 LIBS += -lncurses
 
-# xv65: tested only on debian stable; comment out if it doesn't compile
+# xv65: tested mostly on debian stable; comment out if it doesn't compile
 OBJS += xv65.o
 
 # serial: tested only on debian stable; comment out if it doesn't compile
@@ -65,7 +67,7 @@ stdout.o: _xv65.h
 xv65.o: _xv65.h
 
 clean:
-	rm -f jbit jbit.exe windows.zip *.o
+	rm -f jbit windows.zip *.o *.exe
 
 distclean: clean
 	rm -f jbit.1
