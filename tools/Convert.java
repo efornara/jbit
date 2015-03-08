@@ -73,6 +73,14 @@ public class Convert {
 		return s;
 	}
 
+	public static String indentPreformattedContent(String s) {
+		String space = "    ";
+		s = s.replaceAll("\\r", "");
+		s = s.replaceAll("\\n", "\n" + space);
+		s = s.replaceAll(" +$", "");
+		return space + s;
+	}
+
 	public static String text2html(String s) {
 		s = s.replaceAll("&", "&amp;");
 		s = s.replaceAll("<", "&lt;");
@@ -347,6 +355,57 @@ public class Convert {
 		}
 	}
 
+	public static class MDProcessor implements Processor {
+
+		private PrintStream out;
+
+		public void setOutputStream(OutputStream out) {
+			this.out = new PrintStream(out);
+		}
+
+		public int getNumberOfPasses() {
+			return 1;
+		}
+
+		public void begin(int pass) throws Exception {
+		}
+
+		private void outputHeader(char type, String content) {
+			if (Character.toLowerCase(type) == 'a')
+				out.print("# ");
+			else if (Character.toLowerCase(type) == 'b')
+				out.print("## ");
+			else
+				out.print("### ");
+			if (type != 'i' && Character.isLowerCase(type))
+				out.print(content.replaceAll("\\n", "*\n"));
+			else
+				out.print(content);
+		}
+
+		public void section(char type, String content) {
+			switch (Character.toLowerCase(type)) {
+			case '#':
+				out.print(indentPreformattedContent(content));
+				break;
+			case 'a':
+			case 'b':
+			case 'i':
+				outputHeader(type, content);
+				break;
+			case 'p':
+				out.print(refillParagraph(normalizeParagraphContent(content),
+						PARLEN));
+				break;
+			}
+			out.println();
+		}
+
+		public void end(int pass) throws Exception {
+			out.close();
+		}
+	}
+
 	private static void parseFile(BufferedReader in, Processor proc)
 			throws Exception {
 		StringBuilder builder = new StringBuilder();
@@ -414,6 +473,8 @@ public class Convert {
 					process(inFile, outFile, new HTMLProcessor(true));
 				else if (a.equals("-dat"))
 					process(inFile, outFile, new DATProcessor());
+				else if (a.equals("-md"))
+					process(inFile, outFile, new MDProcessor());
 				else
 					throw new Exception("Unknown format option " + a);
 			} else {
