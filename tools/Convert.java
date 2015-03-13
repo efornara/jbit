@@ -371,14 +371,16 @@ public class Convert {
 		}
 
 		private void outputHeader(char type, String content) {
+			String head;
 			if (Character.toLowerCase(type) == 'a')
-				out.print("# ");
+				head = "#";
 			else if (Character.toLowerCase(type) == 'b')
-				out.print("## ");
+				head = "##";
 			else
-				out.print("### ");
-			if (type != 'i' && Character.isLowerCase(type))
-				out.print(content.replaceAll("\\n", "*\n"));
+				head = "###";
+			out.print(head + " ");
+			if (type != 'i' && Character.isUpperCase(type))
+				out.print(content.replaceAll("\\n", " " + head + "\n"));
 			else
 				out.print(content);
 		}
