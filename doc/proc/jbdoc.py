@@ -31,6 +31,9 @@
 import collections
 import os
 import sys
+import textwrap
+
+PARLEN = 77
 
 Section = collections.namedtuple("Section", "kind content indexed")
 
@@ -78,7 +81,50 @@ class JBDoc:
 			parse_file(f)
 		self.basename = os.path.basename(filename)
 
-for file in sys.argv[1:]:
-	doc = JBDoc(file)
-	for s in doc.sections:
-		print s
+class PageConverter:
+	doc = None
+	f = None
+	def out(self, s):
+		self.f.write(s)
+	def outln(self, s):
+		self.f.write(s)
+		self.f.write('\n')
+	def convert(self):
+		pass
+
+class TextPageConverter(PageConverter):
+	def convert(self):
+		def ruler(content):
+			return '=' * len(content)
+		def out_header(kind, content):
+			if (kind == 'a'):
+				self.outln(ruler(content))
+			self.outln(content)
+			self.outln(ruler(content))
+		def out_section(kind, content):
+			if (kind == '#'):
+				self.out(content)
+			elif (kind == 'a' or kind == 'b'):
+				out_header(kind, content)
+			elif (kind == 'p'):
+				self.outln(textwrap.fill(content, PARLEN))
+			elif (kind == 'i'):
+				self.out('* ')
+				self.outln(content)
+			self.outln('')
+		for s in self.doc.sections:
+			out_section(s.kind, s.content)
+
+def convert(in_file_name, out_file_name):
+	converter = TextPageConverter()
+	converter.doc = JBDoc(in_file_name)
+	converter.f = open(out_file_name, 'w')
+	converter.convert()
+
+def usage():
+	print "usage: jbdoc.py input output"
+	sys.exit(1)
+
+if len(sys.argv) != 3:
+	usage()
+convert(sys.argv[1], sys.argv[2])
