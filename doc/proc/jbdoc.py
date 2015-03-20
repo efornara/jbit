@@ -115,8 +115,25 @@ class TextPageConverter(PageConverter):
 		for s in self.doc.sections:
 			out_section(s.kind, s.content)
 
+class DATPageConverter(PageConverter):
+	def convert(self):
+		def out_section(kind, content, indexed):
+			if indexed:
+				self.out(kind.upper())
+			else:
+				self.out(kind)
+			self.out(content)
+			self.out(chr(0))
+		for s in self.doc.sections:
+			out_section(s.kind, s.content, s.indexed)
+
 def convert(in_file_name, out_file_name):
-	converter = TextPageConverter()
+	if out_file_name.endswith('.txt'):
+		converter = TextPageConverter()
+	elif out_file_name.endswith('.dat'):
+		converter = DATPageConverter()
+	else:
+		raise StandardError('unrecognized output extension')
 	converter.doc = JBDoc(in_file_name)
 	converter.f = open(out_file_name, 'w')
 	converter.convert()
