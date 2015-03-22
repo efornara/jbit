@@ -75,6 +75,7 @@ Section = collections.namedtuple('Section', 'kind content indexed')
 
 class JBDoc:
 	basename = ''
+	title = 'Untitled'
 	sections = []
 	def __init__(self, filename):
 		def section(kind, content, indexed):
@@ -115,6 +116,10 @@ class JBDoc:
 				parse_section(s)
 		with open(filename, 'r') as f:
 			parse_file(f)
+		if len(self.sections) > 0:
+			s = self.sections[0]
+			if s.kind == 'a':
+				self.title = s.content
 		self.basename = os.path.basename(filename)
 
 class PageConverter:
@@ -164,7 +169,6 @@ class DATPageConverter(PageConverter):
 			out_section(s.kind, s.content, s.indexed)
 
 class HTMLPageConverter(PageConverter):
-	title = 'Untitled'
 	def convert(self):
 		def escape(s):
 			s = re.sub('&', '&amp;', s)
@@ -207,11 +211,8 @@ class HTMLPageConverter(PageConverter):
 				self.out('<h3>')
 				self.out(escape(content))
 				self.outln('</h3>')
-		if len(self.doc.sections) > 0:
-			s = self.doc.sections[0]
-			if s.kind == 'a':
-				self.title = escape(s.content)
-		self.out(template_resource('html_header.txt', { 'TITLE': self.title }))
+		self.out(template_resource('html_header.txt',
+			{ 'TITLE': escape(self.doc.title) }))
 		self.outln('<p id="top">')
 		id = [1]
 		for s in self.doc.sections:
@@ -223,23 +224,47 @@ class HTMLPageConverter(PageConverter):
 			out_section(s.kind, s.content, s.indexed)
 		self.out(resource('html_footer.txt'))
 
-def convert(in_file_name, out_file_name):
-	if out_file_name.endswith('.txt'):
+def convert(in_file_name, fmt, out_file_name):
+	if not fmt:
+		if out_file_name.endswith('.txt'):
+			fmt = 'txt'
+		elif out_file_name.endswith('.dat'):
+			fmt = 'dat'
+		elif out_file_name.endswith('.html') or out_file_name.endswith('.htm'):
+			fmt = 'xhtml1'
+		else:
+			raise StandardError('unrecognized output extension')
+	if fmt == 'txt':
 		converter = TextPageConverter()
-	elif out_file_name.endswith('.dat'):
+	elif fmt == 'dat':
 		converter = DATPageConverter()
-	elif out_file_name.endswith('.html') or out_file_name.endswith('.htm'):
+	elif fmt == 'xhtml1':
 		converter = HTMLPageConverter()
 	else:
-		raise StandardError('unrecognized output extension')
+		raise StandardError('unrecognized format')
 	converter.doc = JBDoc(in_file_name)
 	converter.f = open(out_file_name, 'w')
 	converter.convert()
 
 def usage():
-	print 'usage: jbdoc.py input output'
+	print """usage: jbdoc.py input [-f fmt] output
+
+where fmt is:
+  txt          preformatted ascii text file
+  dat          binary format for the JBDoc midlet
+  xhtml1       self-contained xhtml 1.0 file (no external resources)
+
+"""
 	sys.exit(1)
 
-if len(sys.argv) != 3:
+if len(sys.argv) == 3:
+	IN = sys.argv[1]
+	FMT = None
+	OUT = sys.argv[2]
+elif len(sys.argv) == 5 and sys.argv[2] == '-f':
+	IN = sys.argv[1]
+	FMT = sys.argv[3]
+	OUT = sys.argv[4]
+else:
 	usage()
-convert(sys.argv[1], sys.argv[2])
+convert(IN, FMT, OUT)
