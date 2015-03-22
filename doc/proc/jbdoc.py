@@ -38,7 +38,7 @@ PARLEN = 77
 
 fallback_resources = {}
 
-fallback_resources['html_header.txt'] = """
+fallback_resources['xhtml1_header.txt'] = """
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
@@ -56,8 +56,25 @@ body { font-family: sans-serif; }
 <p align="right"><a class="nav" href="#content">skip nav</a></p>
 """
 
-fallback_resources['html_footer.txt'] = """
+fallback_resources['xhtml1_footer.txt'] = """
 <p><a class="nav" href="#top">top</a></p>
+</body>
+</html>
+"""
+
+fallback_resources['epub_header.txt'] = """
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN' 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>JBDoc - __TITLE__</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link href="style.css" type="text/css" rel="stylesheet" />
+</head>
+<body>
+"""
+
+fallback_resources['epub_footer.txt'] = """
 </body>
 </html>
 """
@@ -124,6 +141,7 @@ class JBDoc:
 
 class PageConverter:
 	doc = None
+	fmt = None
 	f = None
 	def out(self, s):
 		self.f.write(s)
@@ -170,18 +188,28 @@ class DATPageConverter(PageConverter):
 
 class HTMLPageConverter(PageConverter):
 	def convert(self):
+		def nav():
+			return self.fmt == 'xhtml1'
 		def escape(s):
 			s = re.sub('&', '&amp;', s)
 			s = re.sub('<', '&lt;', s)
 			s = re.sub('>', '&gt;', s)
 			return s
-		def out_toc(kind, content, indexed):
+		def out_toc_item(kind, content, indexed):
 			if not indexed:
 				return
 			self.out('<a class="nav" href="#id' + str(id[0]) + '">')
 			self.out(escape(content))
 			self.outln('</a><br />')
 			id[0] += 1
+		def out_toc():
+			if not nav():
+				return
+			self.outln('<p id="top">')
+			for s in self.doc.sections:
+				out_toc_item(s.kind, s.content, s.indexed)
+			self.outln('</p>');
+			self.outln('<p id="content"></p>')
 		def out_header(kind, content, indexed):
 			c = escape(content)
 			if kind == 'a':
@@ -189,7 +217,7 @@ class HTMLPageConverter(PageConverter):
 			else:
 				el = 'h2'
 			attr = ''
-			if indexed:
+			if nav() and indexed:
 				if id[0] != 1:
 					self.outln('<p><a class="nav" href="#top">top</a></p>')
 				self.outln('<hr />')
@@ -202,7 +230,7 @@ class HTMLPageConverter(PageConverter):
 				self.out(escape(content))
 				self.outln('</pre>')
 			elif kind == 'a' or kind == 'b':
-				out_header(type, content, indexed)
+				out_header(kind, content, indexed)
 			elif kind == 'p':
 				self.outln('<p>')
 				self.outln(escape(textwrap.fill(content, PARLEN)))
@@ -211,18 +239,14 @@ class HTMLPageConverter(PageConverter):
 				self.out('<h3>')
 				self.out(escape(content))
 				self.outln('</h3>')
-		self.out(template_resource('html_header.txt',
+		self.out(template_resource(self.fmt + '_header.txt',
 			{ 'TITLE': escape(self.doc.title) }))
-		self.outln('<p id="top">')
 		id = [1]
-		for s in self.doc.sections:
-			out_toc(s.kind, s.content, s.indexed)
-		self.outln('</p>');
-		self.outln('<p id="content">')
+		out_toc()
 		id = [1]
 		for s in self.doc.sections:
 			out_section(s.kind, s.content, s.indexed)
-		self.out(resource('html_footer.txt'))
+		self.out(resource(self.fmt + '_footer.txt'))
 
 def convert(in_file_name, fmt, out_file_name):
 	if not fmt:
@@ -238,11 +262,12 @@ def convert(in_file_name, fmt, out_file_name):
 		converter = TextPageConverter()
 	elif fmt == 'dat':
 		converter = DATPageConverter()
-	elif fmt == 'xhtml1':
+	elif fmt == 'xhtml1' or fmt == 'epub':
 		converter = HTMLPageConverter()
 	else:
 		raise StandardError('unrecognized format')
 	converter.doc = JBDoc(in_file_name)
+	converter.fmt = fmt
 	converter.f = open(out_file_name, 'w')
 	converter.convert()
 
@@ -250,9 +275,10 @@ def usage():
 	print """usage: jbdoc.py input [-f fmt] output
 
 where fmt is:
-  txt          preformatted ascii text file
+  txt          preformatted ascii text
   dat          binary format for the JBDoc midlet
-  xhtml1       self-contained xhtml 1.0 file (no external resources)
+  xhtml1       self-contained xhtml 1.0 (no external resources)
+  epub         xhtml 1.0 optimized for epub
 
 """
 	sys.exit(1)
