@@ -92,11 +92,11 @@ class JBDoc:
 					section('b', s[3:-1], False)
 			elif s.startswith('### '):
 				section('i', s[4:-1], False)
-			elif s.startswith('    '):
+			elif s.startswith('\t'):
 				lines = s.splitlines()
 				s = ''
 				for l in lines:
-					s += l[4:] + '\n'
+					s += l[1:] + '\n'
 				section('#', s, False)
 			else:
 				section('p', s[:-1].replace('\n', ' '), False)

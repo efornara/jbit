@@ -74,10 +74,10 @@ public class Convert {
 	}
 
 	public static String indentPreformattedContent(String s) {
-		String space = "    ";
+		String space = "\t";
 		s = s.replaceAll("\\r", "");
 		s = s.replaceAll("\\n", "\n" + space);
-		s = s.replaceAll(" +$", "");
+		s = s.replaceAll("\t$", "");
 		return space + s;
 	}
 
