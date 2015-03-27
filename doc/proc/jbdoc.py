@@ -121,7 +121,7 @@ class JBDoc:
 				else:
 					s += line + '\n'
 			if len(s) != 0:
-				parse_section(s)
+				parse_section(s, lineno)
 		with open(filename, 'r') as f:
 			parse_file(f)
 		if len(self.sections) > 0:
