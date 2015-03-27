@@ -30,11 +30,14 @@
 
 import collections
 import os
+import os.path
 import sys
 import textwrap
 import re
+import argparse
 
 PARLEN = 77
+SYSRES = None
 
 fallback_resources = {}
 
@@ -62,24 +65,12 @@ fallback_resources['xhtml1_footer.txt'] = """
 </html>
 """
 
-fallback_resources['epub_header.txt'] = """
-<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.1//EN' 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd'>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title>JBDoc - __TITLE__</title>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link href="style.css" type="text/css" rel="stylesheet" />
-</head>
-<body>
-"""
-
-fallback_resources['epub_footer.txt'] = """
-</body>
-</html>
-"""
-
 def resource(res):
+	if SYSRES is not None:
+		filename = os.path.join(SYSRES, res)
+		if os.path.isfile(filename):
+			with open(filename, 'r') as f:
+				return f.read()
 	return fallback_resources[res][1:]
 
 def template_resource(res, subs):
@@ -271,26 +262,24 @@ def convert(in_file_name, fmt, out_file_name):
 	converter.f = open(out_file_name, 'w')
 	converter.convert()
 
-def usage():
-	print """usage: jbdoc.py input [-f fmt] output
-
+"""
 where fmt is:
   txt          preformatted ascii text
   dat          binary format for the JBDoc midlet
   xhtml1       self-contained xhtml 1.0 (no external resources)
   epub         xhtml 1.0 optimized for epub
-
 """
-	sys.exit(1)
 
-if len(sys.argv) == 3:
-	IN = sys.argv[1]
-	FMT = None
-	OUT = sys.argv[2]
-elif len(sys.argv) == 5 and sys.argv[2] == '-f':
-	IN = sys.argv[1]
-	FMT = sys.argv[3]
-	OUT = sys.argv[4]
-else:
-	usage()
-convert(IN, FMT, OUT)
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', '--sysres',
+	help='system resources')
+parser.add_argument('-f', '--fmt',
+	choices=['txt', 'dat', 'xhtml1', 'epub'],
+	help='output format')
+parser.add_argument('infile',
+	help='input file')
+parser.add_argument('outfile',
+	help='output file')
+args = parser.parse_args()
+SYSRES = args.sysres
+convert(args.infile, args.fmt, args.outfile)
