@@ -253,7 +253,7 @@ def convert(in_file_name, fmt, out_file_name):
 		converter = TextPageConverter()
 	elif fmt == 'dat':
 		converter = DATPageConverter()
-	elif fmt == 'xhtml1' or fmt == 'epub':
+	elif fmt == 'xhtml1' or fmt == 'epub' or fmt == 'html5':
 		converter = HTMLPageConverter()
 	else:
 		raise StandardError('unrecognized format')
@@ -268,13 +268,14 @@ where fmt is:
   dat          binary format for the JBDoc midlet
   xhtml1       self-contained xhtml 1.0 (no external resources)
   epub         xhtml 1.0 optimized for epub
+  html5        html with external resources
 """
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--sysres',
 	help='system resources')
 parser.add_argument('-f', '--fmt',
-	choices=['txt', 'dat', 'xhtml1', 'epub'],
+	choices=['txt', 'dat', 'xhtml1', 'epub', 'html5'],
 	help='output format')
 parser.add_argument('infile',
 	help='input file')

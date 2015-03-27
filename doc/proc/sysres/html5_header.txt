@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>JBDoc - __TITLE__</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="HandheldFriendly" content="true">
+<link rel="stylesheet" href="jbdoc-html5.css">
+</head>
+<body>
