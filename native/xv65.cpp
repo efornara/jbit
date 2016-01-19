@@ -298,7 +298,12 @@ private:
 		if (seconds == 0) {
 			uint64_t usec;
 			get_value(v_REQDAT, 4, &usec);
-			ret = usleep(usec);
+#if !defined(ANDROID) && !defined(__ANDROID__)
+			ret =
+#else
+			ret = 0;
+#endif
+			usleep(usec);
 		} else {
 			ret = sleep(seconds);
 		}
@@ -700,11 +705,13 @@ private:
 	}
 	int get_consize(int address) {
 		int col = 80, row = 24;
+#if !defined(ANDROID) && !defined(__ANDROID__)
 		struct winsize win;
 		if (ioctl(0, TIOCGWINSZ, &win) >= 0) {
 			col = win.ws_col;
 			row = win.ws_row;
 		}
+#endif
 		return ((address == CONCOLS) ? col : row) & 0xff;
 	}
 	void set_CONESC(int value) {

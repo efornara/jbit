@@ -24,6 +24,10 @@ EXE = jbit
 #CFLAGS += -ggdb
 #CXXFLAGS += -ggdb -std=c++98
 
+# android
+#CFLAGS += -fPIE
+#LDFLAGS += -fPIE -pie
+
 # release
 CFLAGS += -O2 -fomit-frame-pointer
 CXXFLAGS += -O2 -fomit-frame-pointer
