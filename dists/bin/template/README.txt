@@ -22,7 +22,10 @@ midp/
   LGPL21.txt - The GNU Lesser General Public License, version 2.1.
 
 win32/
-  jbit.exe - The native version of JBit.
+  jbit.exe - The native version of JBit for Windows.
+
+linux/
+  jbit*.bin - The native versions of JBit for Linux/Android.
 
 doc/
   Same as JBDoc.jar, but in HTML format for browsing on a PC. Also, the

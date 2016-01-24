@@ -26,6 +26,16 @@ cp $IN/native/jbit.exe $OUT/win32
 cp $IN/native/jbitw.exe $OUT/win32
 ( cd $IN/native ; make clean )
 
+# copy linux/android binaries
+mkdir -p $OUT/linux
+( cd $IN/native ; for arch in arm x86 mips ; do
+./MkAndroid.sh $arch static
+done )
+for arch in arm x86 mips ; do
+cp $IN/native/jbit-android-$arch-static.bin $OUT/linux/jbit$arch.bin
+done
+( cd $IN/native ; make clean )
+
 # copy jbit.1 and convert and copy jbdoc
 mkdir -p $OUT/doc
 ( cd $IN/tools ; javac Convert.java )
