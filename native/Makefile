@@ -24,10 +24,6 @@ EXE = jbit
 #CFLAGS += -ggdb
 #CXXFLAGS += -ggdb -std=c++98
 
-# android
-#LDFLAGS += -fPIE -pie
-#CXXFLAGS += -fPIE
-
 # release
 CFLAGS += -O2 -fomit-frame-pointer
 CXXFLAGS += -O2 -fomit-frame-pointer
@@ -71,7 +67,7 @@ stdout.o: _xv65.h
 xv65.o: _xv65.h
 
 clean:
-	rm -f jbit windows.zip *.o *.exe
+	rm -f jbit windows.zip *.o *.exe *.bin
 
 distclean: clean
 	rm -f jbit.1
