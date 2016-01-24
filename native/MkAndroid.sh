@@ -50,6 +50,8 @@ else
 fi
 ELF=$2
 
+source ../Version.defs
+
 $TOOL-g++ \
  -I../core -fno-exceptions -fno-rtti -Wall \
  -DJBIT_VERSION=\"${JBIT_VERSION}\" \
