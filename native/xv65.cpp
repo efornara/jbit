@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <termios.h>
 
 #include "jbit.h"
 #include "devimpl.h"
@@ -298,12 +299,12 @@ private:
 		if (seconds == 0) {
 			uint64_t usec;
 			get_value(v_REQDAT, 4, &usec);
-#if !defined(ANDROID) && !defined(__ANDROID__)
-			ret =
-#else
-			ret = 0;
-#endif
-			usleep(usec);
+			struct timespec ts;
+			ts.tv_sec = usec / 1000000;
+			ts.tv_nsec = 1000 * (usec % 1000000);
+			ret = nanosleep(&ts, NULL);
+			if (ret)
+				ret = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 		} else {
 			ret = sleep(seconds);
 		}
@@ -705,13 +706,11 @@ private:
 	}
 	int get_consize(int address) {
 		int col = 80, row = 24;
-#if !defined(ANDROID) && !defined(__ANDROID__)
 		struct winsize win;
 		if (ioctl(0, TIOCGWINSZ, &win) >= 0) {
 			col = win.ws_col;
 			row = win.ws_row;
 		}
-#endif
 		return ((address == CONCOLS) ? col : row) & 0xff;
 	}
 	void set_CONESC(int value) {
