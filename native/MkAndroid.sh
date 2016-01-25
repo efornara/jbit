@@ -52,11 +52,14 @@ ELF=$2
 
 source ../Version.defs
 
+EXE=jbit-android-$ARCH-$ELF.bin
+echo "building $EXE..."
+
 $TOOL-g++ \
- -I../core -fno-exceptions -fno-rtti -Wall \
+ -fno-exceptions -fno-rtti -Wall \
  -DJBIT_VERSION=\"${JBIT_VERSION}\" \
  -O2 -fomit-frame-pointer -s \
  $CFLAGS $LDFLAGS \
- main.cpp devimpl.cpp cpu.cpp ../core/asm.cpp ../core/symdefs.cpp \
+ main.cpp devimpl.cpp cpu.cpp asm.cpp symdefs.cpp \
  stdout.cpp xv65.cpp \
- -o jbit-android-$ARCH-$ELF.bin
+ -o $EXE

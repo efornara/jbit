@@ -23,7 +23,6 @@ cp -r $IN/LICENSE.md $OUT/LICENSE.txt
 mkdir -p $OUT/win32
 ( cd $IN/native ; make clean ; make -f MinGW.mk )
 cp $IN/native/jbit.exe $OUT/win32
-cp $IN/native/jbitw.exe $OUT/win32
 ( cd $IN/native ; make clean )
 
 # copy linux/android binaries
@@ -38,12 +37,14 @@ done
 
 # copy jbit.1 and convert and copy jbdoc
 mkdir -p $OUT/doc
-( cd $IN/tools ; javac Convert.java )
-for i in $IN/doc/jbdoc/*.jbdoc ; do
-	f=`basename $i .jbdoc`
-	java -cp $IN/tools Convert $IN/doc/jbdoc/$f.jbdoc \
-		 -dat $IN/midp/help/res/$f.dat \
-		 -html $OUT/doc/$f.htm
+for i in $IN/doc/jbdoc/*.md ; do
+	f=`basename $i .md`
+	$IN/doc/proc/jbdoc.py -f dat \
+		$IN/doc/jbdoc/$f.md \
+		$IN/midp/help/res/$f.dat
+	$IN/doc/proc/jbdoc.py -f xhtml1 \
+		$IN/doc/jbdoc/$f.md \
+		$OUT/doc/$f.htm
 done
 ( cd $IN/tools ; rm -f *.class )
 ronn <$IN/native/jbit.1.ronn --html >$OUT/doc/jbit_1.htm
