@@ -155,8 +155,8 @@ Simple programs aimed at 6502 beginner programmers are available in the
 
 ## REQUESTS
 
-The two major devices in JBit are _xv65_ and _io2_ (a new major device,
-_primo_, is being developed; see below). The underlying systems they
+The two major devices in JBit are _xv65_ and _io2_.
+The underlying systems they
 expose are completely different, but they share the same basic
 communication mechanism: the request. A request is essentially a
 function call to the host environment.
@@ -292,33 +292,6 @@ _Debug_ to debug the program.
 A fair amount of documentation for the io2 device is available here:
 
 <http://jbit.sourceforge.net/doc/jbdoc.html>
-
-## PRIMO
-
-The device _primo_ is intended to map the hardware facilities of some
-popular ATmega microcontrollers from [Atmel](http://www.atmel.com). The
-main target for primo is the [Arduino Uno
-board](http://arduino.cc/en/Main/arduinoBoardUno).
-
-Please note that while jbit in general comes without warranty of any
-kind, this is especially true for the primo device. I assume that you
-are an experienced microcontroller developer.
-
-Study carefully the blink.asm example in the samples/primo directory. If
-you cannot figure out how it works, stop now and make some practice with
-Arduino using the standard tools.
-
-If the blink.asm example makes sense to you, open the nano sketch with
-the Arduino IDE, verify and upload the sketch. Close the Arduino IDE and
-upload blink.asm to the board:
-
-    jbit -S /dev/ttyACM0 blink.asm
-
-Note that this last command does not reprogram the board: the code is
-uploaded to the ram of the board and it is run by the simulator that you
-uploaded in the previous step. It is possible to build a hex image with
-a jbit primo program attached (autorun), but the process is not
-documented at the moment.
 
 ## EXAMPLES
 

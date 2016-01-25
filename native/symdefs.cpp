@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014  Emanuele Fornara
+ * Copyright (C) 2012-2013  Emanuele Fornara
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,32 +26,53 @@
  * SUCH DAMAGE.
  */
 
-#ifndef JBIT_SERIAL_H
-#define JBIT_SERIAL_H
+// symdefs.cpp
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string.h>
 
-#define JBIT_SERIAL_BUFFER_SIZE 128
+#include "core.h"
 
-typedef struct {
-	int fd;
-	int n;
-	void *user_data;
-	char in[JBIT_SERIAL_BUFFER_SIZE];
-	char out[JBIT_SERIAL_BUFFER_SIZE];
-} jbit_serial_t;
+namespace {
 
-typedef void (*jbit_serial_read_t)(jbit_serial_t *ctx);
+const SymDef stdout_symdefs[] = {
+{"PUTCHAR",0x0200},
+{"PUTUINT8",0x0216},
+{0,0},
+}; 
 
-int jbit_serial_open(jbit_serial_t *ctx, const char *filename, int speed);
-int jbit_serial_close(jbit_serial_t *ctx);
-int jbit_serial_write(jbit_serial_t *ctx);
-int jbit_serial_poll(jbit_serial_t *ctx, jbit_serial_read_t callback);
+const SymDef xv65_symdefs[] = {
+#include "d_xv65.h"
+{ 0, 0 },
+}; 
 
-#ifdef __cplusplus
+const SymDef microio_symdefs[] = {
+#include "d_microio.h"
+{ 0, 0 },
+}; 
+
+const SymDef io2_symdefs[] = {
+#include "d_io2.h"
+{ 0, 0 },
+}; 
+
+} // namespace
+
+const char *asm_devices[] = {
+	"stdout",
+	"xv65",
+	"microio",
+	"io2",
+	0
 };
-#endif
 
-#endif
+const SymDef *get_device_symdefs(const char *device) {
+	if (!strcmp(device, "stdout"))
+		return stdout_symdefs;
+	if (!strcmp(device, "xv65"))
+		return xv65_symdefs;
+	if (!strcmp(device, "microio"))
+		return microio_symdefs;
+	if (!strcmp(device, "io2"))
+		return io2_symdefs;
+	return 0;
+}

@@ -4,14 +4,12 @@
 
 include ../Version.defs
 
-# on std. make, replace space separator with : (or ;)
-VPATH = . ../core
-
 CFLAGS = -Wall
-CXXFLAGS = -I../core -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
+CXXFLAGS = -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
 LDFLAGS =
 LIBS =
 
+DEVSYMS = d_xv65.h d_io2.h d_microio.h
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
 EXE = jbit
 
@@ -46,10 +44,6 @@ LIBS += -lncurses
 # xv65: tested mostly on debian stable; comment out if it doesn't compile
 OBJS += xv65.o
 
-# serial: tested only on debian stable; comment out if it doesn't compile
-CXXFLAGS += -DENABLE_SENDFILE
-OBJS += send_file.o serial.o
-
 
 #
 # RULES
@@ -57,7 +51,7 @@ OBJS += send_file.o serial.o
 
 all: $(EXE) jbit.1
 
-$(EXE): $(OBJS)
+$(EXE): $(DEVSYMS) $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
 jbit.1: jbit.1.ronn
@@ -65,6 +59,16 @@ jbit.1: jbit.1.ronn
 
 stdout.o: _xv65.h
 xv65.o: _xv65.h
+
+d_xv65.h: xv65.inc
+	perl ../tools/inc2sym.pl <xv65.inc >d_xv65.h
+	perl ../tools/inc2h.pl <xv65.inc >_xv65.h
+
+d_io2.h: io2.inc
+	perl ../tools/inc2sym.pl <io2.inc >d_io2.h
+
+d_microio.h: microio.inc
+	perl ../tools/inc2sym.pl <microio.inc >d_microio.h
 
 clean:
 	rm -f jbit windows.zip *.o *.exe *.bin

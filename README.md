@@ -7,17 +7,12 @@ If you are looking for the J2ME version of JBit (for feature phones),
 [pre-built midlets](http://jbit.sourceforge.net/download.html)
 are available.
 
-If you just want get an idea of what JBit is about and have
-a modern browser (IE8+), a (limited)
-[webapp](http://jbit.sourceforge.net/webapp/index.html)
-is also available.
-
 If you have Windows, you can find a precompiled EXE following the
 instructions on this
 [wiki page](https://github.com/efornara/jbit/wiki/Windows).
 
 However, for Linux(-like) operating systems, building the Native version
-of JBit is recommended. Unlike the Javascript and the J2ME versions,
+of JBit is recommended. Unlike the J2ME version,
 the Native version has few dependencies and should be fairly easy
 to build.
 
@@ -53,58 +48,6 @@ JBit supports a binary format, if you really need it:
 More information is available in the included jbit(1).
 You can find a copy online here:
 [jbit(1)](http://efornara.github.io/jbit/jbit.1.html).
-
-## JavaScript Version
-
-The current JavaScript version is being refactored, so it might be
-broken at any give time.
-
-To check the progress, see:
-<http://jbit.sourceforge.net/webapp/test/index.html> and
-<http://jbit.sourceforge.net/webapp/test/mobile.html>.
-
-The old version is still available:
-<http://jbit.sourceforge.net/webapp/1.2/>.
-
-## JBit Embedded
-
-This is a new version of the VM that is going to be used in future
-Native and JavaScript versions of JBit. It is written in C and includes
-a modified version of the [Fake6502 CPU
-emulator](http://rubbermallet.org/fake6502.c).
-
-The same code base is used to generate three targets:
-
-An image for [Arduino Uno](http://arduino.cc/en/Main/arduinoBoardUno).
-See [jbit(1) - PRIMO](http://efornara.github.io/jbit/jbit.1.html#PRIMO)
-for more information.
-
-A test native program. Just typing make should work, but you need the
-development package of SDL 1.2. Note that this target might disappear
-entirely, once the consolidated bits of embd are integrated into the
-main Native version.
-
-A new JavaScript emulator. Just like the old JavaScript version, you
-need [emscripten](https://github.com/kripken/emscripten) installed. If
-you have a working installation of emscripten, that is, if:
-
-    emcc
-
-produces something like:
-
-    emcc: no input files
-
-you should be able to type:
-
-    make jbit-embd-c.js
-
-and point your browser to the included index.html. Beware that I recently
-updated emscripten and the suggested script (emsdk-portable) took about
-9GB of disk space. This:
-
-    wget -c http://jbit.sourceforge.net/webapp/test/jbit-embd-c.js
-
-is probably a good enough alternative for most.
 
 ## J2ME Version
 
