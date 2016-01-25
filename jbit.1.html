@@ -63,7 +63,6 @@
     <a href="#REQUESTS">REQUESTS</a>
     <a href="#XV65">XV65</a>
     <a href="#IO2">IO2</a>
-    <a href="#PRIMO">PRIMO</a>
     <a href="#EXAMPLES">EXAMPLES</a>
     <a href="#FILES">FILES</a>
     <a href="#ENVIRONMENT">ENVIRONMENT</a>
@@ -130,7 +129,7 @@ already familiar with 6502 assembly and new to JBit.</p>
 </code></pre>
 
 <p>JBit has a binary format too, although it is mostly used on the J2ME
-version of JBit (see <a href="#IO2" data-bare-link="true" title="IO2">IO2</a>).</p>
+version of JBit (see <a href="#IO2" title="IO2" data-bare-link="true">IO2</a>).</p>
 
 <pre><code>jbit -c jb a.asm &gt;a.jb
 jbit a.jb
@@ -165,12 +164,10 @@ select a device, you get some symbols defined:</p>
 <pre><code>jbit -s stdout
 </code></pre>
 
-<p>You can of course write the same program in assembly:</p>
-
-<pre><code>.device "stdout"
-lda #'A'
-sta PUTCHAR
-</code></pre>
+<p>You can of course write the same program in assembly:
+    .device "stdout"
+    lda #'A'
+    sta PUTCHAR</p>
 
 <p>Check in the samples directories (in particular the format subdirectory)
 for more information about the assembly format.</p>
@@ -236,8 +233,8 @@ called console), a keypad similar to the ones found on classic phones
 
 <h2 id="REQUESTS">REQUESTS</h2>
 
-<p>The two major devices in JBit are <em>xv65</em> and <em>io2</em> (a new major device,
-<em>primo</em>, is being developed; see below). The underlying systems they
+<p>The two major devices in JBit are <em>xv65</em> and <em>io2</em>.
+The underlying systems they
 expose are completely different, but they share the same basic
 communication mechanism: the request. A request is essentially a
 function call to the host environment.</p>
@@ -383,34 +380,6 @@ the joypad), you can stop the program. Select <em>Menu</em> and then select
 
 <p><a href="http://jbit.sourceforge.net/doc/jbdoc.html" data-bare-link="true">http://jbit.sourceforge.net/doc/jbdoc.html</a></p>
 
-<h2 id="PRIMO">PRIMO</h2>
-
-<p>The device <em>primo</em> is intended to map the hardware facilities of some
-popular ATmega microcontrollers from <a href="http://www.atmel.com">Atmel</a>. The
-main target for primo is the <a href="http://arduino.cc/en/Main/arduinoBoardUno">Arduino Uno
-board</a>.</p>
-
-<p>Please note that while jbit in general comes without warranty of any
-kind, this is especially true for the primo device. I assume that you
-are an experienced microcontroller developer.</p>
-
-<p>Study carefully the blink.asm example in the samples/primo directory. If
-you cannot figure out how it works, stop now and make some practice with
-Arduino using the standard tools.</p>
-
-<p>If the blink.asm example makes sense to you, open the nano sketch with
-the Arduino IDE, verify and upload the sketch. Close the Arduino IDE and
-upload blink.asm to the board:</p>
-
-<pre><code>jbit -S /dev/ttyACM0 blink.asm
-</code></pre>
-
-<p>Note that this last command does not reprogram the board: the code is
-uploaded to the ram of the board and it is run by the simulator that you
-uploaded in the previous step. It is possible to build a hex image with
-a jbit primo program attached (autorun), but the process is not
-documented at the moment.</p>
-
 <h2 id="EXAMPLES">EXAMPLES</h2>
 
 <p>Find constants for IPNGGEN:</p>
@@ -486,7 +455,7 @@ reported.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>August 2014</li>
+    <li class='tc'>January 2016</li>
     <li class='tr'>jbit(1)</li>
   </ol>
 
