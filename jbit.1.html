@@ -164,10 +164,12 @@ select a device, you get some symbols defined:</p>
 <pre><code>jbit -s stdout
 </code></pre>
 
-<p>You can of course write the same program in assembly:
-    .device "stdout"
-    lda #'A'
-    sta PUTCHAR</p>
+<p>You can of course write the same program in assembly:</p>
+
+<pre><code>.device "stdout"
+lda #'A'
+sta PUTCHAR
+</code></pre>
 
 <p>Check in the samples directories (in particular the format subdirectory)
 for more information about the assembly format.</p>
@@ -442,15 +444,14 @@ reported.</p>
 
 <h2 id="COPYRIGHT">COPYRIGHT</h2>
 
-<p>Copyright (C) 2012-2014  Emanuele Fornara</p>
+<p>Copyright (C) 2012-2016  Emanuele Fornara</p>
 
 <p>Released under the BSD 2-Clause License.</p>
 
 <h2 id="SEE-ALSO">SEE ALSO</h2>
 
 <p><a href="http://github.com/efornara/jbit/wiki">Wiki for <code>jbit</code></a>,
-<a href="http://jbit.sourceforge.net/">JBit - J2ME Version</a>,
-<a href="http://jbit.sourceforge.net/webapp">JBit - Web Application</a></p>
+<a href="http://jbit.sourceforge.net/">JBit - J2ME Version</a>,</p>
 
 
   <ol class='man-decor man-foot man foot'>
