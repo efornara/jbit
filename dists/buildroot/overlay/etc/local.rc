@@ -1,6 +1,0 @@
-#! /bin/sh
-
-echo "Loading fonts."
-loadfont </usr/share/consolefonts/Lat15-TerminusBold28x14.psf
-echo "Loading kmap."
-loadkmap </usr/share/keymaps/uk.map
