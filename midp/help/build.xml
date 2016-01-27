@@ -3,9 +3,12 @@
 <project name="JBDoc" default="build" basedir=".">
 
 	<property file="../../Version.defs"/>
-	<property file="../../Env.defs"/>
+
+	<property environment="env"/>
 
 	<taskdef resource="antenna.properties" />
+
+	<property name="wtk.home" value="${env.WTK_HOME_DIRECTORY}"/>
 
 	<target name="clean">
 

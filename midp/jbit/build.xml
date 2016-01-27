@@ -3,11 +3,12 @@
 <project name="JBit" default="jbit" basedir=".">
 
 	<property file="../../Version.defs"/>
-	<property file="../../Env.defs"/>
+
+	<property environment="env"/>
 
 	<taskdef resource="antenna.properties"/>
 
-	<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
+	<property name="wtk.home" value="${env.WTK_HOME_DIRECTORY}"/>
 	<property name="wtk.cldc.version" value="1.0"/>	
 	
 	<property name="demos_6502" value="ciao.jb,loop1.jb,fill1.jb,fill2.jb,loop2.jb,loop3.jb,keypad.jb,random.jb,charset.jb"/>

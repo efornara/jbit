@@ -67,7 +67,8 @@ ads/index.html).
   I use version 4.4; older versions should work.
 
 If your environment is setup correctly, you should be able to
-compile JBit by editing Env.defs, entering midp/jbit and running ant.
+compile JBit by setting the `WTK_HOME_DIRECTORY` environment variable,
+entering midp/jbit and running ant.
 
 ## Links
 
