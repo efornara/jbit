@@ -124,7 +124,19 @@ jbit \-s stdout
 .IP "" 0
 .
 .P
-You can of course write the same program in assembly: \.device "stdout" lda #\'A\' sta PUTCHAR
+You can of course write the same program in assembly:
+.
+.IP "" 4
+.
+.nf
+
+\&\.device "stdout"
+lda #\'A\'
+sta PUTCHAR
+.
+.fi
+.
+.IP "" 0
 .
 .P
 Check in the samples directories (in particular the format subdirectory) for more information about the assembly format\.
@@ -475,10 +487,10 @@ The parser is too permissive, and programs that rely on it, might not load in fu
 The parser does not always provide contextual information\. For example, if a symbol is redefined, the location of the first definition is not reported\.
 .
 .SH "COPYRIGHT"
-Copyright (C) 2012\-2014 Emanuele Fornara
+Copyright (C) 2012\-2016 Emanuele Fornara
 .
 .P
 Released under the BSD 2\-Clause License\.
 .
 .SH "SEE ALSO"
-Wiki for \fBjbit\fR \fIhttp://github\.com/efornara/jbit/wiki\fR, JBit \- J2ME Version \fIhttp://jbit\.sourceforge\.net/\fR, JBit \- Web Application \fIhttp://jbit\.sourceforge\.net/webapp\fR
+Wiki for \fBjbit\fR \fIhttp://github\.com/efornara/jbit/wiki\fR, JBit \- J2ME Version \fIhttp://jbit\.sourceforge\.net/\fR,
