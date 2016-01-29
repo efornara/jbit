@@ -91,14 +91,14 @@ class JBDoc:
 		def parse_section(s, lineno):
 			if s.startswith('# '):
 				if s.endswith(' #\n'):
-					section('a', s[2:-3], True)
+					section('a', s[2:-3], False)
 				else:
-					section('a', s[2:-1], False)
+					section('a', s[2:-1], True)
 			elif s.startswith('## '):
 				if s.endswith(' ##\n'):
-					section('b', s[3:-4], True)
+					section('b', s[3:-4], False)
 				else:
-					section('b', s[3:-1], False)
+					section('b', s[3:-1], True)
 			elif s.startswith('### '):
 				section('i', s[4:-1], False)
 			elif s.startswith('\t'):

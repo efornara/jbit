@@ -1,6 +1,6 @@
-# IO Reference
+# IO Reference #
 
-# Registers #
+# Registers
 
 ### REQPUT (1) [W]
 
@@ -207,7 +207,7 @@ The tile id of the current tile cell.
 
 Return values for some IO requests.
 
-# Requests #
+# Requests
 
 Here below you can find the syntax of the requests (and the corresponding
 results, when applicable). See the bgcol1 and bgcol2 demos for examples of
@@ -232,7 +232,7 @@ COLOR causes a PLTE chunk to be generated (a pallette must be provided) and
 setting IDX0TRANSP causes a tRNS chunk to be generated. For more information
 see the PNG specification.
 
-## System ##
+## System
 
 ### TIME(2)
 
@@ -242,7 +242,7 @@ chip was reset. Resolution ranges from milliseconds to seconds.
 Syntax: TIME(2) [RefTime=ABS [Fract=1000]] ; RefTime(C): ABS(1), RESET(2) ;
 Fract(C): 1(1), 10(2), 10(3), 1000(4) ; Result: Time:U64
 
-## Display and Imaging ##
+## Display and Imaging
 
 ### DPYINFO(16)
 
@@ -343,7 +343,7 @@ MIDP2 phones.
 Syntax: IRAWRGBA(28)> ImageId Width:U16 Height:U16 Flags (Red Green Blue
 Alpha)# ; Flags(O): ALPHA(128)
 
-## Layers (Game API) ##
+## Layers (Game API)
 
 ### LMVIEW(32)
 
@@ -474,7 +474,7 @@ Set the bounding box of a sprite. Used for approximate collision detection.
 Syntax: LSPCLRCT(50) SpriteId DType CollRctOX:T CollRctOY:T CollRctWidth:T
 CollRctHeight:T
 
-## Effects ##
+## Effects
 
 WARNING: The effect API is poorly supported on most phones, and in some cases
 it might cause JBit to freeze. Experiment only after you have saved your work!

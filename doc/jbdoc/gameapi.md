@@ -1,10 +1,10 @@
-# Game API Tutorial
+# Game API Tutorial #
 
 In this tutorial I assume that you have read the Beginner's Tutorial, spent a
 bit of time studying the 6502 examples and written some snippets of code
 targeting the MicroIO chip.
 
-## Tiles ##
+## Tiles
 
 The MIDP2 IO chip (called simply IO chip from now on) provides essentially
 the same level of control that professional game programmers have when
@@ -85,7 +85,7 @@ is red, 20:6 is green and 20:7 is blue).
 
 Run the program and make sure that you understand it.
 
-## Paint ##
+## Paint
 
 The standard JBit2P distribution includes a demo called "template" that is
 similar to the "Empty" in the GameKit.
@@ -143,7 +143,7 @@ You can then type the program above and check that it works. The "template"
 demo also uses the three cells starting at 20:5 to configure the background
 color.
 
-## Animation (1) ##
+## Animation (1)
 
 Animation is essentially about timing and loops.
 
@@ -193,7 +193,7 @@ So, this is a predictable and efficient version of the program above:
 	STA 2:18
 	JMP 4:0
 
-## Animation (2) ##
+## Animation (2)
 
 Usually, we don't want to repeat a sequence of instructions forever, but just
 for a little while. We can do this by using BNE, for Branch if Not Equal.
@@ -294,7 +294,7 @@ As an exercise, type in the following:
 	DEY
 	BNE <<1>>
 
-## Key presses ##
+## Key presses
 
 When you are confident in writing animations, you can start making programs
 that react to the user (i.e. interactive programs).

@@ -1,6 +1,6 @@
-# Introduction
+# Introduction #
 
-## JBit ##
+## JBit
 
 This is the main documentation for JBit. Select the "About" item on the menu
 for the list of the key bindings.
@@ -26,7 +26,7 @@ limited wap site is also available:
 
 	jbit.sf.net/m
 
-## News ##
+## News
 
 ### JBit 2.0.0
 
@@ -36,7 +36,7 @@ Merged the J2ME, native and javascript repositories.
 
 There is a new book: ioprg1.
 
-## Versions ##
+## Versions
 
 ### JBit
 
@@ -61,7 +61,7 @@ A custom version of JBit including a pre-made tileset was once available and
 is sometimes referenced in the documentation. At the moment, it is not
 available; a newer (and incompatible) version is planned for the near future.
 
-## Documents ##
+## Documents
 
 Select the "Books" item on the menu for the available documentation. JBDoc is
 a work in progress and the following list is subject to change.

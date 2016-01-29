@@ -1,4 +1,4 @@
-# Quick Start and Reference
+# Quick Start and Reference #
 
 This document is derived from the original sheet found here:
 
@@ -8,7 +8,7 @@ It is quite terse, as it was written to be printed on a single double sheet
 of paper and used as a reference. It assumes some experience with Assembly
 programming.
 
-## Getting Started ##
+## Getting Started
 
 If you are new to 6502 programming, read the online tutorial and then run
 some programs step by step. From the JBit menu, select Demos and then 6502.
@@ -48,7 +48,7 @@ enter ASM minor mode, then press the sequence 5 JKL, 3 DEF and 2 ABC for
 L-D-A, then select the instruction LDA #n from the list, then press 1 and 2
 to enter the operand and finally select OK to confirm the instruction.
 
-## System Overview ##
+## System Overview
 
 Neither interrupts nor BCD mode are supported. SED, RTI or any invalid opcode
 cause the program to abort. To end the program use the BRK (0) opcode.
@@ -66,7 +66,7 @@ in the non-standard page:offset notation.
 The program is loaded and starts at the beginning of page 3. Page 255 is
 reserved for future use. The IO chip is mapped to page 2.
 
-## IO Basic Operations ##
+## IO Basic Operations
 
 IO registers are stated as decimal offsets relative to page 2.
 
@@ -97,7 +97,7 @@ buffer is full when a new key is pressed, that KeyPress is lost.
 
 	KEYBUF 24 (8 bytes)
 
-## Charset ##
+## Charset
 
 ### Latin1
 
@@ -126,7 +126,7 @@ buffer is full when a new key is pressed, that KeyPress is lost.
 
 	(chars 128-143 omitted)
 
-## Conversions ##
+## Conversions
 
 	 0  0000  0    0
 	 1  0001  1   16
@@ -145,7 +145,7 @@ buffer is full when a new key is pressed, that KeyPress is lost.
 	14  1110  E  224
 	15  1111  F  240
 
-## 6502 Operations ##
+## 6502 Operations
 
 BRK: BReaK; in JBit, used to halt the VM.
 
@@ -201,7 +201,7 @@ PHA, PLA: PusH/PuLl Accumulator.
 
 PHP, PLP: PusH/PuLl Processor status.
 
-## 6502 Operands ##
+## 6502 Operands
 
 #n: Constant n.
 
@@ -225,7 +225,7 @@ n,Y: Cell 0:(n+Y modulo 256).
 
 (n),Y: Cell Y cells after cell pointed by 0:n.
 
-## 6502 Examples ##
+## 6502 Examples
 
 TAX: Transfer (i.e. copy) Accumulator into X.
 

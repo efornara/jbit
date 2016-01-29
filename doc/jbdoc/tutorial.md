@@ -1,6 +1,6 @@
-# Beginner's Tutorial #
+# Beginner's Tutorial
 
-## Introduction
+## Introduction ##
 
 JBit is a complete programming environment and is more complex than a typical
 mobile phone application. This tutorial will help you to get started.
@@ -90,7 +90,7 @@ quickly get to the VM.
 
 Select Debug.
 
-## Inside the VM ##
+## Inside the VM
 
 Here is the VM:
 
@@ -150,7 +150,7 @@ a while. We can start with this: the CPU is an agent acting on a virtual
 world on our behalf. Before letting the CPU act on our behalf, we will play a
 bit with this virtual world ourselves.
 
-## Memory ##
+## Memory
 
 Press 0 to switch to the MEMory view.
 
@@ -220,7 +220,7 @@ until the cell 3:25 is visible again. You can see that the cell has kept the
 value you have put into it. The cell 3:25, like most of the cells, is a
 memory cell, that is, a cell that just keeps the value that is put into it.
 
-## IO chip ##
+## IO chip
 
 Select GoTo.
 
@@ -298,7 +298,7 @@ display of the phone.
 Now that we have a better understanding of what "acting on a virtual world"
 means, we are ready to take another look at the CPU.
 
-## CPU ##
+## CPU
 
 Press # again to switch back to the inside view and then 0 to switch to the
 CPU view.
@@ -393,7 +393,7 @@ off the VM and returning to the Editor.
 
 Select End.
 
-## Editing programs ##
+## Editing programs
 
 The Editor is a modal editor, i.e. the effects of pressing a key depend on
 the mode of operation of the editor. There are two major modes of operation
@@ -512,7 +512,7 @@ mode.
 	|Options   Back|
 	+--------------+
 
-## Opcodes and Addr. Modes ##
+## Opcodes and Addr. Modes
 
 Before going any further, let me rephrase the sentence:
 
@@ -577,7 +577,7 @@ Maybe you meant to load the Accumulator from the cell 2:40. But, of course,
 the CPU cannot guess what you meant; it would load the Accumulator with 40
 and then halt the VM because 2 is not a valid opcode.
 
-## Assembly ##
+## Assembly
 
 The assembly language is an effective method to present the bytes of a
 program. Every operation is clearly shown in its own line, no matter if it is
@@ -611,7 +611,7 @@ Assembly, even punctuation is critical. The operations LDA #65 (i.e. 169 65)
 and LDA 65 (i.e. 165 65) are completely different (the second one, if we
 ignore the fact that is shorter and faster, is equivalent to LDA 0:65).
 
-## Your First Program ##
+## Your First Program
 
 Place the cursor at 3:0, press 5 to switch to the EDT MEM mode and then press
 # to switch to the EDT ASM mode.
@@ -756,7 +756,7 @@ Select Save, type Tutorial and select OK.
 
 Select Back followed by Exit to terminate JBit, and then start JBit again.
 
-## Modules and Versions ##
+## Modules and Versions
 
 JBit is a modular system and can be configured to include more or fewer
 tools, depending on the limitations of your phone. The main menu lists which
@@ -807,7 +807,7 @@ so simple that you do not need to consult a reference to use it. Even if you
 have a better version available, targeting the MicroIO version when you write
 your programs is a very good idea.
 
-## Store ##
+## Store
 
 Select Store.
 
@@ -848,7 +848,7 @@ Select Tutorial.
 	|Options   Back|
 	+--------------+
 
-## Editing session ##
+## Editing session
 
 Here is a quick editing session, as a review:
 
