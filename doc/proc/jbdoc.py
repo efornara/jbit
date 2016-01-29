@@ -35,9 +35,10 @@ import sys
 import textwrap
 import re
 import argparse
+import shutil
+import hashlib
 
 PARLEN = 77
-SYSRES = None
 
 fallback_resources = {}
 
@@ -217,6 +218,19 @@ class HTMLPageConverter(PageConverter):
 			self.outln('<' + el + attr + '>' + c + '</' + el + '>');
 		def out_section(kind, content, indexed):
 			if kind == '#':
+				if indir:
+					key = hashlib.sha1(content).hexdigest()
+					if (key + '.gif') in indir:
+						file = key[:8]
+						self.outln('<div style="width: 5.12cm;"><img src="' +
+							file + '.gif" alt="' + key + '" /></div>')
+						if OUTDIR:
+							try:
+								shutil.copyfile(INDIR + '/' + key + '.gif',
+									OUTDIR + '/' + file + '.gif')
+							except OSError:
+								pass
+						return
 				self.outln('<pre>')
 				self.out(escape(content))
 				self.outln('</pre>')
@@ -230,6 +244,9 @@ class HTMLPageConverter(PageConverter):
 				self.out('<h3>')
 				self.out(escape(content))
 				self.outln('</h3>')
+		indir = None
+		if INDIR:
+			 indir = os.listdir(INDIR)
 		self.out(template_resource(self.fmt + '_header.txt',
 			{ 'TITLE': escape(self.doc.title) }))
 		id = [1]
@@ -274,6 +291,10 @@ where fmt is:
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--sysres',
 	help='system resources')
+parser.add_argument('-i', '--indir',
+	help='indir')
+parser.add_argument('-o', '--outdir',
+	help='outdir')
 parser.add_argument('-f', '--fmt',
 	choices=['txt', 'dat', 'xhtml1', 'epub', 'html5'],
 	help='output format')
@@ -283,4 +304,6 @@ parser.add_argument('outfile',
 	help='output file')
 args = parser.parse_args()
 SYSRES = args.sysres
+INDIR = args.indir
+OUTDIR = args.outdir
 convert(args.infile, args.fmt, args.outfile)
