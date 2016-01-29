@@ -65,8 +65,9 @@ cp ../../samples/*.asm $OUT/samples
 cp ../../samples/js/bytes.asm $OUT/samples/6502
 cp ../../samples/6502/*.asm $OUT/samples/6502
 
-# make archive
+# make archives
 ( cd tmp ; rm -f ../$ID-bin.zip ; zip ../$ID-bin.zip -l -r $ID )
+( cd tmp ; tar czf ../$ID-bin.tar.gz $ID )
 
 # cleanup
 rm -rf tmp
