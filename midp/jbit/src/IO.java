@@ -21,6 +21,10 @@
 // Subsystems 
 //////////////////////////////////////////////////////////////////////////////
 
+// #if !IO_DISABLE_RECSTORE
+// #define ENABLE_RECSTORE
+// #endif
+
 // #if !IO_DISABLE_IMAGE
 // #define ENABLE_IMAGE
 // #endif
@@ -49,7 +53,9 @@
 
 // TODO find pragma to disable import warnings
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.util.Vector;
@@ -62,6 +68,11 @@ import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.midlet.MIDlet;
+
+//#if ENABLE_RECSTORE
+import javax.microedition.rms.RecordEnumeration;
+import javax.microedition.rms.RecordStore;
+//#endif
 
 // #if ENABLE_GAME_CANVAS
 // #else
@@ -86,7 +97,6 @@ public class IO extends GameCanvas implements Module, CommandListener {
 // #endif
 // TODO nokia, siemens custom canvas
 
-	/// {{{ cpp io_java.p !
 public static final int REG_REQPUT = 0x01;
 public static final int REG_REQEND = 0x02;
 public static final int REG_REQRES = 0x03;
@@ -127,6 +137,10 @@ public static final int REG_REQDAT = 0x60;
 public static final byte REQ_NOREQ = (byte)0x00;
 public static final byte REQ_TIME = (byte)0x02;
 public static final byte REQ_LOADROM = (byte)0x06;
+public static final byte REQ_RDRIVE = (byte)0x08;
+public static final byte REQ_RLOAD = (byte)0x09;
+public static final byte REQ_RSAVE = (byte)0x0A;
+public static final byte REQ_RDELETE = (byte)0x0B;
 public static final byte REQ_DPYINFO = (byte)0x10;
 public static final byte REQ_SETBGCOL = (byte)0x11;
 public static final byte REQ_SETPAL = (byte)0x12;
@@ -260,11 +274,9 @@ public static final byte CH_RTEE = (byte)0x89;
 public static final byte CH_BTEE = (byte)0x8B;
 public static final byte CH_LTEE = (byte)0x8D;
 public static final byte CH_CROSS = (byte)0x8F;
-	/// }}}
 
 // #if DEBUG
 //@private String [][] labels = {
-//@/// {{{ cpp io_javad.p !
 //@{ "REG_" + "REQPUT", "01" },
 //@{ "REG_" + "REQEND", "02" },
 //@{ "REG_" + "REQRES", "03" },
@@ -305,6 +317,10 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "REQ_" + "NOREQ", "00" },
 //@{ "REQ_" + "TIME", "02" },
 //@{ "REQ_" + "LOADROM", "06" },
+//@{ "REQ_" + "RDRIVE", "08" },
+//@{ "REQ_" + "RLOAD", "09" },
+//@{ "REQ_" + "RSAVE", "0A" },
+//@{ "REQ_" + "RDELETE", "0B" },
 //@{ "REQ_" + "DPYINFO", "10" },
 //@{ "REQ_" + "SETBGCOL", "11" },
 //@{ "REQ_" + "SETPAL", "12" },
@@ -404,7 +420,6 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "VAL_" + "GKEY1_B", "04" },
 //@{ "VAL_" + "GKEY1_C", "08" },
 //@{ "VAL_" + "GKEY1_D", "10" },
-//@/// }}}
 //@	};
 //@	
 //@	String labelToString(String prefix, int value) {
@@ -490,6 +505,10 @@ public static final byte CH_CROSS = (byte)0x8F;
 	private int paletteMask;
 	private int bgCol;
 
+	// #ifdef ENABLE_RECSTORE
+	private char recDrive;
+	// #endif
+
 	// #ifdef ENABLE_IMAGE
 	private Image bgImg;
 	private Image[] images;
@@ -510,6 +529,9 @@ public static final byte CH_CROSS = (byte)0x8F;
 		palette = standardPalette;
 		paletteMask = STANDARD_PALETTE_MASK;
 		bgCol = 0xFFFFFF;
+		// #ifdef ENABLE_RECSTORE
+		recDrive = 'D';
+		// #endif
 		// #ifdef ENABLE_IMAGE
 		bgImg = null;
 		images = new Image[DEFAULT_IMAGE_DIM];
@@ -602,7 +624,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 				int value = is.read();
 				if (value == -1 && size == 0)
 					break;
-				if (value == -1 || address > 0xFFFF)
+				if (value == -1 || address > 0xFF00)
 					throw new RuntimeException();
 				as.put(address, value);
 			}
@@ -612,7 +634,106 @@ public static final byte CH_CROSS = (byte)0x8F;
 				is.close();
 		}
 	}
+
+	// #ifdef ENABLE_RECSTORE
+	private void recOp(byte op, String name, int address, int size) throws Exception {
+		RecordStore store = null;
+		boolean found = false;
+		int recId = 0;
+		byte[] data = null;
+		ByteArrayInputStream bais = null;
+		DataInputStream is = null;
+		int i;
+		try {
+			store = RecordStore.openRecordStore(Const.STORE_NAME, true);
+			RecordEnumeration re = store.enumerateRecords(null, null, false);
+			while (re.hasNextElement()) {
+				recId = re.nextRecordId();
+				data = store.getRecord(recId);
+				bais = new ByteArrayInputStream(data);
+				is = new DataInputStream(bais);
+				String recName = is.readUTF();
+				if (recName.length() == 0)
+					continue;
+				char type = recName.charAt(0);
+				if (type != recDrive)
+					continue;
+				if (recName.substring(1).equals(name)) {
+					found = true;
+					break;
+				}
+			}
+			re.destroy();
+			switch (op) {
+			case REQ_RLOAD:
+				if (!found)
+					throw new RuntimeException();
+				for (i = 0; size == 0 || i < size; i++, address++) {
+					int value = is.read();
+					if (value == -1 && size == 0)
+						break;
+					if (value == -1 || address > 0xFFFF)
+						throw new RuntimeException();
+					as.put(address, value);					
+				}
+				putLong(REG_REQDAT, i);
+				break;
+			case REQ_RSAVE:
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				DataOutputStream os = new DataOutputStream(baos);
+				os.writeUTF(recDrive + name);
+				for (i = 0; i < size; i++, address++) {
+					if (address > 0xFF00)
+						throw new RuntimeException();
+					os.write(as.get(address));
+				}
+				os.flush();
+				data = baos.toByteArray();
+				if (found)
+					store.setRecord(recId, data, 0, data.length);
+				else
+					store.addRecord(data, 0, data.length);
+				break;
+			case REQ_RDELETE:
+				if (!found)
+					throw new RuntimeException();
+				store.deleteRecord(recId);
+				break;
+			}
+		} finally {
+			if (store != null)
+				store.closeRecordStore();
+		}
+	}
 	
+	private void doRDrive() throws Exception {
+		int drive = parseU8();
+		if (drive >= 'A' && drive <= 'Z')
+			recDrive = (char)drive;
+		else
+			throw new RuntimeException();
+	}
+	
+	private void doRLoad() throws Exception {
+		int address = parseU16();
+		int size = parseU16();
+		String name = parseString0();
+		recOp(REQ_RLOAD, name, address, size);
+	}
+	
+	private void doRSave() throws Exception {
+		int address = parseU16();
+		int size = parseU16();
+		String name = parseString0();
+		recOp(REQ_RSAVE, name, address, size);
+	}
+
+	private void doRDelete() throws Exception {
+		String name = parseString0();
+		recOp(REQ_RDELETE, name, 0, 0);
+	}
+	// #endif
+
 	private void putLong(int address, long value) {
 		for (int i = 0; i < 8; i++) {
 			m[address + i] = (byte)value;
@@ -2229,6 +2350,20 @@ public static final byte CH_CROSS = (byte)0x8F;
 			case REQ_LOADROM:
 				doLoadROM();
 				break;
+			// #ifdef ENABLE_RECSTORE
+			case REQ_RDRIVE:
+				doRDrive();
+				break;
+			case REQ_RLOAD:
+				doRLoad();
+				break;
+			case REQ_RSAVE:
+				doRSave();
+				break;
+			case REQ_RDELETE:
+				doRDelete();
+				break;
+			// #endif
 			case REQ_DPYINFO:
 				doDpyInfo();
 				break;

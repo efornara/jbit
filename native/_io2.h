@@ -32,8 +32,6 @@
 /*  SUCH DAMAGE.                                                           */
 /*                                                                         */
 
-/*  imported from jbit.inc                                                 */
-
 #define REQPUT 0x0201
 #define REQEND 0x0202
 #define REQRES 0x0203
@@ -74,6 +72,10 @@
 #define REQ_NOREQ 0x00
 #define REQ_TIME 0x02
 #define REQ_LOADROM 0x06
+#define REQ_RDRIVE 0x08
+#define REQ_RLOAD 0x09
+#define REQ_RSAVE 0x0A
+#define REQ_RDELETE 0x0B
 #define REQ_DPYINFO 0x10
 #define REQ_SETBGCOL 0x11
 #define REQ_SETPAL 0x12
