@@ -72,7 +72,7 @@
 #define REQ_NOREQ 0x00
 #define REQ_TIME 0x02
 #define REQ_LOADROM 0x06
-#define REQ_RDRIVE 0x08
+#define REQ_RSFORMAT 0x08
 #define REQ_RLOAD 0x09
 #define REQ_RSAVE 0x0A
 #define REQ_RDELETE 0x0B

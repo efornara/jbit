@@ -137,7 +137,7 @@ public static final int REG_REQDAT = 0x60;
 public static final byte REQ_NOREQ = (byte)0x00;
 public static final byte REQ_TIME = (byte)0x02;
 public static final byte REQ_LOADROM = (byte)0x06;
-public static final byte REQ_RDRIVE = (byte)0x08;
+public static final byte REQ_RSFORMAT = (byte)0x08;
 public static final byte REQ_RLOAD = (byte)0x09;
 public static final byte REQ_RSAVE = (byte)0x0A;
 public static final byte REQ_RDELETE = (byte)0x0B;
@@ -317,7 +317,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "REQ_" + "NOREQ", "00" },
 //@{ "REQ_" + "TIME", "02" },
 //@{ "REQ_" + "LOADROM", "06" },
-//@{ "REQ_" + "RDRIVE", "08" },
+//@{ "REQ_" + "RSFORMAT", "08" },
 //@{ "REQ_" + "RLOAD", "09" },
 //@{ "REQ_" + "RSAVE", "0A" },
 //@{ "REQ_" + "RDELETE", "0B" },
@@ -505,10 +505,6 @@ public static final byte CH_CROSS = (byte)0x8F;
 	private int paletteMask;
 	private int bgCol;
 
-	// #ifdef ENABLE_RECSTORE
-	private char recDrive;
-	// #endif
-
 	// #ifdef ENABLE_IMAGE
 	private Image bgImg;
 	private Image[] images;
@@ -529,9 +525,6 @@ public static final byte CH_CROSS = (byte)0x8F;
 		palette = standardPalette;
 		paletteMask = STANDARD_PALETTE_MASK;
 		bgCol = 0xFFFFFF;
-		// #ifdef ENABLE_RECSTORE
-		recDrive = 'D';
-		// #endif
 		// #ifdef ENABLE_IMAGE
 		bgImg = null;
 		images = new Image[DEFAULT_IMAGE_DIM];
@@ -656,9 +649,11 @@ public static final byte CH_CROSS = (byte)0x8F;
 				if (recName.length() == 0)
 					continue;
 				char type = recName.charAt(0);
-				if (type != recDrive)
+				if (type != Const.RECORD_TYPE_DATA)
 					continue;
-				if (recName.substring(1).equals(name)) {
+				if (op == REQ_RSFORMAT) {
+					store.deleteRecord(recId);
+				} else if (recName.substring(1).equals(name)) {
 					found = true;
 					break;
 				}
@@ -681,7 +676,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 			case REQ_RSAVE:
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				DataOutputStream os = new DataOutputStream(baos);
-				os.writeUTF(recDrive + name);
+				os.writeUTF(Const.RECORD_TYPE_DATA + name);
 				for (i = 0; i < size; i++, address++) {
 					if (address > 0xFF00)
 						throw new RuntimeException();
@@ -706,12 +701,10 @@ public static final byte CH_CROSS = (byte)0x8F;
 		}
 	}
 	
-	private void doRDrive() throws Exception {
-		int drive = parseU8();
-		if (drive >= 'A' && drive <= 'Z')
-			recDrive = (char)drive;
-		else
+	private void doRSFormat() throws Exception {
+		if (parseU8() != 121 || parseU8() != 33 || reqcur != reqlen)
 			throw new RuntimeException();
+		recOp(REQ_RSFORMAT, null, 0, 0);
 	}
 	
 	private void doRLoad() throws Exception {
@@ -2351,8 +2344,8 @@ public static final byte CH_CROSS = (byte)0x8F;
 				doLoadROM();
 				break;
 			// #ifdef ENABLE_RECSTORE
-			case REQ_RDRIVE:
-				doRDrive();
+			case REQ_RSFORMAT:
+				doRSFormat();
 				break;
 			case REQ_RLOAD:
 				doRLoad();

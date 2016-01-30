@@ -203,7 +203,7 @@ public class Store implements Module, CommandListener {
 	}
 
 	private String parseStore(char parseType) {
-		String ret = "Records:\n\n";
+		String ret = "Records:\n";
 		boolean found = false;
 		try {
 			openStore();
