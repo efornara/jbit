@@ -12,7 +12,7 @@
 	<property name="wtk.cldc.version" value="1.0"/>	
 	
 	<property name="demos_6502" value="ciao.jb,loop1.jb,fill1.jb,fill2.jb,loop2.jb,loop3.jb,keypad.jb,random.jb,charset.jb"/>
-	<property name="demos_IO1" value="resize.jb,stdpal.jb,bgcol1.jb,bgcol2.jb,setpal.jb,iload.jb,idummy.jb,ipnggen1.jb,ipnggen2.jb"/>
+	<property name="demos_IO1" value="resize.jb,stdpal.jb,bgcol1.jb,bgcol2.jb,setpal.jb,iload.jb,idummy.jb,ipnggen1.jb,ipnggen2.jb,recstore.jb"/>
 	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,template.jb,effects.jb"/>
 	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
 	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>

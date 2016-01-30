@@ -65,3 +65,5 @@ Color is at 4:13; bitmap starts at 4:14 (24px x 21px = 63bytes).
 Generate an RGBA image and show it.
 The image is "foggy" because of the blending with the background.
 How you see the image depends on how well your phone supports semi-transparent pixels; the pixel at the top-left corner should be clearly visible on any phone.
+#recstore.jb
+Test the Record Store API. Drive: C, Name: recstore.
