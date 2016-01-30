@@ -52,6 +52,7 @@ public class Store implements Module, CommandListener {
 	private Command deleteCmd = new Command("Delete", Command.ITEM, 6);
 	private Command overwriteCmd = new Command("Overwrite", Command.ITEM, 8);
 	private Command saveCmd = new Command("Save", Command.SCREEN, 1);
+	private Command listRecsCmd = new Command("ListRecs", Command.SCREEN, 2);
 	private Command backCmd = new Command("Back", Command.BACK, 1);
 	private Command okCmd = new Command("OK", Command.OK, 1);
 	private Command cancelCmd = new Command("Cancel", Command.CANCEL, 2);
@@ -201,7 +202,9 @@ public class Store implements Module, CommandListener {
 		}
 	}
 
-	private int parseStore() {
+	private String parseStore(char parseType) {
+		String ret = "Records:\n\n";
+		boolean found = false;
 		try {
 			openStore();
 			RecordEnumeration re = store.enumerateRecords(null, null, false);
@@ -214,17 +217,24 @@ public class Store implements Module, CommandListener {
 				if (name.length() == 0)
 					continue;
 				char type = name.charAt(0);
-				if (type != Const.RECORD_TYPE_PROGRAM)
+				if (type != parseType)
 					continue;
-				recNames.addElement(name);
-				recIds.addElement(new Integer(recId));
+				if (type == Const.RECORD_TYPE_PROGRAM) {
+					recNames.addElement(name);
+					recIds.addElement(new Integer(recId));
+				} else { // Const.RECORD_TYPE_DATA
+					ret += name.substring(1) + " (" + store.getRecordSize(recId) + ")\n";
+					found = true;
+				}
 			}
+			if (!found)
+				ret += "- none -";
+			return ret;
 		} catch (Throwable e) {
-			return -1;
+			return null;
 		} finally {
 			closeStore();
 		}
-		return 0;
 	}
 	
 	private int init(Module jbit) {
@@ -234,7 +244,7 @@ public class Store implements Module, CommandListener {
 			canEdit = true;
 		if (jbit.opO(JBitSvc.OP_FIND_SERVICE, 0, VMSvc.TAG) != null)
 			canRun = true;
-		return parseStore();
+		return parseStore(Const.RECORD_TYPE_PROGRAM) == null ? -1 : 0;
 	}
 	
 	private void updateView() {
@@ -262,6 +272,7 @@ public class Store implements Module, CommandListener {
 		}
 		if (file != null)
 			list.addCommand(saveCmd);
+		list.addCommand(listRecsCmd);
 		list.addCommand(backCmd);
 		list.setCommandListener(this);
 	}
@@ -437,7 +448,13 @@ public class Store implements Module, CommandListener {
 		alert.setTimeout(Alert.FOREVER);
 		display.setCurrent(alert, list);
 	}
-	
+
+	private void showListRecsDialog() {
+		Alert alert = new Alert("ListRecs", parseStore(Const.RECORD_TYPE_DATA), null, AlertType.INFO);
+		alert.setTimeout(Alert.FOREVER);
+		display.setCurrent(alert, list);
+	}
+
 	private boolean handleLoad(String name) {
 		try {
 			createFileFromRecord(name);
@@ -802,6 +819,8 @@ public class Store implements Module, CommandListener {
 				showConfirmedOpDialog(ACTION_OVERWRITE, name);
 			} else if (c == saveCmd) {
 				showNamedOpDialog(ACTION_SAVE, null);
+			} else if (c == listRecsCmd) {
+				showListRecsDialog();
 			} else if (c == backCmd) {
 				jbit.opI(JBitSvc.OP_REPLACE_WITH_SERVICE, 0, null);
 			} else {

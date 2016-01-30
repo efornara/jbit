@@ -48,5 +48,6 @@ public interface Const {
 	String STORE_NAME = "JBit";
 	
 	char RECORD_TYPE_PROGRAM = 'P';
+	char RECORD_TYPE_DATA = 'D';
 
 }
