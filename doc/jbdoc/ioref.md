@@ -242,6 +242,37 @@ chip was reset. Resolution ranges from milliseconds to seconds.
 Syntax: TIME(2) [RefTime=ABS [Fract=1000]] ; RefTime(C): ABS(1), RESET(2) ;
 Fract(C): 1(1), 10(2), 10(3), 1000(4) ; Result: Time:U64
 
+### LOADROM(6)
+
+Load (part of) a ROM resource into memory. At the moment, only "cga.rom" is
+available.
+
+Syntax: LOADROM(6) Addr:U16 ResName:S0 [Offset:U16 Size:U16]
+
+### RSFORMAT(8)
+
+Delete every record from the store. Programs are kept.
+
+Syntax: RSFORMAT(8) 121 33
+
+### RLOAD(9)
+
+Load a record from the store. At most Size bytes are read.
+
+Syntax: RLOAD(9) Addr:U16 Size:U16 RecName:S0
+
+### RSAVE(10)
+
+Save a record into the store.
+
+Syntax: RSAVE(10) Addr:U16 Size:U16 RecName:S0
+
+### RDELETE(11)
+
+Delete a record from the store.
+
+Syntax: RDELETE(11) RecName:S0
+
 ## Display and Imaging
 
 ### DPYINFO(16)

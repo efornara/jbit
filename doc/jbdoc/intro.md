@@ -28,6 +28,10 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.0.1
+
+Record Store API. Android binaries (for terminals, no app). Removed js version.
+
 ### JBit 2.0.0
 
 Merged the J2ME, native and javascript repositories.
