@@ -32,7 +32,7 @@ if [ ! -d $TOOLCHAIN ] ; then
 		exit 1
 	fi
 	$JBITANDROID_NDK/build/tools/make-standalone-toolchain.sh \
-	--arch=$1 --platform=android-$ID \
+	--system=linux-x86_64 --arch=$1 --platform=android-$ID \
 	--install-dir="$TOOLCHAIN"
 fi
 

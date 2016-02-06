@@ -1,0 +1,18 @@
+cd /opt
+apt-get install -y wget
+wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+chmod 755 android-ndk-r10e-linux-x86_64.bin
+./android-ndk-r10e-linux-x86_64.bin
+rm android-ndk-r10e-linux-x86_64.bin
+./android-ndk-r10e/build/tools/make-standalone-toolchain.sh \
+  --system=linux-x86_64 --arch=arm --platform=android-3 \
+  --install-dir=./toolchain-arm-3
+./android-ndk-r10e/build/tools/make-standalone-toolchain.sh \
+  --system=linux-x86_64 --arch=x86 --platform=android-9 \
+  --install-dir=./toolchain-x86-9
+./android-ndk-r10e/build/tools/make-standalone-toolchain.sh \
+  --system=linux-x86_64 --arch=mips --platform=android-9 \
+  --install-dir=./toolchain-mips-9
+rm -rf android-ndk-r10e
+rm get_droid
+cd /
