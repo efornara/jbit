@@ -4,4 +4,4 @@ RUN apt-get update
 RUN apt-get install -y nano nvi make zip
 RUN apt-get install -y python
 RUN apt-get install -y ruby-ronn
-RUN apt-get install -y c++
+RUN apt-get install -y g++
