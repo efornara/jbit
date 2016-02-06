@@ -14,5 +14,5 @@ rm android-ndk-r10e-linux-x86_64.bin
   --system=linux-x86_64 --arch=mips --platform=android-9 \
   --install-dir=./toolchain-mips-9
 rm -rf android-ndk-r10e
-rm -rf scripts
+rm get_droid
 cd /
