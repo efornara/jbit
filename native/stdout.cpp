@@ -72,7 +72,7 @@ public:
 	}
 };
 
-Device *new_Device() {
+Device *new_Device(Tag tag) {
 	return new StdoutDevice();
 }
 

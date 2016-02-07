@@ -50,6 +50,10 @@ void fatal(const char *format, ...) {
 	exit(1);
 }
 
+// pushing rich abstraction into devices not worth it
+Tag MicroIOTag("microio");
+Tag Xv65Tag("xv65");
+
 void show_asm_devices() {
 	printf("asm devices:\n");
 	for (int i = 0; asm_devices[i]; i++)
@@ -64,6 +68,8 @@ void show_sim_devices() {
 		printf("  - none -\n");
 	for (int i = 0; i < n; i++)
 		printf("  %s\n", reg->get(i)->tag.s);
+	if (!reg->get(MicroIOTag) && reg->get(Xv65Tag))
+		printf("  %s\n", MicroIOTag.s);
 }
 
 void usage(int code = 1) {
@@ -112,7 +118,7 @@ const char *resolve_file_name(const char *name, Buffer *buffer) {
 			buffer->append_char('/');
 		buffer->append_string(name);
 		const char *file_name = buffer->get_data();
-		if (access(file_name, F_OK) == 0) // less surprises than R_OK
+		if (access(file_name, F_OK) == 0) // fewer surprises than R_OK
 			return file_name;
 	} while ((dir = strtok(NULL, ":")));
 	return name;
@@ -210,10 +216,13 @@ void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 #endif
 		prg.device_tag = Tag(def_device);
 	}
-	const DeviceEntry *dev_entry = DeviceRegistry::get_instance()->get(prg.device_tag);
+	DeviceRegistry *reg = DeviceRegistry::get_instance();
+	const DeviceEntry *dev_entry = reg->get(prg.device_tag);
+	if (!dev_entry && prg.device_tag == MicroIOTag)
+		dev_entry = reg->get(Xv65Tag);
 	if (!dev_entry)
 		fatal("device '%s' not available", prg.device_tag.s);
-	(*dev) = dev_entry->new_Device();
+	(*dev) = dev_entry->new_Device(prg.device_tag);
 	(*vm) = new_VM(*dev);
 	(*vm)->reset();
 	(*vm)->load(&prg);

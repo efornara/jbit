@@ -77,7 +77,7 @@ public:
 	const DeviceEntry *get(Tag tag);
 };
 
-typedef Device *(*NewDeviceFn)();
+typedef Device *(*NewDeviceFn)(Tag tag);
 
 struct DeviceEntry {
 	Tag tag;

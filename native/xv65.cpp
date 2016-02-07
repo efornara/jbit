@@ -175,6 +175,7 @@ const char *errno_to_string(int id) {
 class Xv65Device : public Device {
 private:
 	const static int top_memory = 0xffff;
+	bool dev_microio;
 	AddressSpace *m;
 	int argc;
 	char **argv;
@@ -784,7 +785,8 @@ private:
 		}
 	}
 public:
-	Xv65Device() {
+	Xv65Device(Tag tag) {
+		dev_microio = (tag == "microio");
 		signal(SIGALRM, sig_handler);
 	}
 	~Xv65Device() {
@@ -802,7 +804,7 @@ public:
 		random.reset();
 		keybuf.reset();
 		display.reset();
-		microio = false;
+		microio = dev_microio;
 		microio_refresh = true;
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
@@ -947,8 +949,8 @@ public:
 	}
 };
 
-Device *new_Device() {
-	return new Xv65Device();
+Device *new_Device(Tag tag) {
+	return new Xv65Device(tag);
 }
 
 DeviceEntry entry("xv65", new_Device);
