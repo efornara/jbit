@@ -97,7 +97,7 @@ REQ_LSEEK  = 50
 TTY_ICANON     =   1
 TTY_MICROIO    =   2
 TTY_RAW        =   3
-TTY_MODMASK    =   7
+TTY_MODEMASK   =   7
 TTY_ISDIRTY    =  64
 TTY_CANREAD    = 128
 

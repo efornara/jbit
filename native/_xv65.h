@@ -99,7 +99,7 @@
 #define TTY_ICANON 1
 #define TTY_MICROIO 2
 #define TTY_RAW 3
-#define TTY_MODMASK 7
+#define TTY_MODEMASK 7
 #define TTY_ISDIRTY 64
 #define TTY_CANREAD 128
 

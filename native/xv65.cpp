@@ -85,6 +85,7 @@ void tty_set(int mode) {
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_attrs);
 		break;
 	case TTY_MICROIO:
+	case TTY_RAW:
 		struct termios attrs = tty_attrs;
 		attrs.c_lflag &= ~(ICANON | ECHO);
 		attrs.c_cc[VMIN] = 0;
@@ -733,6 +734,18 @@ private:
 		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
 			printf("%s\n", display.get_line(i));
 	}
+	int tty_mode(int value) {
+		return value & TTY_MODEMASK;
+	}
+	void enque_key(char value) {
+		int c = value;
+		if (tty_mode(v_TTYCTL) == TTY_MICROIO) {
+			c = MicroIOKeybuf::map_keypad(c);
+			if (!c)
+				return;
+		}
+		keybuf.enque(c);
+	}
 	void put_FRMDRAW() {
 		int fps4 = v_FRMFPS;
 		if (microio) {
@@ -743,12 +756,12 @@ private:
 			microio_refresh = true;
 		}
 		fflush(stdout);
-		if (v_TTYCTL != TTY_ICANON) {
+		if (tty_mode(v_TTYCTL) != TTY_ICANON) {
 			if (tty_canread()) {
 				char buf[16];
 				int n = read(STDIN_FILENO, buf, sizeof(buf));
 				for (int i = 0; i < n; i++)
-					keybuf.enque(buf[i]);
+					enque_key(buf[i]);
 			}
 		}
 		if (fps4) {
@@ -758,6 +771,12 @@ private:
 			ts.tv_nsec = 1000000 * (ms % 1000);
 			nanosleep(&ts, NULL);
 		}
+	}
+	void put_TTYCTL(int value) {
+		int mode = tty_mode(value);
+		if (tty_mode(v_TTYCTL) != mode)
+			tty_set(mode);
+		v_TTYCTL = value;
 	}
 	int get_TTYCTL() {
 		if (tty_canread())
@@ -861,7 +880,7 @@ public:
 			microio = false;
 			break;
 		case TTYCTL:
-			// TODO
+			put_TTYCTL(value);
 			break;
 		case RANDOM:
 			random.put(value);
@@ -934,9 +953,9 @@ public:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];
 			} else if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE) {
-				if (v_TTYCTL == TTY_ICANON) {
+				if (tty_mode(v_TTYCTL) == TTY_ICANON) {
 					tty_set(TTY_MICROIO);
-					v_TTYCTL = TTY_MICROIO;
+					v_TTYCTL = (v_TTYCTL & ~TTY_MODEMASK) | TTY_MICROIO;
 				}
 				return keybuf.get(address - KEYBUF);
 			} else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
