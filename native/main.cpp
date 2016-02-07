@@ -230,6 +230,7 @@ void run(int argc, char *argv[], Tag dev_tag) {
 		vm_status = vm->step();
 		dev_keepalive = dev->update(vm_status);
 	}
+	delete dev;
 }
 
 void dump_page(const Program *prg, int page, bool truncate = false) {

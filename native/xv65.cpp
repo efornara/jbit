@@ -138,6 +138,7 @@ const char *errno_to_string(int id) {
 #define STR_ESC_CLEAR "\x1b[2J"
 #define STR_ESC_HOME "\x1b[;H"
 #define STR_ESC_NORMAL "\x1b[0m"
+#define STR_ESC_OBR "\x1b["
 
 class Xv65Device : public Device {
 private:
@@ -679,17 +680,20 @@ private:
 			req_buf.append_char(0);
 		request();
 	}
+	void print_microio() {
+		if (microio_refresh) {
+			printf(STR_ESC_NORMAL);
+			printf(STR_ESC_CLEAR);
+			microio_refresh = false;
+		}
+		printf(STR_ESC_HOME);
+		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+			printf("%s\n", display.get_line(i));
+	}
 	void put_FRMDRAW() {
 		int fps4 = v_FRMFPS;
 		if (microio) {
-			if (microio_refresh) {
-				printf(STR_ESC_NORMAL);
-				printf(STR_ESC_CLEAR);
-				microio_refresh = false;
-			}
-			printf(STR_ESC_HOME);
-			for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
-				printf("%s\n", display.get_line(i));
+			print_microio();
 			if (!fps4)
 				fps4 = 40;
 		} else {
@@ -724,6 +728,9 @@ private:
 		case ESC_NORMAL:
 			printf(STR_ESC_NORMAL);
 			break;
+		case ESC_OBR:
+			printf(STR_ESC_OBR);
+			break;
 		default:
 			if ((value >= ESC_BG_BLACK && value <= ESC_BG_WHITE) ||
 			    (value >= ESC_FG_BLACK && value <= ESC_FG_WHITE))
@@ -733,6 +740,12 @@ private:
 public:
 	Xv65Device() {
 		signal(SIGALRM, sig_handler);
+	}
+	~Xv65Device() {
+		if (microio) {
+			microio_refresh = true;
+			print_microio();
+		}
 	}
 	// IO
 	void set_address_space(AddressSpace *dma) {
