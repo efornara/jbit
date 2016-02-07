@@ -13,7 +13,7 @@
 .code
 
 START:	LDA	#0
-NEXT:	STA	2:40
+NEXT:	STA	2:18
 	LDA	2:24
 	BEQ	NEXT
 	CMP	#42 ; *

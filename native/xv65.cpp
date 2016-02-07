@@ -59,7 +59,39 @@
 
 namespace {
 
-extern "C" void sig_handler(int) {
+void sig_handler(int) {
+}
+
+bool tty_need_cleanup = false;
+
+struct termios tty_attrs;
+
+void tty_atexit(void) {
+	tcsetattr(STDIN_FILENO, TCSANOW, &tty_attrs);
+}
+
+void tty_set(int mode) {
+	if (!tty_need_cleanup) {
+		if (!isatty(STDIN_FILENO)) {
+			fprintf(stderr, "xv65: tty mode unavailable.\n");
+			exit(1);
+		}
+		tcgetattr(STDIN_FILENO, &tty_attrs);
+		atexit(tty_atexit);
+		tty_need_cleanup = true;
+	}
+	switch (mode) {
+	case TERMIOS_ICANON:
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_attrs);
+		break;
+	case TERMIOS_MICROIO:
+		struct termios attrs = tty_attrs;
+		attrs.c_lflag &= ~(ICANON | ECHO);
+		attrs.c_cc[VMIN] = 0;
+		attrs.c_cc[VTIME] = 0;
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &attrs);
+		break;
+	}
 }
 
 const char *req_id_to_string(int id) {
@@ -149,6 +181,7 @@ private:
 	Buffer req_buf;
 	Buffer tmp_buf;
 	Random random;
+	MicroIOKeybuf keybuf;
 	MicroIODisplay display;
 	bool microio;
 	bool microio_refresh;
@@ -158,6 +191,7 @@ private:
 	int v_FRMFPS;
 	int v_TRCLEVEL;
 	int v_ERREXIT;
+	int v_TERMIOS;
 	FILE *putfp;
 	unsigned char v_REQDAT[16];
 	const char *r;
@@ -700,6 +734,18 @@ private:
 			microio_refresh = true;
 		}
 		fflush(stdout);
+		if (v_TERMIOS != TERMIOS_ICANON) {
+			struct timeval tv = { 0, 0 };
+			fd_set fds;
+			FD_ZERO(&fds);
+			FD_SET(STDIN_FILENO, &fds);
+			if (select(1, &fds, NULL, NULL, &tv) == 1) {
+				char buf[16];
+				int n = read(STDIN_FILENO, buf, sizeof(buf));
+				for (int i = 0; i < n; i++)
+					keybuf.enque(buf[i]);
+			}
+		}
 		if (fps4) {
 			int ms = (int)(1000.0 / (fps4 / 4.0));
 			struct timespec ts;
@@ -754,6 +800,7 @@ public:
 	void reset() {
 		req_buf.reset();
 		random.reset();
+		keybuf.reset();
 		display.reset();
 		microio = false;
 		microio_refresh = true;
@@ -763,6 +810,7 @@ public:
 		v_FRMFPS = 0;
 		v_TRCLEVEL = 0;
 		v_ERREXIT = 0;
+		v_TERMIOS = TERMIOS_ICANON;
 		putfp = stdout;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
@@ -799,8 +847,14 @@ public:
 			fprintf(putfp, "%d", value);
 			microio = false;
 			break;
+		case TERMIOS:
+			// TODO
+			break;
 		case RANDOM:
 			random.put(value);
+			break;
+		case KEYBUF:
+			keybuf.put(address - KEYBUF, value);
 			break;
 		case CONESC:
 			set_CONESC(value);
@@ -846,6 +900,8 @@ public:
 			return sizeof(pid_t);
 		case FRMFPS:
 			return v_FRMFPS;
+		case TERMIOS:
+			return v_TERMIOS;
 		case RANDOM:
 			return random.get();
 			break;
@@ -864,6 +920,12 @@ public:
 		default:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];
+			} else if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE) {
+				if (v_TERMIOS == TERMIOS_ICANON) {
+					tty_set(TERMIOS_MICROIO);
+					v_TERMIOS = TERMIOS_MICROIO;
+				}
+				return keybuf.get(address - KEYBUF);
 			} else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
 				return display.get(address - CONVIDEO);
 			} else {

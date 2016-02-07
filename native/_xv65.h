@@ -43,8 +43,10 @@
 
 #define FRMFPS 0x0211
 #define FRMDRAW 0x0212
+#define TERMIOS 0x0215
 #define PUTUINT8 0x0216
 #define RANDOM 0x0217
+#define KEYBUF 0x0218
 
 #define CONCOLS 0x0220
 #define CONROWS 0x0221
@@ -93,6 +95,12 @@
 #define REQ_TIME 48
 #define REQ_RMDIR 49
 #define REQ_LSEEK 50
+
+#define TERMIOS_ICANON 1
+#define TERMIOS_MICROIO 2
+#define TERMIOS_RAW 3
+#define TERMIOS_MODMASK 7
+#define TERMIOS_DIRTY 128
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
