@@ -57,3 +57,15 @@ public:
 	int get(int address) const;
 	const char *get_line(int i) const;
 };
+
+class MicroIOKeybuf {
+public:
+	static const int KEYBUF_SIZE = 8;
+private:
+	char key_buf[KEYBUF_SIZE];
+public:
+	void reset();
+	void put(int address, int value);
+	int get(int address) const;
+	void enque(int value);
+};

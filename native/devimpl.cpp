@@ -100,3 +100,25 @@ const char *MicroIODisplay::get_line(int i) const {
 	}
 	return line_buf;
 }
+
+void MicroIOKeybuf::reset() {
+	memset(key_buf, 0, sizeof(key_buf));
+}
+
+void MicroIOKeybuf::put(int address, int value) {
+	for (int i = 0; i < KEYBUF_SIZE - 1; i++)
+		key_buf[i] = key_buf[i + 1];
+	key_buf[KEYBUF_SIZE - 1] = 0;
+}
+
+int MicroIOKeybuf::get(int address) const {
+	return key_buf[address] & 0xFF;
+}
+
+void MicroIOKeybuf::enque(int value) {
+	for (int i = 0; i < KEYBUF_SIZE; i++)
+		if (key_buf[i] == 0) {
+			key_buf[i] = (char)value;
+			return;
+		}
+}

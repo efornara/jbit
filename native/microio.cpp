@@ -66,32 +66,7 @@ private:
 	static const int KEYBUF_SIZE = 8;
 
 	Random random;
-
-	jbyte keyBuf[KEYBUF_SIZE];
-
-	void keyBufReset() {
-		for (int i = 0; i < KEYBUF_SIZE; i++)
-			keyBuf[i] = 0;
-	}
-
-	void doKeyBufPut() {
-		for (int i = 0; i < 7; i++)
-			keyBuf[i] = keyBuf[i + 1];
-		keyBuf[7] = 0;
-	}
-
-	int doKeyBufGet(int address) {
-		return keyBuf[address - REG_KEYBUF] & 0xFF;
-	}
-
-	void enqueKeyCode(int keyCode) {
-		for (int i = 0; i < KEYBUF_SIZE; i++)
-			if (keyBuf[i] == 0) {
-				keyBuf[i] = (jbyte)keyCode;
-				return;
-			}
-	}
-	
+	MicroIOKeybuf keybuf;
 	MicroIODisplay display;
 
 	static const int FRAME_MIN_WAIT = 10;
@@ -133,7 +108,7 @@ public:
 
 	void reset() {
 		random.reset();
-		keyBufReset();
+		keybuf.reset();
 		display.reset();
 		frameReset();
 	}
@@ -143,7 +118,7 @@ public:
 	}
 
 	void keyPressed(int keyCode) {
-		enqueKeyCode(keyCode);
+		keybuf.enque(keyCode);
 	}
 
 	int doSomeWork() {
@@ -173,7 +148,7 @@ public:
 		default:
 			if (address >= REG_KEYBUF
 					&& address < REG_KEYBUF + KEYBUF_SIZE) {
-				return doKeyBufGet(address);
+				return keybuf.get(address - REG_KEYBUF);
 			} else if (address >= REG_CONVIDEO
 					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
 				return display.get(address - REG_CONVIDEO);
@@ -194,7 +169,7 @@ public:
 			random.put(value);
 			break;
 		case REG_KEYBUF:
-			doKeyBufPut();
+			keybuf.put(address, value);
 			break;
 		default:
 			if (address >= REG_CONVIDEO
