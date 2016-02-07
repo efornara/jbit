@@ -23,8 +23,8 @@ EXE = jbit
 #CXXFLAGS += -ggdb -std=c++98
 
 # release
-CFLAGS += -O2 -fomit-frame-pointer
-CXXFLAGS += -O2 -fomit-frame-pointer
+CFLAGS += -Os -fomit-frame-pointer
+CXXFLAGS += -Os -fomit-frame-pointer
 LDFLAGS += -s
 
 
@@ -35,11 +35,11 @@ LDFLAGS += -s
 # stdout: minimal dependencies (tested with i586-mingw32msvc and wine)
 OBJS += stdout.o
 
-# microio: comment out if you don't have ncurses
+# microio: obsolete, use only if xv65 gives you problems
 #          on BSD replace -lncurses with -lcurses
 #          on DJGPP replace -lncurses with -lpdcurses (very slow)
-OBJS += microio.o
-LIBS += -lncurses
+#OBJS += microio.o
+#LIBS += -lncurses
 
 # xv65: tested mostly on debian stable; comment out if it doesn't compile
 OBJS += xv65.o
