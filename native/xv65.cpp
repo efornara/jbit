@@ -59,15 +59,27 @@
 
 namespace {
 
-void sig_handler(int) {
+bool tty_need_cleanup = false;
+volatile bool tty_is_dirty = false;
+
+struct termios tty_icanon_attrs;
+struct termios tty_curr_attrs;
+
+void sig_handler(int sig) {
+	switch (sig) {
+	case SIGTSTP:
+		kill(getpid(), SIGSTOP);
+		tty_is_dirty = true;
+		break;
+	case SIGCONT:
+		if (tty_need_cleanup)
+			tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_curr_attrs);
+		break;
+	}
 }
 
-bool tty_need_cleanup = false;
-
-struct termios tty_attrs;
-
 void tty_atexit(void) {
-	tcsetattr(STDIN_FILENO, TCSANOW, &tty_attrs);
+	tcsetattr(STDIN_FILENO, TCSANOW, &tty_icanon_attrs);
 }
 
 void tty_set(int mode) {
@@ -76,21 +88,22 @@ void tty_set(int mode) {
 			fprintf(stderr, "xv65: tty mode unavailable.\n");
 			exit(1);
 		}
-		tcgetattr(STDIN_FILENO, &tty_attrs);
+		tcgetattr(STDIN_FILENO, &tty_icanon_attrs);
 		atexit(tty_atexit);
 		tty_need_cleanup = true;
 	}
 	switch (mode) {
 	case TTY_ICANON:
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_attrs);
+		tty_curr_attrs = tty_icanon_attrs;
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_curr_attrs);
 		break;
 	case TTY_MICROIO:
 	case TTY_RAW:
-		struct termios attrs = tty_attrs;
-		attrs.c_lflag &= ~(ICANON | ECHO);
-		attrs.c_cc[VMIN] = 0;
-		attrs.c_cc[VTIME] = 0;
-		tcsetattr(STDIN_FILENO, TCSAFLUSH, &attrs);
+		tty_curr_attrs = tty_icanon_attrs;
+		tty_curr_attrs.c_lflag &= ~(ICANON | ECHO);
+		tty_curr_attrs.c_cc[VMIN] = 0;
+		tty_curr_attrs.c_cc[VTIME] = 0;
+		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_curr_attrs);
 		break;
 	}
 }
@@ -776,6 +789,8 @@ private:
 		int mode = tty_mode(value);
 		if (tty_mode(v_TTYCTL) != mode)
 			tty_set(mode);
+		if (!(value & TTY_ISDIRTY))
+			tty_is_dirty = false;
 		v_TTYCTL = value;
 	}
 	int get_TTYCTL() {
@@ -783,6 +798,10 @@ private:
 			v_TTYCTL |= TTY_CANREAD;
 		else
 			v_TTYCTL &= ~TTY_CANREAD;
+		if (tty_is_dirty)
+			v_TTYCTL |= TTY_ISDIRTY;
+		else
+			v_TTYCTL &= ~TTY_ISDIRTY;
 		return v_TTYCTL;
 	}
 	int get_consize(int address) {
@@ -817,7 +836,9 @@ private:
 public:
 	Xv65Device(Tag tag) {
 		dev_microio = (tag == "microio");
-		signal(SIGALRM, sig_handler);
+		signal(SIGALRM, SIG_IGN);
+		signal(SIGTSTP, sig_handler);
+		signal(SIGCONT, sig_handler);
 	}
 	~Xv65Device() {
 		if (microio) {

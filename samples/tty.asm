@@ -2,6 +2,29 @@
 
 	.device "xv65"
 
+	ldy #' '
+	jsr refresh
+next:
+	sta FRMDRAW
+	bit TTYCTL
+	bvc clean
+	jsr refresh
+clean:
+	lda KEYBUF
+	beq next
+	sta KEYBUF
+	cmp #12 ; ctrl-l
+	bne std_key
+	jsr refresh
+	jmp next
+std_key:
+	sta PUTUINT8
+	sty PUTCHAR
+	bne next
+
+refresh:
+	lda #TTY_RAW
+	sta TTYCTL ; on next calls, also clear ISDIRTY
 	ldx #0
 l1:
 	lda msg,x
@@ -10,20 +33,16 @@ l1:
 	inx
 	bne l1
 done:
-	ldx #' '
-	lda	#TTY_RAW
-	sta TTYCTL
-next:
-	sta FRMDRAW
-	lda KEYBUF
-	beq next
-	sta KEYBUF
-	sta PUTUINT8
-	stx PUTCHAR
-	bne next
+	rts
 
 .data
 
 msg:
-	"Showing key codes (press ctrl-c to exit)...\n" 0
-
+	$1b "[2J" $1b "[;H"
+	"Press:\n"
+	" - ctrl-c to exit\n"
+	" - ctrl-z to suspend the job\n"
+	" - ctrl-l to clear the screen\n"
+	"\n"
+	"Showing key codes...\n"
+	0
