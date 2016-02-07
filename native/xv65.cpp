@@ -81,10 +81,10 @@ void tty_set(int mode) {
 		tty_need_cleanup = true;
 	}
 	switch (mode) {
-	case TERMIOS_ICANON:
+	case TTY_ICANON:
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &tty_attrs);
 		break;
-	case TERMIOS_MICROIO:
+	case TTY_MICROIO:
 		struct termios attrs = tty_attrs;
 		attrs.c_lflag &= ~(ICANON | ECHO);
 		attrs.c_cc[VMIN] = 0;
@@ -92,6 +92,14 @@ void tty_set(int mode) {
 		tcsetattr(STDIN_FILENO, TCSAFLUSH, &attrs);
 		break;
 	}
+}
+
+bool tty_canread() {
+	struct timeval tv = { 0, 0 };
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(STDIN_FILENO, &fds);
+	return select(1, &fds, NULL, NULL, &tv) == 1;
 }
 
 const char *req_id_to_string(int id) {
@@ -192,7 +200,7 @@ private:
 	int v_FRMFPS;
 	int v_TRCLEVEL;
 	int v_ERREXIT;
-	int v_TERMIOS;
+	int v_TTYCTL;
 	FILE *putfp;
 	unsigned char v_REQDAT[16];
 	const char *r;
@@ -735,12 +743,8 @@ private:
 			microio_refresh = true;
 		}
 		fflush(stdout);
-		if (v_TERMIOS != TERMIOS_ICANON) {
-			struct timeval tv = { 0, 0 };
-			fd_set fds;
-			FD_ZERO(&fds);
-			FD_SET(STDIN_FILENO, &fds);
-			if (select(1, &fds, NULL, NULL, &tv) == 1) {
+		if (v_TTYCTL != TTY_ICANON) {
+			if (tty_canread()) {
 				char buf[16];
 				int n = read(STDIN_FILENO, buf, sizeof(buf));
 				for (int i = 0; i < n; i++)
@@ -754,6 +758,13 @@ private:
 			ts.tv_nsec = 1000000 * (ms % 1000);
 			nanosleep(&ts, NULL);
 		}
+	}
+	int get_TTYCTL() {
+		if (tty_canread())
+			v_TTYCTL |= TTY_CANREAD;
+		else
+			v_TTYCTL &= ~TTY_CANREAD;
+		return v_TTYCTL;
 	}
 	int get_consize(int address) {
 		int col = 80, row = 24;
@@ -812,7 +823,7 @@ public:
 		v_FRMFPS = 0;
 		v_TRCLEVEL = 0;
 		v_ERREXIT = 0;
-		v_TERMIOS = TERMIOS_ICANON;
+		v_TTYCTL = TTY_ICANON;
 		putfp = stdout;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
@@ -849,7 +860,7 @@ public:
 			fprintf(putfp, "%d", value);
 			microio = false;
 			break;
-		case TERMIOS:
+		case TTYCTL:
 			// TODO
 			break;
 		case RANDOM:
@@ -902,8 +913,8 @@ public:
 			return sizeof(pid_t);
 		case FRMFPS:
 			return v_FRMFPS;
-		case TERMIOS:
-			return v_TERMIOS;
+		case TTYCTL:
+			return get_TTYCTL();
 		case RANDOM:
 			return random.get();
 			break;
@@ -923,9 +934,9 @@ public:
 			if (address >= REQDAT && address < REQDAT + 16) {
 				return v_REQDAT[address - REQDAT];
 			} else if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE) {
-				if (v_TERMIOS == TERMIOS_ICANON) {
-					tty_set(TERMIOS_MICROIO);
-					v_TERMIOS = TERMIOS_MICROIO;
+				if (v_TTYCTL == TTY_ICANON) {
+					tty_set(TTY_MICROIO);
+					v_TTYCTL = TTY_MICROIO;
 				}
 				return keybuf.get(address - KEYBUF);
 			} else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {

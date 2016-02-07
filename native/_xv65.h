@@ -43,7 +43,7 @@
 
 #define FRMFPS 0x0211
 #define FRMDRAW 0x0212
-#define TERMIOS 0x0215
+#define TTYCTL 0x0215
 #define PUTUINT8 0x0216
 #define RANDOM 0x0217
 #define KEYBUF 0x0218
@@ -96,11 +96,12 @@
 #define REQ_RMDIR 49
 #define REQ_LSEEK 50
 
-#define TERMIOS_ICANON 1
-#define TERMIOS_MICROIO 2
-#define TERMIOS_RAW 3
-#define TERMIOS_MODMASK 7
-#define TERMIOS_DIRTY 128
+#define TTY_ICANON 1
+#define TTY_MICROIO 2
+#define TTY_RAW 3
+#define TTY_MODMASK 7
+#define TTY_ISDIRTY 64
+#define TTY_CANREAD 128
 
 #define ESC_HOME 1
 #define ESC_CLEAR 2
