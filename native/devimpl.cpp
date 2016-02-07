@@ -101,6 +101,72 @@ const char *MicroIODisplay::get_line(int i) const {
 	return line_buf;
 }
 
+int MicroIOKeybuf::map_keypad(int c) {
+	switch (c) {
+	case 'a':
+	case 'b':
+	case 'c':
+		c = '2';
+		break;
+	case 'd':
+	case 'e':
+	case 'f':
+		c = '3';
+		break;
+	case 'g':
+	case 'h':
+	case 'i':
+		c = '4';
+		break;
+	case 'j':
+	case 'k':
+	case 'l':
+		c = '5';
+		break;
+	case 'm':
+	case 'n':
+	case 'o':
+		c = '6';
+		break;
+	case 'p':
+	case 'q':
+	case 'r':
+	case 's':
+		c = '7';
+		break;
+	case 't':
+	case 'u':
+	case 'v':
+		c = '8';
+		break;
+	case 'w':
+	case 'x':
+	case 'y':
+	case 'z':
+		c = '9';
+		break;
+	case '+':
+		c = '0';
+		break;
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+	case '*':
+	case '0':
+	case '#':
+		break;
+	default:
+		c = 0;
+	}
+	return c;
+}
+
 void MicroIOKeybuf::reset() {
 	memset(key_buf, 0, sizeof(key_buf));
 }

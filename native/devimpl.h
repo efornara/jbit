@@ -64,6 +64,7 @@ public:
 private:
 	char key_buf[KEYBUF_SIZE];
 public:
+	static int map_keypad(int c);
 	void reset();
 	void put(int address, int value);
 	int get(int address) const;
