@@ -56,8 +56,8 @@
 #define IO_BASE 0x200
 #define ERR XV65_EINVAL
 
-typedef long long jb_u64_t;
-typedef unsigned long long jb_i64_t;
+typedef unsigned long long jb_u64_t;
+typedef long long jb_i64_t;
 
 static bool tty_need_cleanup = false;
 static volatile bool tty_is_dirty = false;
