@@ -33,7 +33,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <signal.h>
 #include <time.h>
@@ -56,6 +55,9 @@
 
 #define IO_BASE 0x200
 #define ERR XV65_EINVAL
+
+typedef long long jb_u64_t;
+typedef unsigned long long jb_i64_t;
 
 static bool tty_need_cleanup = false;
 static volatile bool tty_is_dirty = false;
@@ -112,6 +114,32 @@ bool tty_canread() {
 	FD_ZERO(&fds);
 	FD_SET(STDIN_FILENO, &fds);
 	return select(1, &fds, NULL, NULL, &tv) == 1;
+}
+
+static int jbit_sleep(timeval *delay) {
+	struct timeval t0, t1, req = { delay->tv_sec, delay->tv_usec };
+	gettimeofday(&t0, NULL);
+	int ret = select(0, NULL, NULL, NULL, &req);
+	if (ret == 0) {
+		delay->tv_sec = 0;
+		delay->tv_usec = 0;
+	} else {
+		gettimeofday(&t1, NULL); // TODO
+		int sec = delay->tv_sec - (t1.tv_sec - t0.tv_sec);
+		int usec = delay->tv_usec - (t1.tv_usec - t0.tv_usec);
+		if (usec < 0) {
+			sec -= 1;
+			usec += 1000000;
+		} else if (usec > 1000000) {
+			sec += 1;
+			usec -= 1000000;
+		}
+		if (sec < 0)
+			sec = 0;
+		delay->tv_sec = sec;
+		delay->tv_usec = usec;
+	}
+	return ret;
 }
 
 const char *req_id_to_string(int id) {
@@ -217,21 +245,21 @@ private:
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
-	void put_value(unsigned char *buf, int size, uint64_t value) {
+	void put_value(unsigned char *buf, int size, jb_u64_t value) {
 		int pattern = 0x01020304;
 		int patter_v0 = *(unsigned char *)&pattern;
 		unsigned char *v = (unsigned char *)&value;
 		if (patter_v0 == 0x01) {
 			for (int i = 0; i < size; i++)
-				buf[i] = v[sizeof(uint64_t) - 1 - i];
+				buf[i] = v[sizeof(jb_u64_t) - 1 - i];
 		} else if (patter_v0 == 0x04) {
 			for (int i = 0; i < size; i++)
 				buf[i] = v[i];
 		} else 
 			abort();
 	}
-	void get_value(const unsigned char *buf, int size, uint64_t *value) {
-		uint64_t v = 0;
+	void get_value(const unsigned char *buf, int size, jb_u64_t *value) {
+		jb_u64_t v = 0;
 		for (int i = 0; i < size; i++) {
 			v <<= 8;
 			v |= buf[size - i - 1];
@@ -244,11 +272,11 @@ private:
 	int r_get_uint16(int i) {
 		return (r_get_uint8(i + 1) << 8) | r_get_uint8(i);
 	}
-	bool r_get_trailing_int64(int i, int64_t *value) {
+	bool r_get_trailing_int64(int i, jb_i64_t *value) {
 		int len = n - i;
 		if (len < 0 || len > 8)
 			return false;
-		int64_t v = 0;
+		jb_i64_t v = 0;
 		if (len > 0)
 			v = r[i + len - 1] & 0x80 ? -1 : 0; 
 		while (len > 0) {
@@ -263,7 +291,7 @@ private:
 		int len = n - i;
 		if (len < 0 || len > 8)
 			return false;
-		uint64_t v;
+		jb_u64_t v;
 		get_value((const unsigned char *)&r[i], len, &v);
 		*value = (int)v;
 		return true;
@@ -335,7 +363,7 @@ private:
 		default:
 			return ERR;
 		}
-		uint64_t pid;
+		jb_u64_t pid;
 		get_value(v_REQDAT, sizeof(pid_t), &pid);
 		int ret = kill((pid_t)pid, sig);
 		return ret == -1 ? errno : 0;
@@ -353,14 +381,14 @@ private:
 			return ERR;
 		int ret;
 		if (seconds == 0) {
-			uint64_t usec;
+			jb_u64_t usec;
 			get_value(v_REQDAT, 4, &usec);
-			struct timespec ts;
-			ts.tv_sec = usec / 1000000;
-			ts.tv_nsec = 1000 * (usec % 1000000);
-			ret = nanosleep(&ts, NULL);
+			struct timeval tv;
+			tv.tv_sec = usec / 1000;
+			tv.tv_usec = usec % 1000;
+			ret = jbit_sleep(&tv);
 			if (ret)
-				ret = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+				ret = tv.tv_sec * 1000000 + tv.tv_usec;
 		} else {
 			ret = sleep(seconds);
 		}
@@ -591,7 +619,7 @@ private:
 			return ERR;
 		int fd = r_get_uint8(1);
 		int in_whence = r_get_uint8(2);
-		int64_t offset;
+		jb_i64_t offset;
 		if (!r_get_trailing_int64(3, &offset))
 			return ERR;
 		int out_whence;
@@ -611,16 +639,16 @@ private:
 		off_t ret = lseek(fd, (off_t)offset, out_whence);
 		if (ret < 0)
 			return errno;
-		put_value(&v_REQDAT[0], 8, (uint64_t)ret);
+		put_value(&v_REQDAT[0], 8, (jb_u64_t)ret);
 		return 0;
 	}
 	void dump_request() {
 		static const int cols = 10;
 		int id = r[0] & 0xff;
 		fprintf(stderr, "xv65: request %d:%s:\n", id, req_id_to_string(id));
-		int nn = ((n + (cols - 1)) / cols) * cols;
-		for (int i = 0; i < nn;) {
-			for (int j = 0; j < cols; j++, i++) {
+		int i, j, nn = ((n + (cols - 1)) / cols) * cols;
+		for (i = 0; i < nn;) {
+			for (j = 0; j < cols; j++, i++) {
 				int c = r[i] & 0xff;
 				if (i < n)
 					fprintf(stderr, "%03d ", c);
@@ -628,7 +656,7 @@ private:
 					fprintf(stderr, "    ");
 			}
 			i -= cols;
-			for (int j = 0; j < cols; j++, i++) {
+			for (j = 0; j < cols; j++, i++) {
 				int c = r[i] & 0xff;
 				if (i < n)
 					fprintf(stderr, "%c", isprint(c) ? c : '.');
@@ -777,10 +805,10 @@ private:
 		}
 		if (fps4) {
 			int ms = (int)(1000.0 / (fps4 / 4.0));
-			struct timespec ts;
-			ts.tv_sec = ms / 1000;
-			ts.tv_nsec = 1000000 * (ms % 1000);
-			nanosleep(&ts, NULL);
+			struct timeval tv;
+			tv.tv_sec = ms / 1000;
+			tv.tv_usec = 1000 * (ms % 1000);
+			jbit_sleep(&tv);
 		}
 	}
 	void put_TTYCTL(int value) {

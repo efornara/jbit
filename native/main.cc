@@ -264,14 +264,14 @@ static void convert_to_asm(const Program *prg) {
 	if (prg->device_tag.is_valid())
 		printf(".device \"%s\"\n", prg->device_tag.s);
 	printf(".size %d %d\n", prg->n_of_code_pages, prg->n_of_data_pages);
-	int page = 0, n;
+	int page = 0, i, n;
 	printf(".code\n");
 	n = prg->n_of_code_pages;
-	for (int i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		dump_page(prg, page++, i == n - 1);
 	printf(".data\n");
 	n = prg->n_of_data_pages;
-	for (int i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 		dump_page(prg, page++, i == n - 1);
 }
 

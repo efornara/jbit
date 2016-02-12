@@ -4,28 +4,14 @@
 
 include ../Version.defs
 
-CFLAGS = -Wall
-CXXFLAGS = -fno-exceptions -fno-rtti -Wall -DJBIT_VERSION=\"${JBIT_VERSION}\"
-LDFLAGS =
-LIBS =
+CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
+LDFLAGS ?= -s
+
+CXXFLAGS += -DJBIT_VERSION=\"${JBIT_VERSION}\"
 
 DEVSYMS = d_xv65.h d_io2.h d_microio.h
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
 EXE = jbit
-
-
-#
-# COMPILATION FLAGS
-#
-
-# development - on djgpp/mingw, remove -std=c++98
-#CFLAGS += -ggdb
-#CXXFLAGS += -ggdb -std=c++98
-
-# release
-CFLAGS += -Os -fomit-frame-pointer
-CXXFLAGS += -Os -fomit-frame-pointer
-LDFLAGS += -s
 
 
 #
