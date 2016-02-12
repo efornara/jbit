@@ -12,6 +12,8 @@ Version)
 you a programmable 8-bit microcomputer. You can edit, save, run and debug
 assembly (6502) programs directly on your phone. (J2ME Version) 
 
+[![Build Status](https://api.travis-ci.org/efornara/jbit.svg?branch=master)](https://travis-ci.org/efornara/jbit/builds)
+
 ## Getting JBit
 
 There is usually no need for you to build JBit from source.
