@@ -2,7 +2,8 @@
 
 	.device "xv65"
 
-	ldy #' '
+	lda #10
+	sta FRMFPS
 	jsr refresh
 next:
 	sta FRMDRAW
@@ -19,7 +20,8 @@ clean:
 	jmp next
 std_key:
 	sta PUTUINT8
-	sty PUTCHAR
+	lda #' '
+	sta PUTCHAR
 	bne next
 
 refresh:
