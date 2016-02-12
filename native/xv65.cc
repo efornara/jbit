@@ -218,7 +218,7 @@ const char *errno_to_string(int id) {
 #define STR_ESC_CLEAR "\x1b[2J"
 #define STR_ESC_HOME "\x1b[;H"
 #define STR_ESC_NORMAL "\x1b[0m"
-#define STR_ESC_OBR "\x1b["
+#define STR_ESC_CSI "\x1b["
 
 class Xv65Device : public Device {
 private:
@@ -850,8 +850,8 @@ private:
 		case ESC_NORMAL:
 			printf(STR_ESC_NORMAL);
 			break;
-		case ESC_OBR:
-			printf(STR_ESC_OBR);
+		case ESC_CSI:
+			printf(STR_ESC_CSI);
 			break;
 		default:
 			if ((value >= ESC_BG_BLACK && value <= ESC_BG_WHITE) ||

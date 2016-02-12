@@ -104,7 +104,7 @@ TTY_CANREAD    = 128
 ESC_HOME       =   1
 ESC_CLEAR      =   2
 ESC_NORMAL     =   3
-ESC_OBR        =   4
+ESC_CSI        =   4
 
 ESC_FG_BLACK   =  30
 ESC_FG_RED     =  31

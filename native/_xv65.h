@@ -106,7 +106,7 @@
 #define ESC_HOME 1
 #define ESC_CLEAR 2
 #define ESC_NORMAL 3
-#define ESC_OBR 4
+#define ESC_CSI 4
 
 #define ESC_FG_BLACK 30
 #define ESC_FG_RED 31
