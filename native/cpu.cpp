@@ -77,7 +77,7 @@ public:
 
 	static const int CPUSvc_OK = 0;
 	static const int CPUSvc_HALT = 1;
-	static const int CPUSvc_WAIT = 2;
+//	static const int CPUSvc_WAIT = 2;
 	static const int CPUSvc_INVALID_OPCODE = 3;
 	static const int CPUSvc_UNSUPPORTED_OPCODE = 4;
 	
@@ -90,8 +90,8 @@ public:
 	static const int CPUSvc_ADDRESS_Y = 7;
 	static const int CPUSvc_ADDRESS_PC = 8;
 
-	static const int CPUSvc_COUNTER_CYCLES = 1;
-	static const int CPUSvc_COUNTER_INSTRUCTIONS = 2;
+//	static const int CPUSvc_COUNTER_CYCLES = 1;
+//	static const int CPUSvc_COUNTER_INSTRUCTIONS = 2;
 
 	typedef bool boolean;
 	typedef signed char byte;
