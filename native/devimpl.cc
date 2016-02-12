@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// devimpl.cpp
+// devimpl.cc
 
 #include <stdio.h>
 #include <string.h>

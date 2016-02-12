@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// asm.cpp
+// asm.cc
 
 #include <stdio.h>
 #include <stdlib.h>

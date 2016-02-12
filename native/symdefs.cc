@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// symdefs.cpp
+// symdefs.cc
 
 #include <string.h>
 

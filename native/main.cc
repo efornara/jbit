@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// main.cpp
+// main.cc
 
 #include <stdarg.h>
 #include <stdio.h>

@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// cpu.cpp
+// cpu.cc
 
 #include "jbit.h"
 

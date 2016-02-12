@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// xv65.cpp
+// xv65.cc
 
 #define _FILE_OFFSET_BITS 64
 #define _LARGE_FILES 1

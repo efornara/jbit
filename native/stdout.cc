@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// stdout.cpp
+// stdout.cc
 
 #include <stdio.h>
 

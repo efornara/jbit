@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// microio.cpp
+// microio.cc
 
 #include <stdlib.h>
 #include <string.h>
