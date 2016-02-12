@@ -37,8 +37,6 @@
 
 #include "jbit.h"
 
-namespace {
-
 void fatal(const char *format, ...) {
 	va_list ap;
 
@@ -51,16 +49,16 @@ void fatal(const char *format, ...) {
 }
 
 // pushing rich abstraction into devices not worth it
-Tag MicroIOTag("microio");
-Tag Xv65Tag("xv65");
+static Tag MicroIOTag("microio");
+static Tag Xv65Tag("xv65");
 
-void show_asm_devices() {
+static void show_asm_devices() {
 	printf("asm devices:\n");
 	for (int i = 0; asm_devices[i]; i++)
 		printf("  %s\n", asm_devices[i]);
 }
 
-void show_sim_devices() {
+static void show_sim_devices() {
 	printf("sim devices:\n");
 	DeviceRegistry *reg = DeviceRegistry::get_instance();
 	int n = reg->get_n();
@@ -72,7 +70,7 @@ void show_sim_devices() {
 		printf("  %s\n", MicroIOTag.s);
 }
 
-void usage(int code = 1) {
+static void usage(int code = 1) {
 	printf("\n"
 	 "usage: jbit [options] file\n"
 	 "       jbit [options] -a file arg...\n"
@@ -86,7 +84,7 @@ void usage(int code = 1) {
 	exit(code);
 }
 
-void show_symbols(const char *device) {
+static void show_symbols(const char *device) {
 	const SymDef *syms = get_device_symdefs(device);
 	if (syms) {
 		for (int i = 0; syms[i].name; i++)
@@ -97,7 +95,7 @@ void show_symbols(const char *device) {
 	exit(0);
 }
 
-const char *resolve_file_name(const char *name, Buffer *buffer) {
+static const char *resolve_file_name(const char *name, Buffer *buffer) {
 	if (name[0] == '/')
 		return name;
 	const char *c_env = getenv("JBIT_PATH");
@@ -124,7 +122,7 @@ const char *resolve_file_name(const char *name, Buffer *buffer) {
 	return name;
 }
 
-Buffer *load_file(const char *name) {
+static Buffer *load_file(const char *name) {
 	FILE *f;
 	int i = 0, j, n;
 	Buffer *buffer = new Buffer();
@@ -150,8 +148,8 @@ Buffer *load_file(const char *name) {
 	return buffer;
 }
 
-Tag AsmFmtTag("asm");
-Tag JBFmtTag("jb");
+static Tag AsmFmtTag("asm");
+static Tag JBFmtTag("jb");
 
 class JBParser {
 private:
@@ -188,7 +186,7 @@ public:
 	}
 };
 
-void parse(const char *file_name, Tag dev_tag, Program *prg) {
+static void parse(const char *file_name, Tag dev_tag, Program *prg) {
 	Buffer *file = load_file(file_name);
 	if (JBParser::has_signature(file)) {
 		JBParser jb_parser(file);
@@ -205,7 +203,7 @@ void parse(const char *file_name, Tag dev_tag, Program *prg) {
 		prg->device_tag = dev_tag;
 }
 
-void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
+static void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
 	if (!prg.device_tag.is_valid()) {
@@ -228,7 +226,7 @@ void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	(*vm)->load(&prg);
 }
 
-void run(int argc, char *argv[], Tag dev_tag) {
+static void run(int argc, char *argv[], Tag dev_tag) {
 	VM *vm;
 	Device *dev;
 	startup(argv[0], dev_tag, &vm, &dev);
@@ -242,7 +240,7 @@ void run(int argc, char *argv[], Tag dev_tag) {
 	delete dev;
 }
 
-void dump_page(const Program *prg, int page, bool truncate = false) {
+static void dump_page(const Program *prg, int page, bool truncate = false) {
 	static const int bytes_per_line = 16;
 	const char *sep = 0, *space = " ";
 	const char *p = &prg->get_data()[page << 8];
@@ -260,7 +258,7 @@ void dump_page(const Program *prg, int page, bool truncate = false) {
 		printf("\n");
 }
 
-void convert_to_asm(const Program *prg) {
+static void convert_to_asm(const Program *prg) {
 	printf("#! /usr/bin/env jbit");
 	printf(" -a\n\n");
 	if (prg->device_tag.is_valid())
@@ -277,7 +275,7 @@ void convert_to_asm(const Program *prg) {
 		dump_page(prg, page++, i == n - 1);
 }
 
-void convert_to_jb(const Program *prg) {
+static void convert_to_jb(const Program *prg) {
 	printf("JBit");
 	putchar(0); // header size
 	putchar(12);
@@ -294,7 +292,7 @@ void convert_to_jb(const Program *prg) {
 		putchar(0);
 }
 
-void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
+static void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
 	if (fmt_tag == AsmFmtTag)
@@ -304,8 +302,6 @@ void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
 	else
 		fatal("internal error (convert)");
 }
-
-} // namespace
 
 DeviceRegistry *DeviceRegistry::get_instance() {
 	static DeviceRegistry *registry = 0;

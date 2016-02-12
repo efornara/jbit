@@ -57,15 +57,13 @@
 #define IO_BASE 0x200
 #define ERR XV65_EINVAL
 
-namespace {
+static bool tty_need_cleanup = false;
+static volatile bool tty_is_dirty = false;
 
-bool tty_need_cleanup = false;
-volatile bool tty_is_dirty = false;
+static struct termios tty_icanon_attrs;
+static struct termios tty_curr_attrs;
 
-struct termios tty_icanon_attrs;
-struct termios tty_curr_attrs;
-
-void sig_handler(int sig) {
+static void sig_handler(int sig) {
 	switch (sig) {
 	case SIGTSTP:
 		kill(getpid(), SIGSTOP);
@@ -78,11 +76,11 @@ void sig_handler(int sig) {
 	}
 }
 
-void tty_atexit(void) {
+static void tty_atexit(void) {
 	tcsetattr(STDIN_FILENO, TCSANOW, &tty_icanon_attrs);
 }
 
-void tty_set(int mode) {
+static void tty_set(int mode) {
 	if (!tty_need_cleanup) {
 		if (!isatty(STDIN_FILENO)) {
 			fprintf(stderr, "xv65: tty mode unavailable.\n");
@@ -1000,10 +998,8 @@ public:
 	}
 };
 
-Device *new_Device(Tag tag) {
+static Device *new_Device(Tag tag) {
 	return new Xv65Device(tag);
 }
 
-DeviceEntry entry("xv65", new_Device);
-
-} // namespace
+static DeviceEntry entry("xv65", new_Device);

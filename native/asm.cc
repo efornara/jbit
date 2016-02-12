@@ -36,9 +36,7 @@
 
 #include "core.h"
 
-namespace {
-
-ParseError parse_error;
+static ParseError parse_error;
 
 class LineReader {
 private:
@@ -99,7 +97,7 @@ struct OpcodeList {
 	int opcode[12];
 };
 
-const OpcodeList opcodes[] = {
+static const OpcodeList opcodes[] = {
 //        -     r   n:n    #n (n,X) (n),Y     n   n,X   n,Y n:n,Y (n:n) n:n,X 
 {"BRK",{  0,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1}},
 {"BPL",{ -1,   16,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1}},
@@ -159,7 +157,7 @@ const OpcodeList opcodes[] = {
 {"JMP",{ -1,   -1,   76,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  108,   -1}},
 };
 
-const int n_of_mnemonics = sizeof(opcodes) / sizeof(OpcodeList);
+static const int n_of_mnemonics = sizeof(opcodes) / sizeof(OpcodeList);
 
 enum AddressMode {
 	AM_IMP = 0,
@@ -176,7 +174,7 @@ enum AddressMode {
 	AM_ABS_X,
 };
 
-const int am_size[] = {
+static const int am_size[] = {
 	1, // -
 	2, // r
 	3, // n:n
@@ -265,7 +263,7 @@ struct Token {
 	}
 };
 
-const char *directives[] = {
+static const char *directives[] = {
 	"device",
 	"size",
 	"code",
@@ -1404,8 +1402,6 @@ public:
 		return 0;
 	}
 };
-
-} // namespace
 
 bool Tag::operator==(const Tag &o) const {
 	if (!s)

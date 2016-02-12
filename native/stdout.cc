@@ -36,8 +36,6 @@
 
 #define IO_BASE 0x200
 
-namespace {
-
 class StdoutDevice : public Device {
 public:
 	// IO
@@ -72,10 +70,8 @@ public:
 	}
 };
 
-Device *new_Device(Tag tag) {
+static Device *new_Device(Tag tag) {
 	return new StdoutDevice();
 }
 
-DeviceEntry entry("stdout", new_Device);
-
-} // namespace
+static DeviceEntry entry("stdout", new_Device);

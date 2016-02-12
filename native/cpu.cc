@@ -32,8 +32,6 @@
 
 #include <string.h>
 
-namespace {
-
 class VMAddressSpace {
 private:
 	static const int mem_size = 256 * 256;
@@ -1196,8 +1194,6 @@ public:
 		return mem.get(address);
 	}
 };
-
-} // namespace
 
 VM *new_VM(IO *io) {
 	return new VMImpl(io);

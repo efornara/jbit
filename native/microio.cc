@@ -39,8 +39,6 @@
 #include "jbit.h"
 #include "devimpl.h"
 
-namespace {
-
 class MicroIO {
 
 	/*
@@ -180,7 +178,7 @@ public:
 	}
 };
 
-void curses_init() {
+static void curses_init() {
 	initscr();
 	cbreak();
 	noecho();
@@ -190,7 +188,7 @@ void curses_init() {
 	timeout(0);
 }
 
-extern "C" void curses_cleanup() {
+static void curses_cleanup() {
 	endwin();
 }
 
@@ -299,10 +297,8 @@ public:
 	}
 };
 
-Device *new_Device(Tag tag) {
+static Device *new_Device(Tag tag) {
 	return new CursesDevice();
 }
 
-DeviceEntry entry("microio", new_Device);
-
-} // namespace
+static DeviceEntry entry("microio", new_Device);

@@ -32,30 +32,26 @@
 
 #include "core.h"
 
-namespace {
-
-const SymDef stdout_symdefs[] = {
+static const SymDef stdout_symdefs[] = {
 {"PUTCHAR",0x0200},
 {"PUTUINT8",0x0216},
 {0,0},
 }; 
 
-const SymDef xv65_symdefs[] = {
+static const SymDef xv65_symdefs[] = {
 #include "d_xv65.h"
 { 0, 0 },
 }; 
 
-const SymDef microio_symdefs[] = {
+static const SymDef microio_symdefs[] = {
 #include "d_microio.h"
 { 0, 0 },
 }; 
 
-const SymDef io2_symdefs[] = {
+static const SymDef io2_symdefs[] = {
 #include "d_io2.h"
 { 0, 0 },
 }; 
-
-} // namespace
 
 const char *asm_devices[] = {
 	"stdout",
