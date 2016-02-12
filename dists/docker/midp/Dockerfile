@@ -5,7 +5,6 @@ RUN apt-get install -y nano nvi make zip
 RUN apt-get install -y python
 RUN apt-get install -y openjdk-7-jdk
 ADD scripts /opt
-RUN chmod 755 /opt/get_midp
 RUN /opt/get_midp
 RUN dpkg --add-architecture i386
 RUN apt-get update
