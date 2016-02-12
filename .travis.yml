@@ -6,4 +6,4 @@ os:
   - linux
   - osx
 script:
-  - make -C native
+  - make -C native LDFLAGS=""
