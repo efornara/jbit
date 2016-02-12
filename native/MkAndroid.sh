@@ -60,6 +60,6 @@ $TOOL-g++ \
  -DJBIT_VERSION=\"${JBIT_VERSION}\" \
  -O2 -fomit-frame-pointer -s \
  $CFLAGS $LDFLAGS \
- main.cpp devimpl.cpp cpu.cpp asm.cpp symdefs.cpp \
- stdout.cpp xv65.cpp \
+ main.cc devimpl.cc cpu.cc asm.cc symdefs.cc \
+ stdout.cc xv65.cc \
  -o $EXE
