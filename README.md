@@ -1,6 +1,19 @@
 JBit
 ====
 
+JBit is two projects in one:
+
+1. JBit is a 6502 assembler / simulator for Linux(-like) computers and gadgets
+that gives you easy access to a simplified subset of their kernel (read, fork,
+exec, etc...). A limited executable is also available for Windows. (Native
+Version)
+
+2. JBit is small java application for old feature phones (MIDlet) that gives
+you a programmable 8-bit microcomputer. You can edit, save, run and debug
+assembly (6502) programs directly on your phone. (J2ME Version) 
+
+## Getting JBit
+
 There is usually no need for you to build JBit from source.
 
 If you are looking for the J2ME version of JBit (for feature phones),
@@ -11,22 +24,16 @@ If you have Windows, you can find a precompiled EXE following the
 instructions on this
 [wiki page](https://github.com/efornara/jbit/wiki/Windows).
 
-However, for Linux(-like) operating systems, building the Native version
-of JBit is recommended. Unlike the J2ME version,
-the Native version has few dependencies and should be fairly easy
-to build.
+However, for Linux(-like) computers, building the Native version of JBit is
+recommended. Unlike the J2ME version, the Native version has few dependencies
+and should be fairly easy to build.
 
 ## Native Version
 
-The following should work (tested mostly on debian, but occasionally on
-NetBSD):
+The following should work:
 
 	cd native
 	make
-
-If you are missing ncurses (or have curses), comment out the offending
-lines in the Makefile (or edit them), or install the relevant package
-(*libncurses5-dev* on debian and ubuntu).
 
 The resulting binary (jbit) is self-contained, so you should be able to
 run it from anywhere.  From now on, I will assume that you have it in
@@ -55,16 +62,15 @@ To compile the J2ME Version from source you need:
 
 * [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
 ads/index.html).
-  I use version 1.6.0; any version should be fine.
-* [Sun Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-13
-5801.html).
-  I use versions 1.0.4 and 2.5; again, any version should be fine.
+  I use OpenJDK version 1.7.0.
+* [Sun Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-135801.html).
+  I use version 2.5.2.
 * [Ant](http://ant.apache.org/).
-  I use versions 1.6.5 and 1.7.0; I have no idea if you can use other versions.
+  I use versions 1.9.6.
 * [Antenna](http://antenna.sourceforge.net/).
-  I use version 1.2.1beta; older versions should work.
+  I use version 1.2.1beta.
 * [ProGuard](http://proguard.sourceforge.net/).
-  I use version 4.4; older versions should work.
+  I use version 5.2.1.
 
 If your environment is setup correctly, you should be able to
 compile JBit by setting the `WTK_HOME_DIRECTORY` environment variable,
