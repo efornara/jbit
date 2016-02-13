@@ -3,14 +3,13 @@ JBit
 
 JBit is really two projects in one:
 
-1. **Native Version**: A 6502 assembler / simulator for Linux(-like) computers
+1. **Native**: A 6502 assembler / simulator for Linux(-like) computers
 and gadgets that gives you easy access to a simplified subset of their kernel
 (read, fork, exec, etc...). A limited executable is also available for Windows.
-(Native Version)
 
-2. **J2ME Version**: A small java application for old feature phones (MIDlet)
+2. **J2ME**: A small java application for old feature phones (MIDlet)
 that gives you a programmable 8-bit microcomputer. You can edit, save, run and
-debug assembly (6502) programs directly on your phone. (J2ME Version) 
+debug assembly (6502) programs directly on your phone.
 
 [![Build Status](https://api.travis-ci.org/efornara/jbit.svg?branch=master)](https://travis-ci.org/efornara/jbit/builds)
 
@@ -34,7 +33,7 @@ However, for Linux(-like) computers, building the Native version of JBit is
 recommended. Unlike the J2ME version, the Native version has few dependencies
 and should be fairly easy to build.
 
-## Native Version
+## Native
 
 The following should work:
 
@@ -62,14 +61,14 @@ More information is available in the included jbit(1).
 You can find a copy online here:
 [jbit(1)](http://efornara.github.io/jbit/jbit.1.html).
 
-## J2ME Version
+## J2ME
 
-To compile the J2ME Version from source you need:
+To compile from source you need:
 
 * [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
 ads/index.html).
   Tested with OpenJDK version 1.7.0.
-* [Sun Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-135801.html).
+* [Oracle Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-135801.html).
   Tested with version 2.5.2.
 * [Ant](http://ant.apache.org/).
   Tested with versions 1.9.6.
@@ -81,6 +80,16 @@ ads/index.html).
 If your environment is setup correctly, you should be able to
 compile JBit by setting the `WTK_HOME_DIRECTORY` environment variable,
 entering midp/jbit and running ant.
+
+## Docker
+
+A few docker images are available ([efornara/jbit](https://hub.docker.com/r/efornara/jbit/)):
+
+	busybox  jbit binary hosted in a busybox environment
+	main     development setup for Native (and documentation)
+	midp     development setup for J2ME (Oracle WTK still needed)
+	droid    development setup for Android (cross compiler)
+	win32    development setup for Win32 (cross compiler)
 
 ## Links
 
