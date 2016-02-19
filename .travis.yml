@@ -6,4 +6,4 @@ os:
   - linux
   - osx
 script:
-  - make -C native LDFLAGS=""
+  - make -C native PLATFORM="$TRAVIS_OS_NAME"

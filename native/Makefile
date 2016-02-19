@@ -9,23 +9,48 @@ DEVSYMS = d_xv65.h d_io2.h d_microio.h
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
 EXE = jbit
 
-
 #
-# DEVICE SELECTION
+# PLATFORM SELECTION
 #
 
-# stdout: minimal dependencies (tested with i586-mingw32msvc and wine)
+ifndef PLATFORM
+PLATFORM = posix
+endif
+
+ifeq ($(PLATFORM),linux)
+PLATFORM = posix
+endif
+
+ifeq ($(PLATFORM),std)
 OBJS += stdout.o
+endif
 
-# microio: obsolete, use only if xv65 gives you problems
-#          on BSD replace -lncurses with -lcurses
-#          on DJGPP replace -lncurses with -lpdcurses (very slow)
-#OBJS += microio.o
-#LIBS += -lncurses
+ifeq ($(PLATFORM),posix)
+OBJS += stdout.o xv65.o
+endif
 
-# xv65: tested mostly on debian stable; comment out if it doesn't compile
-OBJS += xv65.o
+ifeq ($(PLATFORM),osx)
+OBJS += stdout.o xv65.o
+LDFLAGS =
+endif
 
+ifeq ($(PLATFORM),win32)
+CXX = i586-mingw32msvc-g++
+LDFLAGS = -mconsole -s
+OBJS += stdout.o
+EXE = jbit.exe
+endif
+
+ifeq ($(PLATFORM),dos)
+CXX = i586-pc-msdosdjgpp-g++
+LDFLAGS = -s
+OBJS += stdout.o
+EXE = jbit.exe
+endif
+
+ifeq ($(PLATFORM),local)
+include Local.mk
+endif
 
 #
 # RULES
