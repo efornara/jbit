@@ -44,7 +44,7 @@ static const SymDef xv65_symdefs[] = {
 }; 
 
 static const SymDef microio_symdefs[] = {
-#include "d_microio.h"
+#include "d_mio.h"
 { 0, 0 },
 }; 
 

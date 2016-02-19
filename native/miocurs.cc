@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-// microio.cc
+// miocurs.cc
 
 #include <stdlib.h>
 #include <string.h>

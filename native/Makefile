@@ -5,7 +5,7 @@
 CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
-DEVSYMS = d_xv65.h d_io2.h d_microio.h
+DEVSYMS = d_xv65.h d_io2.h d_mio.h
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
 EXE = jbit
 
@@ -84,8 +84,8 @@ all: $(EXE) jbit.1
 $(EXE): $(DEVSYMS) $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
-jbit.1: jbit.1.ronn
-	ronn --roff jbit.1.ronn
+jbit.1: jbit.ron
+	ronn <jbit.ron >jbit.1
 
 stdout.o: _xv65.h
 xv65.o: _xv65.h
@@ -98,11 +98,11 @@ d_io2.h: io2.inc
 	perl ../tools/inc2sym.pl <io2.inc >d_io2.h
 	perl ../tools/inc2h.pl <io2.inc >_io2.h
 
-d_microio.h: microio.inc
-	perl ../tools/inc2sym.pl <microio.inc >d_microio.h
+d_mio.h: mio.inc
+	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
 
 clean:
-	rm -f jbit windows.zip *.o *.exe *.bin
+	rm -f jbit *.o *.exe *.bin
 
 distclean: clean
 	rm -f jbit.1

@@ -9,13 +9,7 @@
 *.zip
 *.tar.gz
 *.bin
-jbit-core.js
-js/libs
-js/images
-js/res
+Local.mk
 native/jbit
-jbembd
-jbit-embd-c.js
-build-cli
 private
 .c9
