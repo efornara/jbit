@@ -16,9 +16,10 @@ rm -rf tmp
 mkdir -p $OUT
 
 # make binaries (all combinations)
-( cd $IN/native ; for arch in arm x86 mips ; do
+( cd $IN/native ; rm -f *.bin ; for arch in arm x86 mips ; do
 for elf in pie nopie static ; do
-./MkAndroid.sh $arch $elf
+rm -f *.o
+make PLATFORM=android ARCH=$arch ELF=$elf
 done
 done )
 

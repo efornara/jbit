@@ -34,6 +34,29 @@ OBJS += stdout.o xv65.o
 LDFLAGS =
 endif
 
+ifeq ($(PLATFORM),android)
+# ARCH
+ifeq ($(ARCH),arm)
+CXX = arm-linux-androideabi-g++
+endif
+ifeq ($(ARCH),x86)
+CXX = i686-linux-android-g++
+endif
+ifeq ($(ARCH),mips)
+CXX = mipsel-linux-android-g++
+endif
+# ELF
+ifeq ($(ELF),pie)
+CXXFLAGS += -fPIE
+LDFLAGS += -fPIE -pie
+endif
+ifeq ($(ELF),static)
+LDFLAGS += -static
+endif
+# EXE
+EXE = jbit-android-$(ARCH)-$(ELF).bin
+endif
+
 ifeq ($(PLATFORM),win32)
 CXX = i586-mingw32msvc-g++
 LDFLAGS = -mconsole -s

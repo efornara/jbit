@@ -4,4 +4,3 @@ RUN apt-get update
 RUN apt-get install -y nano nvi make zip
 ADD scripts /opt
 RUN /opt/get_droid
-ENV JBITANDROID_WORKDIR /opt

@@ -27,10 +27,11 @@ cp $IN/native/jbit.exe $OUT/win32
 
 # copy linux/android binaries
 mkdir -p $OUT/linux
-( cd $IN/native ; for arch in arm x86 mips ; do
-./MkAndroid.sh $arch static
+( cd $IN/native ; rm -f *.bin ; for arch in arm x86 ; do
+rm -f *.o
+make PLATFORM=android ARCH=$arch ELF=static
 done )
-for arch in arm x86 mips ; do
+for arch in arm x86 ; do
 cp $IN/native/jbit-android-$arch-static.bin $OUT/linux/jbit$arch.bin
 done
 ( cd $IN/native ; make clean )

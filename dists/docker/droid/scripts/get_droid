@@ -16,5 +16,8 @@ rm android-ndk-r10e-linux-x86_64.bin
   --system=linux-x86_64 --arch=mips --platform=android-9 \
   --install-dir=./toolchain-mips-9
 rm -rf android-ndk-r10e
+echo >>/etc/bash.bashrc 'if [[ ":$PATH:" != *":/opt/toolchain-arm-3/bin:"* ]]; then PATH="$PATH:/opt/toolchain-arm-3/bin" ; fi'
+echo >>/etc/bash.bashrc 'if [[ ":$PATH:" != *":/opt/toolchain-x86-9/bin:"* ]]; then PATH="$PATH:/opt/toolchain-x86-9/bin" ; fi'
+echo >>/etc/bash.bashrc 'if [[ ":$PATH:" != *":/opt/toolchain-mips-9/bin:"* ]]; then PATH="$PATH:/opt/toolchain-mips-9/bin" ; fi'
 rm get_droid
 cd /
