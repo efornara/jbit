@@ -1,2 +1,2 @@
-jbit.1.html: ../../jbit/native/jbit.1.ronn
+jbit.1.html: ../../jbit/native/jbit.ron
 	ronn --html < $< > $@
