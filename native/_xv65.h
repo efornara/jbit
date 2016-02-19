@@ -100,6 +100,7 @@
 #define TTY_MICROIO 2
 #define TTY_RAW 3
 #define TTY_MODEMASK 7
+#define TTY_WAKEUP 32
 #define TTY_ISDIRTY 64
 #define TTY_CANREAD 128
 

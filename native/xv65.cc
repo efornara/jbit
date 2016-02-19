@@ -116,15 +116,22 @@ bool tty_canread() {
 	return select(1, &fds, NULL, NULL, &tv) == 1;
 }
 
-static int jbit_sleep(timeval *delay) {
+static int jbit_sleep(timeval *delay, bool int_on_key) {
 	struct timeval t0, t1, req = { delay->tv_sec, delay->tv_usec };
 	gettimeofday(&t0, NULL);
-	int ret = select(0, NULL, NULL, NULL, &req);
+	int ret;
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(STDIN_FILENO, &fds);
+	if (int_on_key)
+		ret = select(1, &fds, NULL, NULL, &req);
+	else
+		ret = select(0, NULL, NULL, NULL, &req);
 	if (ret == 0) {
 		delay->tv_sec = 0;
 		delay->tv_usec = 0;
 	} else {
-		gettimeofday(&t1, NULL); // TODO
+		gettimeofday(&t1, NULL);
 		int sec = delay->tv_sec - (t1.tv_sec - t0.tv_sec);
 		int usec = delay->tv_usec - (t1.tv_usec - t0.tv_usec);
 		if (usec < 0) {
@@ -222,7 +229,7 @@ const char *errno_to_string(int id) {
 
 class Xv65Device : public Device {
 private:
-	const static int top_memory = 0xffff;
+	static const int top_memory = 0xffff;
 	bool dev_microio;
 	AddressSpace *m;
 	int argc;
@@ -380,20 +387,25 @@ private:
 		if (!r_get_trailing_uint(1, &seconds))
 			return ERR;
 		int ret;
-		if (seconds == 0) {
-			jb_u64_t usec;
+		jb_u64_t usec;
+		if (seconds == 0)
 			get_value(v_REQDAT, 4, &usec);
-			struct timeval tv;
-			tv.tv_sec = usec / 1000;
-			tv.tv_usec = usec % 1000;
-			ret = jbit_sleep(&tv);
-			if (ret)
-				ret = tv.tv_sec * 1000000 + tv.tv_usec;
-		} else {
-			ret = sleep(seconds);
-		}
+		else
+			usec = seconds * 1000000;
+		struct timeval tv;
+		tv.tv_sec = usec / 1000000;
+		tv.tv_usec = usec % 1000000;
+		if ((v_TTYCTL & TTY_WAKEUP) && keybuf.get(0))
+			ret = -1;
+		else
+			ret = jbit_sleep(&tv, v_TTYCTL & TTY_WAKEUP);
+		if (ret)
+			ret = tv.tv_sec * 1000000 + tv.tv_usec;
 		if (ret) {
-			put_value(v_REQDAT, 8, ret);
+			if (seconds)
+				put_value(v_REQDAT, 8, ret);
+			else
+				put_value(v_REQDAT, 8, ret / 1000000);
 			return XV65_EINTR;
 		}
 		return 0;
@@ -808,7 +820,7 @@ private:
 			struct timeval tv;
 			tv.tv_sec = ms / 1000;
 			tv.tv_usec = 1000 * (ms % 1000);
-			jbit_sleep(&tv);
+			jbit_sleep(&tv, false);
 		}
 	}
 	void put_TTYCTL(int value) {

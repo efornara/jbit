@@ -2,30 +2,34 @@
 
 	.device "xv65"
 
-	lda #10
-	sta FRMFPS
+.define RAW_AND_WAKEUP 35 ; TTY_RAW|TTY_WAKEUP
+
+	lda #>sleep
+	sta REQPTRHI
 	jsr refresh
-next:
+wait_key:
 	sta FRMDRAW
+	lda #<sleep
+	sta REQPTRLO
 	bit TTYCTL
 	bvc clean
 	jsr refresh
 clean:
 	lda KEYBUF
-	beq next
+	beq wait_key
 	sta KEYBUF
 	cmp #12 ; ctrl-l
 	bne std_key
 	jsr refresh
-	jmp next
+	jmp clean
 std_key:
 	sta PUTUINT8
 	lda #' '
 	sta PUTCHAR
-	bne next
+	bne clean
 
 refresh:
-	lda #TTY_RAW
+	lda #RAW_AND_WAKEUP
 	sta TTYCTL ; on next calls, also clear ISDIRTY
 	ldx #0
 l1:
@@ -38,6 +42,10 @@ done:
 	rts
 
 .data
+
+sleep: .req
+	REQ_SLEEP 10
+.endreq
 
 msg:
 	$1b "[2J" $1b "[;H"
