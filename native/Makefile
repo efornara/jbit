@@ -102,7 +102,7 @@ d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
 
 clean:
-	rm -f jbit *.o *.exe *.bin
+	rm -f jbit jbit.exe *.o *.bin
 
 distclean: clean
 	rm -f jbit.1
