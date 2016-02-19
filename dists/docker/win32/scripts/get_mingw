@@ -1,0 +1,12 @@
+#! /bin/sh
+
+cd /opt
+apt-get install -y wget
+wget -c http://ftp.debian.org/debian/pool/main/m/mingw32-runtime/mingw32-runtime_3.13-1_all.deb
+wget -c http://ftp.debian.org/debian/pool/main/m/mingw32-binutils/mingw32-binutils_2.20-0.2_amd64.deb
+wget -c http://ftp.debian.org/debian/pool/main/m/mingw32/mingw32_4.2.1.dfsg-2_amd64.deb
+dpkg -i mingw32-runtime_3.13-1_all.deb
+dpkg -i mingw32-binutils_2.20-0.2_amd64.deb
+dpkg -i mingw32_4.2.1.dfsg-2_amd64.deb
+rm *.deb get_mingw
+cd /
