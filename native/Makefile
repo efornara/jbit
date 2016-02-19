@@ -17,15 +17,15 @@ ifndef PLATFORM
 PLATFORM = posix
 endif
 
-ifeq ($(PLATFORM),linux)
-PLATFORM = posix
-endif
-
 ifeq ($(PLATFORM),std)
 OBJS += stdout.o
 endif
 
 ifeq ($(PLATFORM),posix)
+OBJS += stdout.o xv65.o
+endif
+
+ifeq ($(PLATFORM),linux)
 OBJS += stdout.o xv65.o
 endif
 
