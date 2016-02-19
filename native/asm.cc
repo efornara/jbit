@@ -1472,6 +1472,10 @@ const ParseError *parse_asm(const Buffer *src, Program *prg) {
 	return engine.parse();
 };
 
+static const char *
+#include "../Version.def"
+;
+
 const char *get_jbit_version() {
 	return JBIT_VERSION;
 }

@@ -2,11 +2,9 @@
 # VARIABLES
 #
 
-include ../Version.defs
-
 CC = i586-mingw32msvc-gcc
 CXX = i586-mingw32msvc-g++
-CFLAGS = -Wall -Os -fomit-frame-pointer -DJBIT_VERSION=\"${JBIT_VERSION}\"
+CFLAGS = -Wall -Os -fomit-frame-pointer
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ifdef MINGW_STATIC_RUNTIME
 LDFLAGS = -s -static-libstdc++ -static-libgcc

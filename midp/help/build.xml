@@ -2,7 +2,16 @@
 
 <project name="JBDoc" default="build" basedir=".">
 
-	<property file="../../Version.defs"/>
+	<property file="../../Version.def"/>
+	<loadresource property="jbit.version">
+		<propertyresource name="JBIT_VERSION"/>
+		<filterchain>
+			<tokenfilter>
+				<filetokenizer/>
+				<replacestring from="&quot;" to=""/>
+			</tokenfilter>
+		</filterchain>
+	</loadresource>
 
 	<property environment="env"/>
 
@@ -22,7 +31,7 @@
 
 		<property name="midlet.name" value="JBDoc" />
 		<property name="midlet.vendor" value="Emanuele Fornara" />
-		<property name="midlet.version" value="${JBIT_VERSION}" />
+		<property name="midlet.version" value="${jbit.version}" />
 
 		<property name="wtk.home" value="${WTK_HOME_DIRECTORY}"/>
 		<property name="wtk.midp.version" value="1.0" />

@@ -1,12 +1,12 @@
 #! /bin/sh
 
-if [ ! -f ../../Version.defs ] ; then
+if [ ! -f ../../Version.def ] ; then
 	echo "please, run from dists/bin."
 	exit 1
 fi
 
 # version dependent file names
-. ../../Version.defs
+. ../../Version.def
 ID=jbit-$JBIT_VERSION
 IN=../..
 OUT=tmp/$ID

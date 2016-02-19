@@ -50,14 +50,11 @@ else
 fi
 ELF=$2
 
-source ../Version.defs
-
 EXE=jbit-android-$ARCH-$ELF.bin
 echo "building $EXE..."
 
 $TOOL-g++ \
  -fno-exceptions -fno-rtti -Wall \
- -DJBIT_VERSION=\"${JBIT_VERSION}\" \
  -O2 -fomit-frame-pointer -s \
  $CFLAGS $LDFLAGS \
  main.cc devimpl.cc cpu.cc asm.cc symdefs.cc \

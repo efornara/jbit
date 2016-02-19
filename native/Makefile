@@ -2,12 +2,8 @@
 # VARIABLES
 #
 
-include ../Version.defs
-
 CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
-
-CXXFLAGS += -DJBIT_VERSION=\"${JBIT_VERSION}\"
 
 DEVSYMS = d_xv65.h d_io2.h d_microio.h
 OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
