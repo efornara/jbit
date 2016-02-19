@@ -1,0 +1,10 @@
+#! /bin/sh
+
+cd /opt
+apt-get install -y wget
+wget -c https://github.com/andrewwutw/build-djgpp/releases/download/v1.8/djgpp-linux64-gcc530.tar.bz2
+tar xf djgpp-linux64-gcc530.tar.bz2
+rm djgpp-linux64-gcc530.tar.bz2
+echo >>/etc/bash.bashrc 'if [[ ":$PATH:" != *":/opt/djgpp/bin:"* ]]; then PATH="$PATH:/opt/djgpp/bin" ; fi'
+rm get_djgpp
+cd /
