@@ -67,7 +67,7 @@ endif
 ifeq ($(PLATFORM),dos)
 CXX = i586-pc-msdosdjgpp-g++
 LDFLAGS = -s
-OBJS += stdout.o
+OBJS += stdout.o mio.o miodos.o
 EXE = jbit.exe
 endif
 
