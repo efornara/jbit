@@ -1,10 +1,10 @@
 JBit
 ====
 
-JBit is really two projects in one:
+JBit comes in two versions and is really two projects in one:
 
-1. **Native**: A 6502 assembler / simulator for Linux(-like) computers
-and gadgets that gives you easy access to a simplified subset of their kernel
+1. **Native**: A 6502 assembler / simulator for Linux(-like) systems
+that gives you easy access to a simplified subset of their kernel
 (read, fork, exec, etc...). A limited executable is also available for Windows.
 
 2. **J2ME**: A small java application for old feature phones (MIDlet)
@@ -15,81 +15,59 @@ debug assembly (6502) programs directly on your phone.
 
 ## Getting JBit
 
-There is usually no need for you to build JBit from source.
+There is usually no need for you to build JBit from source:
 
-If you are looking for the J2ME version of JBit (for feature phones),
-[pre-built midlets](http://jbit.sourceforge.net/download.html)
-are available.
+- **Feature Phones**: pre-build midlets are available
+[here](http://jbit.sourceforge.net/download.html).
 
-If you have Windows, you can find a precompiled binary following the
-instructions found
+- **Windows**: a precompiled binary is available following the instructions
 [here](https://github.com/efornara/jbit/wiki/Windows).
 
-If you have an Android phone/tablet, you can find precompiled binaries
-following the instructions found
+- **Android**: precompiled binaries are available following the instructions
 [here](https://github.com/efornara/jbit/wiki/Android).
 
-However, for Linux(-like) computers, building the Native version of JBit is
-recommended. Unlike the J2ME version, the Native version has few dependencies
-and should be fairly easy to build.
+However, for Linux(-like) systems, building the Native version of JBit is
+recommended.
 
-## Native
+Building notes can be found in `COMPILE.md`.
 
-The following should work:
+## Compatibily
 
-	cd native
-	make
+The Native version of JBit is usually tested on the latest *debian stable*.
+In the past, it has been tested on:
 
-The resulting binary (jbit) is self-contained, so you should be able to
-run it from anywhere.  From now on, I will assume that you have it in
-your path.
+- Windows 95
+- Windows 10
+- Wine 1.6.2
+- DosBox v0.74
+- Slackware 2.2.0
+- NetBSD 1.6.2
+- OpenBSD 5.8
+- Mac OS X 10.8
+- Android 1.5+
+- Fire OS 5.1
 
-Switch to the sample directory and type:
+When the J2ME version of JBit is updated, it is usually tested on a
+*Samsung E2121B*. Occasionally, it is tested on:
 
-	jbit hello.asm
-
-You should get back the usual message:
-
-	Hello, World!
-
-JBit supports a binary format, if you really need it:
-
-	jbit -c jb hello.asm >hello.jb
-	jbit hello.jb
-
-More information is available in the included jbit(1).
-You can find a copy online here:
-[jbit(1)](http://efornara.github.io/jbit/jbit.1.html).
-
-## J2ME
-
-To compile from source you need:
-
-* [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
-ads/index.html).
-  Tested with OpenJDK version 1.7.0.
-* [Oracle Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-135801.html).
-  Tested with version 2.5.2.
-* [Ant](http://ant.apache.org/).
-  Tested with versions 1.9.6.
-* [Antenna](http://antenna.sourceforge.net/).
-  Tested with version 1.2.1beta.
-* [ProGuard](http://proguard.sourceforge.net/).
-  Tested with version 5.2.1.
-
-If your environment is setup correctly, you should be able to
-compile JBit by setting the `WTK_HOME_DIRECTORY` environment variable,
-entering midp/jbit and running ant.
+- Nokia 2630
+- Sony Ericsson K550
+- Motorola V360
 
 ## Docker
 
-A few docker images are available ([efornara/jbit](https://hub.docker.com/r/efornara/jbit/)):
+A few docker images are available to ease cross development
+([efornara/jbit](https://hub.docker.com/r/efornara/jbit/)):
 
-	busybox  jbit binary hosted in a busybox environment
 	main     development setup for Native (and documentation)
 	midp     development setup for J2ME (Oracle WTK still needed)
 	droid    development setup for Android (cross compiler)
 	win32    development setup for Win32 (cross compiler)
+	dos      development setup for MS-DOS (cross compiler)
+
+A small image is also available for trying out JBit:
+
+	busybox  jbit binary hosted in a busybox environment
 
 ## Links
 
