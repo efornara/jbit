@@ -39,7 +39,19 @@
 #include "jbit.h"
 #include "devimpl.h"
 
-class MicroIO {
+// MicroIODriver
+class MicroIODeviceDriver {
+public:
+	virtual void set_display(const MicroIODisplay *display_) = 0;
+	virtual void reset() = 0;
+	virtual void flush(const char *status, int ms) = 0;
+	virtual int get_key() = 0;
+	virtual ~MicroIODeviceDriver() {}
+};
+
+extern MicroIODeviceDriver *new_MicroIODeviceDriver();
+
+class MicroIODevice : public Device {
 
 	/*
 	 * Simple port from Java.
@@ -100,17 +112,6 @@ private:
 
 public:
 
-	MicroIO() {
-		waitingForFrame = false;
-	}
-
-	void reset() {
-		random.reset();
-		keybuf.reset();
-		display.reset();
-		frameReset();
-	}
-	
 	const MicroIODisplay *getDisplay() {
 		return &display;
 	}
@@ -137,6 +138,37 @@ public:
 		return wait;
 	}
 
+private:
+	static const int KEYCODE_NONE = 0;
+	static const int KEYCODE_BREAK = -1;
+	MicroIODeviceDriver *drv;
+	const char *status_msg;
+	int filter_char(int c) {
+		if (c == ':')
+			return KEYCODE_BREAK;
+		c = MicroIOKeybuf::map_keypad(c);
+		return c ? c : KEYCODE_NONE;
+	}
+public:
+	MicroIODevice() {
+		waitingForFrame = false;
+		status_msg = "";
+		drv = new_MicroIODeviceDriver();
+	}
+	~MicroIODevice() {
+		delete drv;
+	}
+	// IO
+	void set_address_space(AddressSpace *dma) {
+	}
+	void reset() {
+		random.reset();
+		keybuf.reset();
+		display.reset();
+		frameReset();
+		drv->set_display(&display);
+		drv->reset();
+	}
 	int get(int address) {
 		switch (address) {
 		case REG_FRMFPS:
@@ -154,8 +186,7 @@ public:
 		}			
 		return 0;
 	}
-
-	int put(int address, int value) {
+	void put(int address, int value) {
 		switch (address) {
 		case REG_FRMFPS:
 			doFrmFpsPut(value);
@@ -174,97 +205,6 @@ public:
 					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
 				display.put(address - REG_CONVIDEO, value);
 		}			
-		return 0;
-	}
-};
-
-static void curses_init() {
-	initscr();
-	cbreak();
-	noecho();
-	nonl();
-	intrflush(stdscr, FALSE);
-	keypad(stdscr, TRUE);
-	timeout(0);
-}
-
-static void curses_cleanup() {
-	endwin();
-}
-
-class CursesDevice : public Device {
-private:
-	static const int KEYCODE_NONE = 0;
-	static const int KEYCODE_BREAK = -1;
-
-	MicroIO io;
-	int display_y;
-	int display_x;
-	int cursor_y;
-	int cursor_x;
-	const char *status_msg;
-
-	void show_static() {
-		clear();
-		int y = 0;
-		int x = 18;
-		mvaddstr(y++, x, "[:] break");
-		y++;
-		x = 7;
-		display_y = y;
-		display_x = x;
-		const MicroIODisplay *display = io.getDisplay();
-		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
-			mvaddstr(y++, x, display->get_line(i));
-		x = 0;
-		y++;
-		mvaddstr(y++, x, "[1]      [2] abc  [3] def");
-		y++;
-		mvaddstr(y++, x, "[4] ghi  [5] jkl  [6] mno");
-		y++;
-		mvaddstr(y++, x, "[7] pqrs [8] tuv  [9] wxyz");
-		y++;
-		mvaddstr(y++, x, "[*]      [0]  +   [#]    ");
-		y++;
-		cursor_y = y;
-		cursor_x = 0;
-	}
-	void flush() {
-		const MicroIODisplay *display = io.getDisplay();
-		mvaddstr(0, 0, status_msg);
-		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
-			mvaddstr(display_y + i, display_x, display->get_line(i));
-		move(cursor_y, cursor_x);
-		refresh();
-	}
-	int filter_char(int c) {
-		if (c == ':')
-			return KEYCODE_BREAK;
-		c = MicroIOKeybuf::map_keypad(c);
-		return c ? c : KEYCODE_NONE;
-	}
-	void wait(int ms) {
-		napms(ms);
-	}
-public:
-	CursesDevice() {
-		curses_init();
-		atexit(curses_cleanup);
-	}
-	// VM
-	void set_address_space(AddressSpace *dma) {
-	}
-	void reset() {
-		io.reset();
-		status_msg = "";
-		show_static();
-		flush();
-	}
-	void put(int address, int value) {
-		io.put(address, value);
-	}
-	int get(int address) {
-		return io.get(address);
 	}
 	// Device
 	void set_args(int argc_, char **argv_) {
@@ -281,24 +221,103 @@ public:
 			status_msg = "FAILED ";
 			break;
 		}
-		int c = filter_char(getch());
+		int c = filter_char(drv->get_key());
 		if (c == KEYCODE_BREAK)
 			exit(0);
 		if (c != KEYCODE_NONE)
-			io.keyPressed(c);
+			keyPressed(c);
 		int ms = 100;
 		if (status == 0) // OK
-			ms = io.doSomeWork();
-		if (ms) {
-			flush();
-			wait(ms);
-		}
+			ms = doSomeWork();
+		if (ms)
+			drv->flush(status_msg, ms);
 		return true;
 	}
 };
 
 static Device *new_Device(Tag tag) {
-	return new CursesDevice();
+	return new MicroIODevice();
 }
 
 static DeviceEntry entry("microio", new_Device);
+
+static void curses_init() {
+	initscr();
+	cbreak();
+	noecho();
+	nonl();
+	intrflush(stdscr, FALSE);
+	keypad(stdscr, TRUE);
+	timeout(0);
+}
+
+static void curses_cleanup() {
+	endwin();
+}
+
+class CursesMicroIODeviceDriver : public MicroIODeviceDriver {
+private:
+	const MicroIODisplay *display;
+	int display_y;
+	int display_x;
+	int cursor_y;
+	int cursor_x;
+	void show_static() {
+		clear();
+		int y = 0;
+		int x = 18;
+		mvaddstr(y++, x, "[:] break");
+		y++;
+		x = 7;
+		display_y = y;
+		display_x = x;
+		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+			mvaddstr(y++, x, display->get_line(i));
+		x = 0;
+		y++;
+		mvaddstr(y++, x, "[1]      [2] abc  [3] def");
+		y++;
+		mvaddstr(y++, x, "[4] ghi  [5] jkl  [6] mno");
+		y++;
+		mvaddstr(y++, x, "[7] pqrs [8] tuv  [9] wxyz");
+		y++;
+		mvaddstr(y++, x, "[*]      [0]  +   [#]    ");
+		y++;
+		cursor_y = y;
+		cursor_x = 0;
+	}
+	void flush(const char *status) {
+		mvaddstr(0, 0, status);
+		for (int i = 0; i < MicroIODisplay::N_OF_LINES; i++)
+			mvaddstr(display_y + i, display_x, display->get_line(i));
+		move(cursor_y, cursor_x);
+		refresh();
+	}
+	void wait(int ms) {
+		napms(ms);
+	}
+public:
+	CursesMicroIODeviceDriver() {
+		curses_init();
+		atexit(curses_cleanup);
+	}
+	// MicroIODeviceDriver
+	void set_display(const MicroIODisplay *display_) {
+		display = display_;
+	}
+	void reset() {
+		show_static();
+		flush("");
+	}
+	void flush(const char *status, int ms) {
+		flush(status);
+		wait(ms);
+	}
+	int get_key() {
+		return getch();
+	}
+};
+
+MicroIODeviceDriver *new_MicroIODeviceDriver() {
+	return new CursesMicroIODeviceDriver();
+}
