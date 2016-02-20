@@ -21,7 +21,7 @@ cp -r $IN/LICENSE.md $OUT/LICENSE.txt
 
 # copy jbit.exe and jbitw.exe
 mkdir -p $OUT/win32
-( cd $IN/native ; make clean ; make -f MinGW.mk )
+( cd $IN/native ; make clean ; make PLATFORM=win32 )
 cp $IN/native/jbit.exe $OUT/win32
 ( cd $IN/native ; make clean )
 
