@@ -995,7 +995,6 @@ public:
 			return get_TTYCTL();
 		case RANDOM:
 			return random.get();
-			break;
 		case CONCOLS:
 		case CONROWS:
 			return get_consize(address);

@@ -33,103 +33,32 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <sys/time.h>
-
 #include "jbit.h"
 #include "devimpl.h"
 
+#include "_xv65.h"
+
+#define IO_BASE 0x200
+
 class MicroIODevice : public Device {
-
-	/*
-	 * Simple port from Java.
-	 */
-
+public:
+	static const int FRAME_MIN_WAIT = 10;
+	static const int KEYCODE_NONE = 0;
+	static const int KEYCODE_BREAK = -1;
 private:
-
-	typedef signed char jbyte;
-
-	long long currentTimeMillis() {
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		return ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
-	}
-
-	static const int REG_FRMFPS = 17;
-	static const int REG_FRMDRAW = 18;
-	static const int REG_RANDOM = 23;
-	static const int REG_KEYBUF = 24;
-	static const int REG_CONVIDEO = 40;
-
-	static const int KEYBUF_SIZE = 8;
-
+	MicroIODeviceDriver *drv;
 	Random random;
 	MicroIOKeybuf keybuf;
 	MicroIODisplay display;
-
-	static const int FRAME_MIN_WAIT = 10;
-
-	int fps;	
-	long nextFrame;
-	int frameInterval;
-	bool waitingForFrame;
-	
-	void frameReset() {
-		doFrmFpsPut(40);
-	}
-
-	int doFrmFpsGet() {
-		return fps;
-	}
-
-	void doFrmFpsPut(int value) {
-		fps = value;
-		if (value == 0) {
-			frameInterval = 0;
-			nextFrame = 0;
-		} else {
-			frameInterval = 4000 / value;
-			nextFrame = currentTimeMillis() + frameInterval;
-		}
-	}
-
-	void doFrmDrawPut() {
-		if (frameInterval)
-			waitingForFrame = true;
-	}
-
-public:
-
-	const MicroIODisplay *getDisplay() {
-		return &display;
-	}
-
-	void keyPressed(int keyCode) {
-		keybuf.enque(keyCode);
-	}
-
-	int doSomeWork() {
-		int wait = -1;
-		long now = currentTimeMillis();
-		if (nextFrame != 0 && now >= nextFrame - FRAME_MIN_WAIT) {
-			do
-				nextFrame += frameInterval;
-			while (nextFrame < now);
-			if (waitingForFrame) {
-				waitingForFrame = false;
-			}
-			wait = 0;
-		}
-		if (waitingForFrame) {
-			wait = (int)(nextFrame - now - (FRAME_MIN_WAIT >> 1));
-		}
-		return wait;
-	}
-
-private:
-	static const int KEYCODE_NONE = 0;
-	static const int KEYCODE_BREAK = -1;
-	MicroIODeviceDriver *drv;
+	int v_FRMFPS;
 	const char *status_msg;
+	void put_FRMDRAW() {
+		int fps4 = v_FRMFPS;
+		int ms = (int)(1000.0 / (fps4 / 4.0));
+		if (ms < FRAME_MIN_WAIT)
+			ms = FRAME_MIN_WAIT;
+		drv->flush(status_msg, ms);
+	}
 	int filter_char(int c) {
 		if (c == ':')
 			return KEYCODE_BREAK;
@@ -138,7 +67,6 @@ private:
 	}
 public:
 	MicroIODevice() {
-		waitingForFrame = false;
 		status_msg = "";
 		drv = new_MicroIODeviceDriver();
 	}
@@ -152,45 +80,44 @@ public:
 		random.reset();
 		keybuf.reset();
 		display.reset();
-		frameReset();
+		v_FRMFPS = 40;
 		drv->set_display(&display);
 		drv->reset();
 	}
 	int get(int address) {
+		address += IO_BASE;
 		switch (address) {
-		case REG_FRMFPS:
-			return doFrmFpsGet();
-		case REG_RANDOM:
+		case FRMFPS:
+			return v_FRMFPS;
+		case RANDOM:
 			return random.get();
 		default:
-			if (address >= REG_KEYBUF
-					&& address < REG_KEYBUF + KEYBUF_SIZE) {
-				return keybuf.get(address - REG_KEYBUF);
-			} else if (address >= REG_CONVIDEO
-					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE) {
-				return display.get(address - REG_CONVIDEO);
-			}
+			if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE)
+				return keybuf.get(address - KEYBUF);
+			else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+				return display.get(address - CONVIDEO);
 		}			
 		return 0;
 	}
 	void put(int address, int value) {
+		address += IO_BASE;
+		value &= 0xff;
 		switch (address) {
-		case REG_FRMFPS:
-			doFrmFpsPut(value);
+		case FRMFPS:
+			v_FRMFPS = value;
 			break;
-		case REG_FRMDRAW:
-			doFrmDrawPut();
+		case FRMDRAW:
+			put_FRMDRAW();
 			break;
-		case REG_RANDOM:
+		case RANDOM:
 			random.put(value);
 			break;
-		case REG_KEYBUF:
-			keybuf.put(address, value);
+		case KEYBUF:
+			keybuf.put(address - KEYBUF, value);
 			break;
 		default:
-			if (address >= REG_CONVIDEO
-					&& address < REG_CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
-				display.put(address - REG_CONVIDEO, value);
+			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+				display.put(address - CONVIDEO, value);
 		}			
 	}
 	// Device
@@ -212,12 +139,9 @@ public:
 		if (c == KEYCODE_BREAK)
 			exit(0);
 		if (c != KEYCODE_NONE)
-			keyPressed(c);
-		int ms = 100;
-		if (status == 0) // OK
-			ms = doSomeWork();
-		if (ms)
-			drv->flush(status_msg, ms);
+			keybuf.enque(c);
+		if (status)
+			drv->flush(status_msg, 100);
 		return true;
 	}
 };
