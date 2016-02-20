@@ -79,13 +79,16 @@ endif
 # RULES
 #
 
-all: $(EXE) jbit.1
+all: $(EXE) jbit.1 BSD.mk
 
 $(EXE): $(DEVSYMS) $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
 
 jbit.1: jbit.ron
 	ronn <jbit.ron >jbit.1
+
+BSD.mk: Makefile
+	perl ../tools/genbsd.pl <Makefile >BSD.mk
 
 stdout.o: _xv65.h
 xv65.o: _xv65.h
@@ -100,6 +103,9 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+touch:
+	touch jbit.1 BSD.mk *.h
 
 clean:
 	rm -f jbit jbit.exe *.o *.bin
