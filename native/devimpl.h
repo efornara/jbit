@@ -70,3 +70,14 @@ public:
 	int get(int address) const;
 	void enque(int value);
 };
+
+class MicroIODeviceDriver {
+public:
+	virtual void set_display(const MicroIODisplay *display_) = 0;
+	virtual void reset() = 0;
+	virtual void flush(const char *status, int ms) = 0;
+	virtual int get_key() = 0;
+	virtual ~MicroIODeviceDriver() {}
+};
+
+extern MicroIODeviceDriver *new_MicroIODeviceDriver();
