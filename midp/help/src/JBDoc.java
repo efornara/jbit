@@ -1,6 +1,6 @@
 /*
 	JBDoc - Documentation for JBit
-	Copyright (C) 2012-2013  Emanuele Fornara
+	Copyright (C) 2012-2016  Emanuele Fornara
 	
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
