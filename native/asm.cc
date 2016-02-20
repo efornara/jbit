@@ -787,7 +787,7 @@ protected:
 	Binary &bin;
 public:
 	Pass(LineReader &r_, Binary &bin_) : r(r_), bin(bin_) {
-		strcpy(lookup_table, "01");
+		memcpy(lookup_table, "01", 2 + 1);
 	}
 	int get_symbol_size(const char *s) {
 		return bin.get_symbol(s)->size;
@@ -802,8 +802,8 @@ public:
 	const ParseError *lookup(const char *s) {
 		int n = strlen(s);
 		if (n < 2 || n > 16)
-			return r.error("lookup length must 2..16");
-		strcpy(lookup_table, s);
+			return r.error("lookup length must be 2..16");
+		memcpy(lookup_table, s, n + 1);
 		return 0;
 	}
 	const ParseError *bits(const char *s) {

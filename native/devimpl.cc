@@ -87,7 +87,7 @@ int MicroIODisplay::get(int address) const {
 
 const char *MicroIODisplay::get_line(int i) const {
 	if (i <= 0 || i >= (N_OF_LINES - 1)) {
-		strcpy(line_buf, "+----------+");
+		memcpy(line_buf, "+----------+", 1 + COLS + 1 + 1);
 	} else {
 		line_buf[0] = '|';
 		const char *p = &video_buf[(i - 1) * COLS];
