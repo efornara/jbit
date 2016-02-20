@@ -54,6 +54,7 @@ ifeq ($(ELF),static)
 LDFLAGS += -static
 endif
 # EXE
+OBJS += stdout.o xv65.o
 EXE = jbit-android-$(ARCH)-$(ELF).bin
 endif
 
