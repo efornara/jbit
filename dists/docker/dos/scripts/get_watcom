@@ -1,0 +1,20 @@
+#! /bin/sh
+
+cd /opt
+apt-get install -y wget p7zip
+mkdir watcom
+cd watcom
+wget -nv -c http://downloads.sourceforge.net/project/openwatcom/current-build/ow-snapshot.7z
+7zr x ow-snapshot.7z
+rm ow-snapshot.7z
+chmod 755 binl/*
+echo >>/etc/bash.bashrc 'if [[ ":$PATH:" != *":/opt/watcom/binl:"* ]]; then PATH="$PATH:/opt/watcom/binl" ; fi'
+cat >>/etc/bash.bashrc <<END
+export WATCOM=/opt/watcom
+export INCLUDE=/opt/watcom/h
+export EDPATH=/opt/watcom/eddat
+export WIPFC=/opt/watcom/wipfc
+END
+cd /opt
+rm get_watcom
+cd /
