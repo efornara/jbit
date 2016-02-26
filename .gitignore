@@ -9,6 +9,9 @@
 *.zip
 *.tar.gz
 *.bin
+*.log
+*.aux
+*.pdf
 Local.mk
 native/jbit
 private

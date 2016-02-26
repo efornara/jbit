@@ -1,0 +1,256 @@
+\documentclass[a4paper,twocolumn,11pt]{article}
+\usepackage[latin1]{inputenc}
+\usepackage[top=3cm,bottom=3cm,left=1.5cm,right=1.5cm]{geometry}
+\usepackage{fancyhdr}
+
+\begin{document}
+
+\pagestyle{fancy}
+\fancyhead{}
+\fancyfoot{}
+\lhead{\small JBit-IO (R)}
+\rhead{\small Registers, Constants, Requests}
+\lfoot{\small Copyright \copyright\ 2007-2016 Emanuele Fornara}
+\cfoot{\small JBit}
+\rfoot{\small \tt http://jbit.sourceforge.net/}
+
+\section*{\centerline{JBit IO (R)}}
+
+\subsection*{Registers}
+
+\begin{verbatim}
+REQPUT      1        CONVIDEO   40(40)
+REQEND      2        CONROW0    40(10)
+REQRES      3        CONROW1    50(10)
+REQPTRLO    4        CONROW2    60(10)
+REQPTRHI    5        CONROW3    70(10)
+ENABLE     16        LID        80
+FRMFPS     17        LCTL       81
+FRMDRAW    18        LX         82
+GKEY0      19        LY         83
+GKEY1      20        SFRAME     84
+RANDOM     23        STRANSFM   85
+KEYBUF     24(8)     SCWITH     86
+CONCOLS    32        TCOLLO     87
+CONROWS    33        TCOLHI     88
+CONCX      34        TROWLO     89
+CONCY      35        TROWHI     90
+CONCCHR    36        TCELL      91
+CONCFG     37        REQDAT     96(32)
+CONCBG     38
+\end{verbatim}
+
+\subsection*{Constants}
+
+\noindent {\bf ENABLE (Bitmask)}
+\begin{verbatim}
+BGCOL       1        BGIMG       2
+CONSOLE     4        LAYERS      8
+\end{verbatim}
+
+\noindent {\bf Standard Palette}
+\begin{verbatim}
+BLACK       0        ORANGE      8
+WHITE       1        BROWN       9
+RED         2        LIGHTRED   10
+CYAN        3        GRAY1      11
+PURPLE      4        GRAY2      12
+GREEN       5        LIGHTGREEN 13
+BLUE        6        LIGHTBLUE  14
+YELLOW      7        GRAY3      15
+\end{verbatim}
+
+\noindent {\bf Line Art (Bitmask)}
+\begin{verbatim}
+TOP         1        BOTTOM      8
+LEFT        2        RIGHT       4
+CDOT      128
+\end{verbatim}
+
+\noindent {\bf Datatypes}
+\begin{verbatim}
+U8          1        I8          2
+U16         3        I16         4
+\end{verbatim}
+
+\vskip 1em
+
+\noindent {\bf LCTL - Layer Control (Bitmask)}
+\begin{verbatim}
+SHIFTX0     1        SHIFTX1     2
+SHIFTY0     4        SHIFTY1     8
+PXLCOLL    16        ENABLE    128
+\end{verbatim}
+
+\noindent {\bf STRANSFM - Sprite Transformation}
+\begin{verbatim}
+NONE        0        ROT90       5
+ROT180      3        ROT270      6
+MIRROR      2        MROT90      7
+MROT180     1        MROT270     4
+\end{verbatim}
+
+\noindent {\bf GKEY0 - Game Keys 0 (Bitmask)}
+\begin{verbatim}
+UP          2        LEFT        4
+RIGHT      32        DOWN       64
+\end{verbatim}
+
+\noindent {\bf GKEY1 - Game Keys 1 (Bitmask)}
+\begin{verbatim}
+A           2        B           4
+C           8        D          16
+FIRE        1
+\end{verbatim}
+
+\subsection*{Requests}
+
+On the other side of this sheet you can find the syntax of the requests
+(and the corresponding results, when applicable).
+See the {\em bgcol1} and {\em bgcol2} demos for examples of how
+to send a request to the IO chip.
+After the request has been sent, REQRES
+contains 0 on success and 255 on failure (usually not tested).
+Results are available starting from REQDAT.
+Streaming requests (identified by a {\tt >}) are not bounded.
+The other requests are bounded (255 bytes).
+
+Optional values are delimited by [ and ]. ( and ) are used for grouping.
+* means repeat 0 or more times. + means repeat at least once. \# means
+repeat with constraints. $|$ means choice (priority is low).
+Datatype is U8 unless stated otherwise (by a tag preceded by :).
+For datatypes larger than 8 bits, the least significat byte comes first.
+Enumerated values are identified by C (for choice).
+Bitmasks are identified by O (for OR).
+Strings can be delimited by 0 (S0) or by the end of the request (S).
+When an argument has datatype T, the actual datatype is
+chosen by the user with DType (see constants above).
+
+For the semantic of the requests, take a look at the demos
+or simply experiment using names as hints.
+Notes for the IPNGGEN request:
+using INDEXED\_COLOR causes a PLTE chunk to be generated
+(a pallette must be provided) and
+setting IDX0TRANSP causes a tRNS chunk to be generated.
+For more information see the PNG specification.
+
+\clearpage
+
+\begin{flushleft}
+{\bf System}
+\vskip 2pt
+{\tt NOREQ(0)>}: Dummy* \\
+\vskip 4pt
+{\tt TIME(2)}: [RefTime=ABS [Fract=1000]] \\
+RefTime(C): {\tt ABS(1)}, {\tt RESET(2)} \\
+Fract(C): {\tt 1(1)}, {\tt 10(2)}, {\tt 10(3)}, {\tt 1000(4)} \\
+Result: Time:U64 \\
+\vskip 4pt
+{\tt LOADROM(6)}: Addr:U16 ResName:S0 [Offset:U16 Size:U16] \\
+\vskip 4pt
+{\tt RSFORMAT(8)}: 121 33 \\
+\vskip 4pt
+{\tt RLOAD(9)}: Addr:U16 Size:U16 RecName:S0 \\
+\vskip 4pt
+{\tt RSAVE(10)}: Addr:U16 Size:U16 RecName:S0 \\
+\vskip 4pt
+{\tt RDELETE(11)}: RecName:S0 \\
+\vskip 6pt
+{\bf Display and Imaging}
+\vskip 2pt
+{\tt DPYINFO(16)}: - \\
+Result: Width:U16 Height:U16 ColorDepth AlphaDepth Flags \\
+Flags(O): {\tt ISCOLOR(128)}, {\tt ISMIDP2(64)} \\
+\vskip 4pt
+{\tt SETBGCOL(17)}: PaletteEntry $|$ Red Green Blue \\
+\vskip 4pt
+{\tt SETPAL(18)>}: (Red Green Blue)* \\
+\vskip 4pt
+{\tt SETBGIMG(19)}: ImageId \\
+\vskip 4pt
+{\tt IDESTROY(20)}: ImageId \\
+\vskip 4pt
+{\tt IDIM(21)}: MaxImageId \\
+\vskip 4pt
+{\tt IINFO(22)}: ImageId \\
+Result: Width:U16 Height:U16 Flags \\
+Flags(O): {\tt ISMUTABLE(128)} \\
+\vskip 4pt
+{\tt ILOAD(23)}: ImageId ResName:S0 \\
+\vskip 4pt
+{\tt IDUMMY(24)}: ImageId Type=SIMPLE Width:U16 Height:U16 Bg Fg [Title:S] \\
+{\tt IDUMMY(24)}: ImageId Type=SPRITE Width Height Frames Bg Fg [Title:S] \\
+{\tt IDUMMY(24)}: ImageId Type=TILES Width Height Cols Rows Bg Fg (N Bg Fg)* \\
+Type(C): {\tt SIMPLE(1)}, {\tt SPRITE(2)}, {\tt TILES(3)} \\
+\vskip 4pt
+{\tt IPNGGEN(25)>}: ImageId  Width:U16 Height:U16 Depth ColorType Flag
+[MaxPaletteEntry (PaletteEntry $|$ Red Green Blue)\#] Data\# \\
+ColorType(C): {\tt GRAYSCALE(0)}, {\tt TRUECOLOR(2)}, {\tt INDEXED\_COLOR(3)},
+{\tt GRAYSCALE\_ALPHA(4)}, {\tt TRUECOLOR\_ALPHA(6)}\\
+Flags(O): {\tt IDX0TRANSP(1)}, {\tt PALREF(2)}, {\tt ZOOM0(4)}, {\tt ZOOM1(8)} \\
+\vskip 4pt
+{\tt IEMPTY(26)}: ImageId Width:U16 Height:U16 \\
+\vskip 4pt
+{\tt IMKIMMUT(27)}: ImageId \\
+\vskip 4pt
+{\tt IRAWRGBA(28)>}: ImageId Width:U16 Height:U16 Flags
+(Red Green Blue Alpha)\# \\
+Flags(O): {\tt ALPHA(128)} \\
+\vskip 6pt
+{\bf Layers (Game API)}
+\vskip 2pt
+{\tt LMVIEW(32)}: TiledLayerId $|$ DType [X:T Y:T] Width:T Height:T \\
+\vskip 4pt
+{\tt LMPOS(33)}: DType OX:T OY:T \\
+\vskip 4pt
+{\tt LDESTROY(34)}: LayerId \\
+\vskip 4pt
+{\tt LDIM(35)}: MaxLayerId \\
+\vskip 4pt
+{\tt LTILED(36)}: TiledLayerId ImageId TWidth THeight NAnimTiles DType
+Cols:T Rows:T \\
+\vskip 4pt
+{\tt LSPRITE(37)}: SpriteId ImageId [Width Height] \\
+\vskip 4pt
+{\tt LSETPOS(38)}: LayerId DType X:T Y:T \\
+\vskip 4pt
+{\tt LGETPOS(39)}: LayerId \\
+Result: X:I32 Y:I32 \\
+\vskip 4pt
+{\tt LMOVE(40)}: LayerId DType DX:T DY:T \\
+\vskip 4pt
+{\tt LSETPRI(41)}: LayerId DType Priority:T \\
+\vskip 4pt
+{\tt LGETPRI(42)}: LayerId \\
+Result: Priority:I32 \\
+\vskip 4pt
+{\tt LTLANIM(43)}: TiledLayerId AnimTile StaticTile\\
+\vskip 4pt
+{\tt LTLFILL(44)}: TiledLayerId Tile [DType Col:T Row:T NumCols:T NumRows:T] \\
+\vskip 4pt
+{\tt LTLPUT(45)>}: TiledLayerId Col:U16 Row:U16 NumCols:U16 Tile* \\
+\vskip 4pt
+{\tt LTLSCRLL(46)}: TiledLayerId ScrollType={\tt 0} DType Col:T Row:T NumCols:T NumRows:T
+DX:T DY:T \\
+\vskip 4pt
+{\tt LSPCOPY(47)}: SpriteId TemplateSpriteId \\
+\vskip 4pt
+{\tt LSPAPOS(48)}: SpriteId DType AbsX:T AbsY:T \\
+\vskip 4pt
+{\tt LSPREFPX(49)}: SpriteId DType RefPixelX:T RefPixelY:T \\
+\vskip 4pt
+{\tt LSPCLRCT(50)}: SpriteId DType CollRctOX:T CollRctOY:T CollRctWidth:T CollRctHeight:T \\
+\vskip 6pt
+{\bf Effects}
+\vskip 2pt
+{\tt FXTONE(64)}: Duration Frequency Volume \\
+\vskip 4pt
+{\tt FXVIBRA(65)}: Duration \\
+Result: Supported \\
+\vskip 4pt
+{\tt FXFLASH(66)}: Duration \\
+Result: Supported \\
+\vskip 4pt
+\end{flushleft}
+
+\end{document}
