@@ -505,6 +505,14 @@ Set the bounding box of a sprite. Used for approximate collision detection.
 Syntax: LSPCLRCT(50) SpriteId DType CollRctOX:T CollRctOY:T CollRctWidth:T
 CollRctHeight:T
 
+### GAMEKIT(60)
+
+Setup a tiled layer (Id 1) using an image or a pre-defined tile set,
+and make it visible and current.
+
+Syntax: GAMEKIT(60) [[[ImageId | TileSetId=255] Cols=0 Rows=0]
+TWidth=0 THeight=0] ; Result: Cols:U16 Rows:U16
+
 ## Effects
 
 WARNING: The effect API is poorly supported on most phones, and in some cases

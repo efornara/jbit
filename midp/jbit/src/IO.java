@@ -173,6 +173,7 @@ public static final byte REQ_LSPCOPY = (byte)0x2F;
 public static final byte REQ_LSPAPOS = (byte)0x30;
 public static final byte REQ_LSPREFPX = (byte)0x31;
 public static final byte REQ_LSPCLRCT = (byte)0x32;
+public static final byte REQ_GAMEKIT = (byte)0x3C;
 public static final byte REQ_FXTONE = (byte)0x40;
 public static final byte REQ_FXVIBRA = (byte)0x41;
 public static final byte REQ_FXFLASH = (byte)0x42;
@@ -242,6 +243,9 @@ public static final byte VAL_GKEY1_A = (byte)0x02;
 public static final byte VAL_GKEY1_B = (byte)0x04;
 public static final byte VAL_GKEY1_C = (byte)0x08;
 public static final byte VAL_GKEY1_D = (byte)0x10;
+public static final byte VAL_GAMEKIT_COLS = (byte)0x00;
+public static final byte VAL_GAMEKIT_ROWS = (byte)0x02;
+public static final byte VAL_TILESET_SILK = (byte)0xFF;
 public static final byte ALINE_TOP = (byte)0x01;
 public static final byte ALINE_LEFT = (byte)0x02;
 public static final byte ALINE_RIGHT = (byte)0x04;
@@ -353,6 +357,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "REQ_" + "LSPAPOS", "30" },
 //@{ "REQ_" + "LSPREFPX", "31" },
 //@{ "REQ_" + "LSPCLRCT", "32" },
+//@{ "REQ_" + "GAMEKIT", "3C" },
 //@{ "REQ_" + "FXTONE", "40" },
 //@{ "REQ_" + "FXVIBRA", "41" },
 //@{ "REQ_" + "FXFLASH", "42" },
@@ -420,6 +425,9 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "VAL_" + "GKEY1_B", "04" },
 //@{ "VAL_" + "GKEY1_C", "08" },
 //@{ "VAL_" + "GKEY1_D", "10" },
+//@{ "VAL_" + "GAMEKIT_COLS", "00" },
+//@{ "VAL_" + "GAMEKIT_ROWS", "02" },
+//@{ "VAL_" + "TILESET_SILK", "FF" },
 //@	};
 //@	
 //@	String labelToString(String prefix, int value) {
@@ -1773,8 +1781,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 		}
 	}
 	
-	private void doLDim() {
-		int n = parseU8() + 1;
+	private void doLDimImpl(int n) {
 		Layer[] newLayerObj = new Layer[n];
 		byte[] newLayerCtl = new byte[n];
 		int[] newLayerOX = new int[n];
@@ -1785,8 +1792,8 @@ public static final byte CH_CROSS = (byte)0x8F;
 			if (layerObj[i] != null)
 				layerManager.remove(layerObj[i]);
 		}
-		if (images.length < n)
-			n = images.length;
+		if (layerObj.length < n)
+			n = layerObj.length;
 		System.arraycopy(layerObj, 0, newLayerObj, 0, n);
 		System.arraycopy(layerCtl, 0, newLayerCtl, 0, n);
 		System.arraycopy(layerOX, 0, newLayerOX, 0, n);
@@ -1799,6 +1806,10 @@ public static final byte CH_CROSS = (byte)0x8F;
 		layerOY = newLayerOY;
 		layerPri = newLayerPri;
 		layerExtra = newLayerExtra;
+	}
+
+	private void doLDim() {
+		doLDimImpl(parseU8() + 1);
 	}
 	
 	private void doLTiled() {
@@ -2022,6 +2033,59 @@ public static final byte CH_CROSS = (byte)0x8F;
 		int width = parseInt(t);
 		int height = parseInt(t);
 		l.defineCollisionRectangle(x, y, width, height);
+	}
+
+	private static final int GAMEKIT_LID = 1;
+
+	private void doGamekit() throws Throwable {
+		int id = VAL_TILESET_SILK, cols = 0, rows = 0, tileWidth = 0, tileHeight = 0;
+		if (reqlen > reqcur)
+			id = parseU8();
+		if (reqlen > reqcur) {
+			cols = parseU8();
+			rows = parseU8();
+		}
+		if (reqlen > reqcur) {
+			tileWidth = parseU8();
+			tileHeight = parseU8();
+		}
+		if (reqlen != reqcur)
+			throw new RuntimeException();
+		if (layerObj.length < GAMEKIT_LID + 1)
+			doLDimImpl(GAMEKIT_LID + 1);
+		Image image;
+		if (id == VAL_TILESET_SILK) {
+			image = Image.createImage("silk.png");
+			if (tileWidth == 0)
+				tileWidth = 16;
+			if (tileHeight == 0)
+				tileHeight = 16;
+		} else {
+			image = images[id];
+			if (tileWidth == 0)
+				tileWidth = 8;
+			if (tileHeight == 0)
+				tileHeight = 8;
+		}
+		if (cols == 0)
+			cols = getWidth() / tileWidth;
+		if (rows == 0)
+			rows = getHeight() / tileHeight;
+		if (layerObj[GAMEKIT_LID] != null)
+			layerManager.remove(layerObj[GAMEKIT_LID]);
+		TiledLayer l = new TiledLayer(cols, rows, image, tileWidth, tileHeight);
+		l.setVisible(true);
+		layerObj[GAMEKIT_LID] = l;
+		layerCtl[GAMEKIT_LID] = 0;
+		layerOX[GAMEKIT_LID] = 0;
+		layerOY[GAMEKIT_LID] = 0;
+		layerPri[GAMEKIT_LID] = GAMEKIT_LID;
+		layerExtra[GAMEKIT_LID] = 0;
+		layerReorder(GAMEKIT_LID);
+		m[REG_ENABLE] = VAL_ENABLE_BGCOL | VAL_ENABLE_LAYERS;
+		m[REG_LID] = GAMEKIT_LID;
+		putShort(REG_REQDAT + VAL_GAMEKIT_COLS, cols);
+		putShort(REG_REQDAT + VAL_GAMEKIT_ROWS, rows);
 	}
 
 	private synchronized void doGKey0Put() {
@@ -2445,6 +2509,9 @@ public static final byte CH_CROSS = (byte)0x8F;
 				break;
 			case REQ_LSPCLRCT:
 				doLSpClRct();
+				break;
+			case REQ_GAMEKIT:
+				doGamekit();
 				break;
 			// #endif
 			// #if ENABLE_EFFECTS
