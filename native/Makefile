@@ -66,10 +66,19 @@ EXE = jbit.exe
 endif
 
 ifeq ($(PLATFORM),dos)
+ifeq ($(ARCH),dpmi)
 CXX = i586-pc-msdosdjgpp-g++
 LDFLAGS = -s
 OBJS += stdout.o mio.o miodos.o
 EXE = jbit.exe
+endif
+ifeq ($(ARCH),dos4g)
+CXX = wcl386
+CXXFLAGS = -bt=dos
+OBJS = main.o stdout.o cpu.o asm.o symdefs.o
+jbit.exe: $(OBJS)
+	wcl386 -l=dos4g -fe=jbit $(OBJS)
+endif
 endif
 
 ifeq ($(PLATFORM),local)
