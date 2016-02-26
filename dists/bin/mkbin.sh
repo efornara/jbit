@@ -48,7 +48,7 @@ for i in $IN/doc/jbdoc/*.md ; do
 		$OUT/doc/$f.htm
 done
 ( cd $IN/tools ; rm -f *.class )
-ronn <$IN/native/jbit.1.ronn --html >$OUT/doc/jbit_1.htm
+ronn <$IN/native/jbit.ron --html >$OUT/doc/jbit_1.htm
 
 # copy selection of midlets
 mkdir -p $OUT/midp
