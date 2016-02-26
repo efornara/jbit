@@ -355,13 +355,13 @@ ALPHA(6) ; Flags(O): IDX0TRANSP(1), PALREF(2), ZOOM0(4), ZOOM1(8)
 
 ### IEMPTY(26)
 
-Create an empty mutable image. Not useful at the moment.
+Create an empty mutable image. Deprecated.
 
 Syntax: IEMPTY(26) ImageId Width:U16 Height:U16
 
 ### IMKIMMUT(27)
 
-Make an image immutable. Not useful at the moment.
+Make an image immutable. Deprecated.
 
 Syntax: IMKIMMUT(27) ImageId
 
