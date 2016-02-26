@@ -59,11 +59,12 @@ When the J2ME version of JBit is updated, it is usually tested on a
 A few docker images are available to ease cross development
 ([efornara/jbit](https://hub.docker.com/r/efornara/jbit/)):
 
-	main     development setup for Native (and documentation)
+	main     development setup for Native (and basic documentation)
 	midp     development setup for J2ME (Oracle WTK still needed)
-	droid    development setup for Android (cross compiler)
-	win32    development setup for Win32 (cross compiler)
-	dos      development setup for MS-DOS (cross compiler)
+	droid    development setup for Android (NDK cross compiler)
+	win32    development setup for Win32 (mingw32 cross compiler)
+	dos      development setup for MS-DOS (djgpp/watcom cross compilers)
+	doc      development setup for extra documentation (sheets and mobi)
 
 A small image is also available for trying out JBit:
 
