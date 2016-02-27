@@ -2056,7 +2056,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 			doLDimImpl(GAMESET_LID + 1);
 		Image image;
 		if (id == VAL_TILESET_SILK) {
-			image = Image.createImage("silk.png");
+			image = Image.createImage("/silk.png");
 			defaultTileWidth = 16;
 			defaultTileHeight = 16;
 		} else {
