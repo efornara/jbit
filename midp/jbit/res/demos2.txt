@@ -85,7 +85,7 @@ TiledLayer+Sprite with custom graphics (infinite loop).
 Take the ball out of the maze without touching the wall.
 Be careful! once you begin you cannot stop... literally.
 The maze is encoded as a standard IPNGGEN image and thus can be edited by Paint.
-#template.jb
-Starting point for simple mini-games.
+#gameset.jb
+Use 2, 4, 6 and 8 to collect the items. Hit the bomb when you get bored.
 #effects.jb
 Press 0-9 to play a tone, # to vibrate and * to exit.
