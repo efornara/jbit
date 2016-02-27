@@ -173,7 +173,7 @@ public static final byte REQ_LSPCOPY = (byte)0x2F;
 public static final byte REQ_LSPAPOS = (byte)0x30;
 public static final byte REQ_LSPREFPX = (byte)0x31;
 public static final byte REQ_LSPCLRCT = (byte)0x32;
-public static final byte REQ_GAMEKIT = (byte)0x3C;
+public static final byte REQ_GAMESET = (byte)0x3C;
 public static final byte REQ_FXTONE = (byte)0x40;
 public static final byte REQ_FXVIBRA = (byte)0x41;
 public static final byte REQ_FXFLASH = (byte)0x42;
@@ -243,8 +243,8 @@ public static final byte VAL_GKEY1_A = (byte)0x02;
 public static final byte VAL_GKEY1_B = (byte)0x04;
 public static final byte VAL_GKEY1_C = (byte)0x08;
 public static final byte VAL_GKEY1_D = (byte)0x10;
-public static final byte VAL_GAMEKIT_COLS = (byte)0x00;
-public static final byte VAL_GAMEKIT_ROWS = (byte)0x02;
+public static final byte VAL_GAMESET_COLS = (byte)0x00;
+public static final byte VAL_GAMESET_ROWS = (byte)0x02;
 public static final byte VAL_TILESET_SILK = (byte)0xFF;
 public static final byte ALINE_TOP = (byte)0x01;
 public static final byte ALINE_LEFT = (byte)0x02;
@@ -357,7 +357,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "REQ_" + "LSPAPOS", "30" },
 //@{ "REQ_" + "LSPREFPX", "31" },
 //@{ "REQ_" + "LSPCLRCT", "32" },
-//@{ "REQ_" + "GAMEKIT", "3C" },
+//@{ "REQ_" + "GAMESET", "3C" },
 //@{ "REQ_" + "FXTONE", "40" },
 //@{ "REQ_" + "FXVIBRA", "41" },
 //@{ "REQ_" + "FXFLASH", "42" },
@@ -425,8 +425,8 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "VAL_" + "GKEY1_B", "04" },
 //@{ "VAL_" + "GKEY1_C", "08" },
 //@{ "VAL_" + "GKEY1_D", "10" },
-//@{ "VAL_" + "GAMEKIT_COLS", "00" },
-//@{ "VAL_" + "GAMEKIT_ROWS", "02" },
+//@{ "VAL_" + "GAMESET_COLS", "00" },
+//@{ "VAL_" + "GAMESET_ROWS", "02" },
 //@{ "VAL_" + "TILESET_SILK", "FF" },
 //@	};
 //@	
@@ -2035,10 +2035,11 @@ public static final byte CH_CROSS = (byte)0x8F;
 		l.defineCollisionRectangle(x, y, width, height);
 	}
 
-	private static final int GAMEKIT_LID = 1;
+	private static final int GAMESET_LID = 1;
 
-	private void doGamekit() throws Throwable {
+	private void doGameSet() throws Throwable {
 		int id = VAL_TILESET_SILK, cols = 0, rows = 0, tileWidth = 0, tileHeight = 0;
+		int defaultTileWidth = 8, defaultTileHeight = 8;
 		if (reqlen > reqcur)
 			id = parseU8();
 		if (reqlen > reqcur) {
@@ -2051,41 +2052,42 @@ public static final byte CH_CROSS = (byte)0x8F;
 		}
 		if (reqlen != reqcur)
 			throw new RuntimeException();
-		if (layerObj.length < GAMEKIT_LID + 1)
-			doLDimImpl(GAMEKIT_LID + 1);
+		if (layerObj.length < GAMESET_LID + 1)
+			doLDimImpl(GAMESET_LID + 1);
 		Image image;
 		if (id == VAL_TILESET_SILK) {
 			image = Image.createImage("silk.png");
-			if (tileWidth == 0)
-				tileWidth = 16;
-			if (tileHeight == 0)
-				tileHeight = 16;
+			defaultTileWidth = 16;
+			defaultTileHeight = 16;
 		} else {
 			image = images[id];
-			if (tileWidth == 0)
-				tileWidth = 8;
-			if (tileHeight == 0)
-				tileHeight = 8;
 		}
+		if (tileWidth == 0)
+			tileWidth = defaultTileWidth;
+		if (tileHeight == 0)
+			tileHeight = defaultTileHeight;
 		if (cols == 0)
 			cols = getWidth() / tileWidth;
 		if (rows == 0)
 			rows = getHeight() / tileHeight;
-		if (layerObj[GAMEKIT_LID] != null)
-			layerManager.remove(layerObj[GAMEKIT_LID]);
+		if (layerObj[GAMESET_LID] != null)
+			layerManager.remove(layerObj[GAMESET_LID]);
 		TiledLayer l = new TiledLayer(cols, rows, image, tileWidth, tileHeight);
 		l.setVisible(true);
-		layerObj[GAMEKIT_LID] = l;
-		layerCtl[GAMEKIT_LID] = 0;
-		layerOX[GAMEKIT_LID] = 0;
-		layerOY[GAMEKIT_LID] = 0;
-		layerPri[GAMEKIT_LID] = GAMEKIT_LID;
-		layerExtra[GAMEKIT_LID] = 0;
-		layerReorder(GAMEKIT_LID);
+		layerManager.setViewWindow(0, 0, l.getWidth(), l.getHeight());
+		layerManagerOX = (getWidth() - l.getWidth()) >> 1;
+		layerManagerOY = (getHeight() - l.getHeight()) >> 1;
+		layerObj[GAMESET_LID] = l;
+		layerCtl[GAMESET_LID] = VAL_LCTL_ENABLE;
+		layerOX[GAMESET_LID] = 0;
+		layerOY[GAMESET_LID] = 0;
+		layerPri[GAMESET_LID] = GAMESET_LID;
+		layerExtra[GAMESET_LID] = 0;
+		layerReorder(GAMESET_LID);
 		m[REG_ENABLE] = VAL_ENABLE_BGCOL | VAL_ENABLE_LAYERS;
-		m[REG_LID] = GAMEKIT_LID;
-		putShort(REG_REQDAT + VAL_GAMEKIT_COLS, cols);
-		putShort(REG_REQDAT + VAL_GAMEKIT_ROWS, rows);
+		m[REG_LID] = GAMESET_LID;
+		putShort(REG_REQDAT + VAL_GAMESET_COLS, cols);
+		putShort(REG_REQDAT + VAL_GAMESET_ROWS, rows);
 	}
 
 	private synchronized void doGKey0Put() {
@@ -2510,8 +2512,8 @@ public static final byte CH_CROSS = (byte)0x8F;
 			case REQ_LSPCLRCT:
 				doLSpClRct();
 				break;
-			case REQ_GAMEKIT:
-				doGamekit();
+			case REQ_GAMESET:
+				doGameSet();
 				break;
 			// #endif
 			// #if ENABLE_EFFECTS

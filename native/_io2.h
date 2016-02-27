@@ -108,7 +108,7 @@
 #define REQ_LSPAPOS 0x30
 #define REQ_LSPREFPX 0x31
 #define REQ_LSPCLRCT 0x32
-#define REQ_GAMEKIT 0x3C
+#define REQ_GAMESET 0x3C
 #define REQ_FXTONE 0x40
 #define REQ_FXVIBRA 0x41
 #define REQ_FXFLASH 0x42
@@ -178,8 +178,8 @@
 #define GKEY1_B 0x04
 #define GKEY1_C 0x08
 #define GKEY1_D 0x10
-#define GAMEKIT_COLS 0x00
-#define GAMEKIT_ROWS 0x02
+#define GAMESET_COLS 0x00
+#define GAMESET_ROWS 0x02
 #define TILESET_SILK 0xFF
 #define ALINE_TOP 0x01
 #define ALINE_LEFT 0x02
