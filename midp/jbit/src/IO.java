@@ -2043,7 +2043,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 		int imageId = VAL_TILESET_SILK, cols = 0, rows = 0, tileWidth = 0, tileHeight = 0;
 		int defaultTileWidth = 8, defaultTileHeight = 8, layerId = GAMESET_LID;
 		if (reqlen > reqcur)
-			imageId = parseU8();
+			imageId = parseI8();
 		if (reqlen > reqcur) {
 			cols = parseU8();
 			rows = parseU8();
