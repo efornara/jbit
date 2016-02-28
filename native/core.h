@@ -56,6 +56,30 @@ public:
 	int get_length() const { return length; }
 };
 
+class String {
+private:
+	Buffer *b;
+	int i;
+	friend struct Token;
+public:
+	String() : b(0), i(-1) {}
+	String(Buffer *b_, const char *s) : b(b_) {
+		if (s) {
+			i = b->get_length();
+			b->append_string(s);
+		} else {
+			i = -1;
+		}
+	}
+	String(Buffer *b_, int i_) : b(b_), i(i_) {}
+	const char *get_s() {
+		if (i == - 1)
+			return 0;
+		else
+			return &b->get_data()[i];
+	}
+};
+
 class Program : public Buffer {
 public:
 	Buffer metadata_storage;

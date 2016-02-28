@@ -8,7 +8,7 @@ CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
 DEVSYMS = d_xv65.h d_io2.h d_mio.h
-OBJS = main.o devimpl.o cpu.o asm.o symdefs.o
+OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
 EXE = jbit
 
 #

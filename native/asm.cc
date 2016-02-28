@@ -213,30 +213,6 @@ enum TokenArg {
 	ARG_DEF = ':',
 };
 
-class String {
-private:
-	Buffer *b;
-	int i;
-	friend struct Token;
-public:
-	String() : b(0), i(-1) {}
-	String(Buffer *b_, const char *s) : b(b_) {
-		if (s) {
-			i = b->get_length();
-			b->append_string(s);
-		} else {
-			i = -1;
-		}
-	}
-	String(Buffer *b_, int i_) : b(b_), i(i_) {}
-	const char *get_s() {
-		if (i == - 1)
-			return 0;
-		else
-			return &b->get_data()[i];
-	}
-};
-
 struct Token {
 	TokenType type;
 	TokenArg arg;
@@ -1403,79 +1379,7 @@ public:
 	}
 };
 
-bool Tag::operator==(const Tag &o) const {
-	if (!s)
-		return !o.s;
-	if (!o.s)
-		return false;
-	return !strcmp(s, o.s);
-}
-
-bool Tag::operator==(const char *o) const {
-	if (!s)
-		return !o;
-	if (!o)
-		return false;
-	return !strcmp(s, o);
-}
-
-Buffer::Buffer(int initial_size) {
-	if (initial_size <= 0)
-		initial_size = 1;
-	data = new char[initial_size]; // OK to crash if low memory
-	size = initial_size;
-	length = 0;
-}
-
-char *Buffer::append_raw(int len) {
-	int new_length = length + len;
-	if (new_length > size) {
-		int new_size = size * 2;
-		if (new_size < new_length)
-			new_size = new_length;
-		char *new_data = new char[new_size];
-		memcpy(new_data, data, length);
-		delete[] data;
-		data = new_data;
-		size = new_size;
-	}
-	char *raw = &data[length];
-	length += len;
-	return raw;
-}
-
-void Buffer::append_char(char c) {
-	char *raw = append_raw(1);
-	*raw = c;
-}
-
-void Buffer::append_data(const char *p, int len) {
-	char *raw = append_raw(len);
-	memcpy(raw, p, len);
-}
-
-void Buffer::append_string(const char *s) {
-	int len = strlen(s) + 1;
-	char *raw = append_raw(len);
-	memcpy(raw, s, len);
-}
-
-void Buffer::append_line(const char *line) {
-	int len = strlen(line);
-	char *raw = append_raw(len + 1);
-	memcpy(raw, line, len);
-	raw[len] = '\n';
-}
-
 const ParseError *parse_asm(const Buffer *src, Program *prg) {
 	ParserEngine engine(src, prg);
 	return engine.parse();
 };
-
-static const char *
-#include "../Version.def"
-;
-
-const char *get_jbit_version() {
-	return JBIT_VERSION;
-}
