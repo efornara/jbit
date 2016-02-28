@@ -2038,29 +2038,31 @@ public static final byte CH_CROSS = (byte)0x8F;
 	private static final int GAMESET_LID = 1;
 
 	private void doGameSet() throws Throwable {
-		int id = VAL_TILESET_SILK, cols = 0, rows = 0, tileWidth = 0, tileHeight = 0;
-		int defaultTileWidth = 8, defaultTileHeight = 8;
+		int imageId = VAL_TILESET_SILK, cols = 0, rows = 0, tileWidth = 0, tileHeight = 0;
+		int defaultTileWidth = 8, defaultTileHeight = 8, layerId = GAMESET_LID;
 		if (reqlen > reqcur)
-			id = parseU8();
+			imageId = parseU8();
 		if (reqlen > reqcur) {
 			cols = parseU8();
 			rows = parseU8();
 		}
+		if (reqlen > reqcur)
+			layerId = parseU8();
 		if (reqlen > reqcur) {
 			tileWidth = parseU8();
 			tileHeight = parseU8();
 		}
 		if (reqlen != reqcur)
 			throw new RuntimeException();
-		if (layerObj.length < GAMESET_LID + 1)
-			doLDimImpl(GAMESET_LID + 1);
+		if (layerObj.length < layerId + 1)
+			doLDimImpl(layerId + 1);
 		Image image;
-		if (id == VAL_TILESET_SILK) {
+		if (imageId == VAL_TILESET_SILK) {
 			image = Image.createImage("/silk.png");
 			defaultTileWidth = 16;
 			defaultTileHeight = 16;
 		} else {
-			image = images[id];
+			image = images[imageId];
 		}
 		if (tileWidth == 0)
 			tileWidth = defaultTileWidth;
@@ -2070,22 +2072,22 @@ public static final byte CH_CROSS = (byte)0x8F;
 			cols = getWidth() / tileWidth;
 		if (rows == 0)
 			rows = getHeight() / tileHeight;
-		if (layerObj[GAMESET_LID] != null)
-			layerManager.remove(layerObj[GAMESET_LID]);
+		if (layerObj[layerId] != null)
+			layerManager.remove(layerObj[layerId]);
 		TiledLayer l = new TiledLayer(cols, rows, image, tileWidth, tileHeight);
 		l.setVisible(true);
 		layerManager.setViewWindow(0, 0, l.getWidth(), l.getHeight());
 		layerManagerOX = (getWidth() - l.getWidth()) >> 1;
 		layerManagerOY = (getHeight() - l.getHeight()) >> 1;
-		layerObj[GAMESET_LID] = l;
-		layerCtl[GAMESET_LID] = VAL_LCTL_ENABLE;
-		layerOX[GAMESET_LID] = 0;
-		layerOY[GAMESET_LID] = 0;
-		layerPri[GAMESET_LID] = GAMESET_LID;
-		layerExtra[GAMESET_LID] = 0;
-		layerReorder(GAMESET_LID);
+		layerObj[layerId] = l;
+		layerCtl[layerId] = VAL_LCTL_ENABLE;
+		layerOX[layerId] = 0;
+		layerOY[layerId] = 0;
+		layerPri[layerId] = GAMESET_LID;
+		layerExtra[layerId] = 0;
+		layerReorder(layerId);
 		m[REG_ENABLE] = VAL_ENABLE_BGCOL | VAL_ENABLE_LAYERS;
-		m[REG_LID] = GAMESET_LID;
+		m[REG_LID] = (byte)layerId;
 		putShort(REG_REQDAT + VAL_GAMESET_COLS, cols);
 		putShort(REG_REQDAT + VAL_GAMESET_ROWS, rows);
 	}
