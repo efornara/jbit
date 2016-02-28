@@ -2087,7 +2087,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 		layerCtl[layerId] = VAL_LCTL_ENABLE;
 		layerOX[layerId] = 0;
 		layerOY[layerId] = 0;
-		layerPri[layerId] = GAMESET_LID;
+		layerPri[layerId] = layerId;
 		layerExtra[layerId] = 0;
 		layerReorder(layerId);
 		m[REG_ENABLE] = VAL_ENABLE_BGCOL | VAL_ENABLE_LAYERS;
