@@ -1,6 +1,7 @@
 intro
 tutorial
 qsref
-gameapi
 ioprg1
+ioprg2
+modules
 ioref

@@ -1,623 +1,311 @@
 # IO Programming (1) #
 
-In this book, the color codes of the standard palette are used throughout. As
-a quick reminder, here is a subset of them (see ioref for the complete list):
+In this tutorial I assume that you have read the Beginner's Tutorial, spent a
+bit of time studying the 6502 examples and written some snippets of code
+targeting the MicroIO chip.
 
-	STD PALETTE
-	--+--------
-	 0|BLACK
-	 1|WHITE
-	 2|RED
-	 3|CYAN
-	 4|PURPLE
-	 5|GREEN
-	 6|BLUE
-	 7|YELLOW
+## Tiles
 
-## IO Requests
+The MIDP2 IO chip (called simply IO2 from now on) provides essentially
+the same level of control that professional game programmers have when
+writing 2D action games. This flexibility comes at a price: complexity.
 
-The IO Chip (MIDP1/MIDP2) is able to execute some sort of instructions called
-"requests". For example, this is a request:
+Most of this complexity is usually at the initial stage of the program.
+How many objects are there? What is their shape and color? What about
+the playfield? How big is it? Does it scroll horizontally? Vertically?
+Not at all? All of these questions must be answered, answered of course
+using bytes... You can imagine that it is not going to be easy.
 
-	17 0
+A short sequence of register settings, GAMESET, provides a set of
+answers:
 
-and it means "set the background color to BLACK".
-
-This is another one:
-
-	17 0 0 255
-
-and it means "set the background color to pure blue (i.e. RGB 0,0,255)".
-
-While this one:
-
-	17 0 0
-
-is an invalid request.
-
-The first byte of a request (17 in the examples above) tells you what the
-request is all about ("set the background color", or SETBGCOL in the examples
-above).
-
-Unlike CPU instructions, requests are "sent" to the IO Chip. Also, unlike CPU
-instructions you cannot tell how long is a request by looking at its first
-byte.
-
-Suppose you want to send the request 17 5 to the IO Chip to set the
-background color to GREEN. First you send one byte after the other by writing
-into REQPUT (2:1):
-
-	LDA #17
-	STA 2:1
-	LDA #5
-	STA 2:1
-
-Then you signal the end of the request by writing any value you like into
-REQEND (2:2):
-
-	STA 2:2
-
-Now, suppose you want to send the request 17 20 100 255. Using 2:1 and 2:2,
-that would take 9 (i.e. 4*2 + 1) assembly instructions. There is another way.
-You can store a sequence of bytes like this (note the first two bytes stating
-how long the request is; in this case 4 bytes):
-
-	4 0 17 20 100 255
-
-starting from, for example, 7:50 and then send the request writing the
-address (including the 2-bytes length) into the registers REQPTRHI (2:5) and
-REQPTRLO (2:4):
-
-	LDA #7
-	STA 2:5
-	LDA #50
-	STA 2:4
-
-The order is important! The sending starts when you write into 2:4. When
-sending multiple requests, you don't need to rewrite into 2:5 if it doesn't
-change.
-
-This way of sending a request by telling the IO chip where it starts in
-memory is called DMA (for Direct Memory Access).
-
-## Enable
-
-When you write into FRMDRAW (2:18), the CPU is blocked until the next frame
-is due and the following elements are drawn:
-
-1) A rectangle covering the whole frame using the color set by the request
-SETBGCOL (default: WHITE)
-
-2) The image configured by the request SETBGIMG (default: no image)
-
-3) The matrix of characters set by CONVIDEO, CONCCHR, CONCFG, etc..., a.k.a.
-the Console
-
-4) Sprites and Tiled Layers configured by the requests LSPRITE/LTILED, a.k.a.
-the Layers
-
-You can configure which of the steps above are actually carried out by adding
-together a combination of the following:
-
-	ENABLE
-	-+-------
-	1|BGCOL
-	2|BGIMG
-	4|CONSOLE
-	8|LAYERS
-
-and writing the result into ENABLE (2:16).
-
-For example, by default, the value stored in 2:16 is 5. 5 is 1+4. So, by
-default, the background and the console are drawn.
-
-As a last example, this program:
-
-	LDA #17
-	STA 2:1
-	LDA #5
+	LDA #60
 	STA 2:1
 	STA 2:2
 
-results in a green screen with a white rectangle in the middle (i.e. the
-console), while this program:
+The answers that GAMESET provides are designed to setup a playfield that
+will feel like the MicroIO display from the inside, but that will look
+prettier from the outside. Instead of displaying letters, symbols and
+numbers, you can display painted tiles chosen from a set of 56 tiles:
 
-	LDA #1
-	STA 2:16
-	LDA #17
-	STA 2:1
-	LDA #5
+	+---------+
+	|         |
+	|   56    |
+	|  tiles  |
+	| omitted |
+	|         |
+	+---------+
+
+Thanks to:
+
+	http://www.famfamfam.com/lab/icons/silk/
+
+Here is the description of the first 8 tiles:
+
+	 1 shape_square
+	 2 lightbulb_off
+	 3 lightbulb
+	 4 lock_open
+	 5 lock
+	 6 emoticon_unhappy
+	 7 emoticon_smile
+	 8 door
+
+So, is it just a matter of writing 3 into 2:42 to make a bulb appear?
+Unfortunately not. A direct link of cells to tiles is fine for a small
+grid, but with IO2 you can define grids of thousands of tiles. Nothing
+prevents you from defining a grid of, say, 500x500 tiles (i.e. 25000
+tiles) and show only a portion of them.
+
+Having said that, GAMESET actually configures as many tiles as possible
+to fit on the display of your phone. For example, on a phone with a
+resolution of 176x220 pixels, 11 columns of 13 rows of tiles are
+available (each tile as configured by GAMESET is 16x16 pixels big).
+
+So, how can you access a potentially large number of tiles with the IO chip?
+One at a time. The IO chip has the notion of the Current Tile. You can use
+the following cells:
+
+	Reg    Content
+	----   -----------------------------------
+	2:87   Column of the Current Tile
+	       (initially 0, the leftmost column).
+	2:89   Row of the Current Tile
+	       (initially 0, the topmost row).
+	2:91   The tile itself
+	       (initially all 0, empty cells).
+
+After all this theory, let's do some practice. Create a new program and,
+starting from 3:0, type (GAMESET):
+
+	LDA #60
 	STA 2:1
 	STA 2:2
 
-results in just a green screen, because the console has been disabled.
+Then (from 3:8):
 
-## Creating images
+	LDA #2
+	STA 2:87
+	LDX #3
+	STX 2:91
+	INC 2:89
+	STX 2:91
+	INC 2:89
+	STA 2:91
 
-The main request to create an image (IPNGGEN) is fairly complex and is
-usually generated by the Paint module. However, studying how that request is
-composed can help you to demystify the whole concept of images. Here is a 20
-bytes request to create a small image.
+## Animation (1)
 
-	(20 0)
-	25 1 8 0 8 0 1
-	3 3 1 2 7
-	126 255 219 255
-	195 231 255 126
+Animation is essentially about timing and loops.
 
-I prefixed the request with a 2-bytes length (20 0) because it is common to
-send images to the IO chip using DMA.
+Programs so far have been "linear", i.e. after a few instructions, the
+program would reach a BRK and terminate. To be able to write animations, we
+need to be able to repeat a sequence of instructions over and over again. The
+easiest way to do it is to use JMP, for JuMP. It allows us to change the PC
+of the CPU, thus changing the address of the next instruction to execute.
 
-First there is IPNGGEN (25), followed by the ImageId (1). The ImageId is
-discussed later. As long as you are consistent within your program, 1 is
-usually fine.
+With this knowledge, you might think of writing the following program
+(starting from 3:8, I assume that you have typed the GAMESET sequence
+already):
 
-Then there are 4 bytes for the width (8 0) and the height (8 0) of the image,
-followed by the Depth (1) of the image. For Depth you can choose one of the
-following:
+	INC 2:91
+	DEC 2:91
+	JMP 3:8
 
-	D|Col
-	-+---
-	1|  2
-	2|  4
-	4| 16
-	8|256
+Unfortunatelly, this program does not work. Well, it might work, but it is so
+unpredictable and inefficient that you really do not want to run it.
 
-So, a Depth of 1 means 2 colors.
+It is unpredictable, because JBit tries to run the program as fast as it can,
+and the actual speed varies a lot from phone to phone. My tests and the
+feedback that I have received suggest that JBit is able to simulate from
+around 10,000 instructions per second on slow phones to around 500.000
+instructions per second on fast ones.
 
-The next byte (ColorType) is usually 3, meaning that a color palette is
-included in the image. The next byte (Flags) is a combination of the
-following:
+It is inefficient, because it would try to change the tile too often. Even on
+a slow phone, the tile would change thousands of times per second.
 
-	FLAGS
-	-+----------
-	1|IDX0TRANSP
-	2|PALREF
-	4|ZOOM0
-	8|ZOOM1
+Actually, all this work would be wasted, because IO2 would not even
+bother to keep up. IO2 would update the tile eventually, but you have
+no idea how often. It might even be the case that IO2 would use the
+same value more than once. What you would see is effectively a sampling of a
+very fast variable. The odds are not even 50%, as the value 0 is more likely.
 
-On the example above, Flags is 3, meaning that the first color of the image
-is unused / transparent (IDX0TRANSP) and colors are described by the color
-codes of the current palette (PALREF). ZOOM0 and ZOOM1 are discussed later.
+There is a better way. When you are finished arranging the tiles, you can
+tell IO2 that now is the time to update the display. You do so by
+writing any value into 2:18. This has the nice side effect that JBit will
+suspend its CPU for a while and tell your phone that JBit is idle. Some
+phones might not care, but some might be able to switch their CPU into
+low-power mode in turn, draining less power from the battery.
 
-Now the description of how the image looks like begins.
+So, this is a predictable and efficient version of the program above:
 
-First there is the palette of the image:
+	INC 2:91
+	STA 2:18
+	DEC 2:91
+	STA 2:18
+	JMP 3:8
 
-	1 2 7
+## Animation (2)
 
-The first byte (1) is the number of entries minus 1. So, the first 1 means
-that the palette has 2 entries (same as the number of colors; but it could be
-lower). The next 2 bytes are the color codes.
+Usually, we don't want to repeat a sequence of instructions forever, but just
+for a little while. We can do this by using BNE, for Branch if Not Equal.
+Branch instructions change the PC only if a specific condition is met. In the
+case of BNE, Not Equal is a bit misleading, as the condition really is Not
+Zero and it refers to the result of the instruction before the branch.
 
-So, the first entry is RED and the second entry is YELLOW. However, since
-IDX0TRANSP above, RED pixels appear transparent.
+For example, the following sequence:
 
-If Flags did no contain PALREF, each entry would take 3 bytes instead of 1,
-for the red, green and blue components of the color.
-
-Finally, there is group of bytes (Data) describing each pixel of the image.
-
-	126 255 219 255
-	195 231 255 126
-
-Here is where these 8 bytes come from. If you draw a picture using X for
-YELLOW and . for RED:
-
-	.XXXXXX.
-	XXXXXXXX
-	XX.XX.XX
-	XXXXXXXX
-	XX....XX
-	XXX..XXX
-	XXXXXXXX
-	.XXXXXX.
-
-And then turn them into 0s and 1s:
-
-	01111110
-	11111111
-	11011011
-	11111111
-	11000011
-	11100111
-	11111111
-	01111110
-
-You can use the following table:
-
-	LO|  % |$| HI
-	--+----+-+---
-	 0|0000|0|  0
-	 1|0001|1| 16
-	 2|0010|2| 32
-	 3|0011|3| 48
-	 4|0100|4| 64
-	 5|0101|5| 80
-	 6|0110|6| 96
-	 7|0111|7|112
-	 8|1000|8|128
-	 9|1001|9|144
-	10|1010|A|160
-	11|1011|B|176
-	12|1100|C|192
-	13|1101|D|208
-	14|1110|E|224
-	15|1111|F|240
-
-Here is how it works:
-
-1) Take the first row of the image (01111110)
-
-2) Split it in two halves (also called "nibbles"): 0111 and 1110.
-
-3) Find the first half (0111) in the table, and note the number on the right
-(112).
-
-4) Find the second half (1110) in the table, and note the number on the left
-(14).
-
-5) Add the two numbers together: 112 + 14 = 126.
-
-If you check, you will see that 126 is the first of the 8 Data bytes. Use the
-second row for the second byte, and so on.
-
-## Showing images
-
-Once you create an image, to show it you can send a SETBGIMG (19) request.
-Remember to use ENABLE (2:16) to disable the console and enable the
-background image.
-
-First create a program of 2 pages (1 page of code and 1 page of data).
-
-At 4:0, create a IPNGGEN request (see above for the explanation):
-
-	20 0
-	25 1 8 0 8 0 1
-	3 3 1 2 7
-	126 255 219 255
-	195 231 255 126
-
-At 4:22, create a SETBGIMG request:
-
-	2 0 19 1
-
-The byte following 19 is the ImageId. As stated above, use 1 and you will be
-fine.
-
-Now for the code (starting from 3:0).
-
-First, use ENABLE to enable the background image and to disable the console:
-
+	...
 	LDA #3
-	STA 2:16
+	BNE 3:20
+	...
 
-All the requests are on page 4, so setup the DMA to use page 4:
+Will continue to 3:20, while the following:
 
-	LDA #4
-	STA 2:5
-
-Now create the image (send the IPNGGEN request):
-
+	...
 	LDA #0
-	STA 2:4
+	BNE 3:20
+	...
 
-And show it (send the SETBGIMG request):
+Will continue to the next instruction after BNE.
 
-	LDA #22
-	STA 2:4
+There is a slight complication here. If you try to type in BNE, you will
+notice that the format is BNE r, not BNE n:n as you might expect.
 
-If you try the program, you should see a yellow image centered on the screen.
-Keep this program; it will be modified below to explore other aspects of the
-IO chip.
+The reason is that branches usually point to an instruction nearby and two
+bytes would often be wasted. The single byte operand is used as the number of
+bytes to skip forward (if between 0 and 127) or backward (if between 128 and
+255, where 255 means 1, 254 means 2, etc...). Fortunately, there is no need
+for you to count them.
 
-## References and slots
+We will use the following code as an example:
 
-Images (and layers, to be discussed later) are "objects" managed by the IO
-chip.
+	LDX #30
+	STA 2:18    [1]
+	DEX
+	BNE <<1>>
 
-You can keep references to images using slots. By default, there are 4
-(image) slots (from 0 to 3) available.
+We want the BNE instruction to point to STA 2:18, thus writing into 2:18
+thirty times and causing the VM to run for about 3 seconds (plus the time
+spent for initialization).
 
-When you create an image, ImageId is the slot you use. The slot will hold a
-reference to the image. If the slot already referenced another image, that
-reference is removed.
+Type in the code starting from 3:0, leaving the operand of BNE to 0.
+Then switch to NAV ASM mode. The listing should look like this:
 
-The example above used ImageId 1 and looked liked this:
-
-	IPNGGEN 1 (image A)
-	SETBGIMG 1
-
-After these requests, the IO chip looks like this:
-
-	ID Slots     Images       Users
-	   +---+
-	 0 | . |
-	   +---+      +-+
-	 1 | -------> |A| <------ BGIMG
-	   +---+      +-+
-	 2 | . |
-	   +---+
-	 3 | . |
-	   +---+
-
-The request IDESTROY (20) removes a reference from a slot to an image. It is
-followed by the ImageId of the slot.
-
-Note that in the example above you could send a IDESTROY with ImageId 1 and
-the image would not be destroyed (BGIMG "keeps it alive"). A better name for
-IDESTROY might have been something like IUNLINK.
-
-Here is a more complex example. After the following requests:
-
-	IPNGGEN 3 (image A)
-	IDESTROY 3
-	IPNGGEN 0 (image B)
-	SETBGIMG 0
-	IPNGGEN 0 (image C)
-
-The IO chip looks like this:
-
-	ID Slots     Images       Users
-	   +---+    +-+
-	 0 | -----> |C|
-	   +---+    +-+
-	 1 | . |          +-+
-	   +---+          |B| <-- BGIMG
-	 2 | . |     +-+  +-+
-	   +---+     |A|
-	 3 | . |     +-+
-	   +---+
-
-Image A is not used by anyone and the IO chip might destroy it if it needs
-more memory (a process called "garbage collection"). Image B is used by the
-IO chip (even if you have disabled the drawing of the background image with
-ENABLE). Image C is kept alive by the programmer, who is holding a reference
-to it in slot 0.
-
-You can increase (or decrease) the number of image slots by sending a IDIM
-(21) request, but this is usually not necessary.
-
-## Layers (Sprites)
-
-Layers are objects that you can easily move around the display. The name
-comes from the fact that when they overlap is as if they were stacked on top
-of each other.
-
-You manage layers using slots. It is just like images, but it is a different
-set of slots. By default, there are 16 (layer) slots (from 0 to 15)
-available. If you need to increase the number of layers you can use the
-request LDIM (35). It is followed by the last layer id (i.e. 31 if you need
-32 layers).
-
-There are two kind of layers: sprites and tiled layers. Sprites are described
-first, as they are a bit easier to use. To create a sprite, you can use the
-LSPRITE (37) request. It is followed by the LayerId and by the ImageId. If
-you only use one sprite, you should use slot 0 for LayerId. How to handle
-multiple sprites is discussed later.
-
-Starting from the program from the "Creating images" section above, you can
-replace the SETBGCOL request with a LSPRITE request. So, starting from 4:22,
-you will have:
-
-	3 0 37 0 1
-
-The value written into ENABLE should also be changed. You want to enable the
-drawing of the layers instead of the background image. So, starting from 3:0,
-you will have:
-
-	LDA #9
-	STA 2:16
-
-If you try the program now, nothing happens. This is because layers are
-created hidden. To show them, you have to write 128 into LCTL (2:81). So, at
-the end of the program (it should be at 3:20), add:
-
-	LDA #128
-	STA 2:81
-
-If you try the program now, you should see the sprite. Unlike the background
-image, the sprite is positioned at the top left corner of the display. But
-unlike background images, you can move sprites! Use LX (2:82) and LY (2:83).
-You can of course do so in a loop. For example, at the end of the program (it
-should be at 3:25), add:
-
-	LDA #50
-	STA 2:83
-	INC 2:82
+	LDX #30
 	STA 2:18
-	JMP 3:30
+	DEX
+	BNE !!!!
 
-As you can see, after the position of the sprite has been updated, the
-program writes to FRMDRAW (2:18).
+The BNE is pointless as it is (no matter the result of DEX, no branching
+takes place) and !!!! is a reminder that you probably meant to change it
+later on.
 
-## Multiple Sprites
+Here are the steps:
 
-To create more than one sprite, just send more LSPRITE requests. Make sure to
-give each sprite a different LayerId. You can use the same image several
-times or give each sprite a separate image.
+1. Make sure that the cursor is on BNE !!!!
 
-You can only control one layer (remember that sprites are just a type of
-layer) at a time. To tell the IO chip which one you want to control, write
-its LayerId into LID (2:80). The layer registers (i.e.: LCTL, LX, LY, etc...)
-will then refer to that particular layer. Initially, LID is set to 0; this is
-the reason why you don't need to worry about it if you only have one layer
-and its LayerId is 0.
+2. Press 7. This sets an invisible marker on this address (3:6).
 
-Here is how to modify the previous example to handle multiple sprites.
+3. Move the cursor to STA 2:18 (i.e., 3:2)
 
-Leave the data page as it is. You should have a IPNGGEN request at 4:0 and a
-LSPRITE request at 4:22.
+4. Press 0. This swaps the cursor and the marker. The cursor is now on the
+BNE !!!! instruction and the invisible marker is now on the STA instruction.
 
-The beginning of the code is left unchanged:
+Select PutMark from the menu.
 
-	LDA #9
-	STA 2:16
-	LDA #4
-	STA 2:5
+The listing should now look like this:
 
-Then (starting at 3:10), the following loop creates 3 sprites:
-
-	LDX #0
-	LDA #0
-	STA 2:4
-	STX 4:25
-	LDA #22
-	STA 2:4
-	STX 2:80
-	LDA #128
-	STA 2:81
-	DEC 4:13
-	INX
-	CPX #3
-	BNE 3:12
-
-Note how the requests are changed before they are sent to the IO chip: at
-each iteration, the color code of the image to be created (4:13) is
-decremented, and the LayerId (4:25) of the sprite to be created is
-incremented. Also note that LID (2:80) is updated with the LayerId of the
-newly created sprite, before enabling it by writing 128 into LCTL (2:81).
-
-After the code above, the IO chip looks like this:
-
-	 IMAGES                    LAYERS
-	ID Slots     Images       Slots ID
-	   +---+          +-+     +---+
-	 0 | . |          |Y| <------ |  0
-	   +---+    +-+   +-+     +---+
-	 1 | ----+  |B| <------------ |  1
-	   +---+ |  +-+   +-+     +---+
-	 2 | . | +------> |G| <-------|  2
-	   +---+          +-+     +---+
-	 3 | . |                    .
-	   +---+                    .
-	                          +---+
-	                          | . | 15
-	                          +---+
-
-If you try the program now, you will see only one sprite. The other two
-sprites are really there; they are simply below the one you see.
-
-Add this loop at the end of the program (it should be at 3:41), to move them:
-
-	LDA #0
-	STA 2:80
-	INC 2:82
-	INC 2:80
-	INC 2:83
-	INC 2:80
-	INC 2:82
-	INC 2:83
+	LDX #30
 	STA 2:18
-	JMP 3:41
+	DEX
+	BNE 3:2
 
-Note how at each frame LID (2:80) is first reset to select sprite 0 and then
-it is incremented twice to select the other two sprites. For each sprite, LX
-(2:82) and LY (2:83) are changed differently.
+With the cursor still on the BNE instruction, press 9. This moves the cursor
+to the address pointed by the operand and can be handy to check if the
+operands are correct.
 
-If you run the program now, the three sprites should move in a loop.
+If you run the program, it should last for a bit more than 3 seconds and then
+terminate.
 
-## More on images
+As an exercise, type in the GAMESET sequence, followed by:
 
-When converting an image to bytes, turning X/.s into 1/0s was a trivial, but
-important step. X/.s are pixels. 1/0s are bits. The distinction will become
-relevant shortly, when multicolor images are discussed, but first, let's see
-how images of sizes other than 8x8 are converted.
+	LDY #10
+	LDX #8      [1]
+	LDA #2
+	STA 2:91
+	STA 2:18    [2]
+	DEX
+	BNE <<2>>
+	LDX #2
+	LDA #3
+	STA 2:91
+	STA 2:18    [3]
+	DEX
+	BNE <<3>>
+	DEY
+	BNE <<1>>
 
-If the image is shorter or taller, it is not really a problem: a 8x2 image
-would just have 2 rows and a 8x100 image would just have 100 rows.
+## Key presses (OBSOLETE)
 
-If the image is narrower, you fill each row until you reach 8 bits. For
-example, the following 3x3 image:
+When you are confident in writing animations, you can start making programs
+that react to the user (i.e. interactive programs).
 
-	010
-	111
-	010
+Empty includes a handy subroutine. It takes care of updating the display and
+saving in the Accumulator the code of the key that the user has pressed.
 
-should be treated like this:
+What is a subroutine? It is a piece of code that can be used again and again.
+You don't even have to understand how the piece of code works to be able to
+use. You "call" the subroutine (using JSR), and, when the subroutine has
+finished to do its job, the control returns to your code.
 
-	01000000
-	11100000
-	01000000
+You can call the subroutine above with:
 
-Note that the width to use in the IPNGGEN request is still 3.
+	JSR 3:3
 
-If the image is wider, you need more bytes for each row; just group the bits
-in groups of 8 when you convert them. You still need to fill each row until
-you reach a multiple of 8 bits. For example, the following 10x3 image:
+You can then check if a key has been pressed (BNE) or not (BEQ). For example,
+to wait for the user to press two keys, you could write something like this:
 
-	1111111111
-	1000000001
-	1111111111
+	JSR 3:3     [1]
+	BEQ <<1>>
+	JSR 3:3     [2]
+	BEQ <<2>>
 
-should be treated like this:
+If the user has pressed a key, you can inspect the Accumulator to find out
+which key it was. The key codes are the same as the ones you use to write
+into 2:40 - 2:79. As a reminder, on a standard keypads they are:
 
-	11111111 11000000
-	10000000 01000000
-	11111111 11000000
+	key|value
+	---+-----
+	 # | 35
+	 * | 42
+	 0 | 48
+	 1 | 49
+	 . . ..
+	 . . ..
+	 9 | 57
 
-Every byte of each row is sent starting from the first on the left, to the
-last on the right. To clarify, the Data of last image is 6 bytes long, and
-the order of the bytes is the following:
+On a QWERTY, you might receive other codes too (e.g. 65 or 97 if the user
+presses the 'A' key).
 
-	1 2
-	3 4
-	5 6
+Here is a more complex example. Press '1' or '3' to change a tile on the
+screen, and '*' to terminate the program.
 
-If the image has more than 2 colors, Depth means how many bits each pixel
-takes. Here is an example with Depth 2:
+	JSR 3:3     [1]
+	BEQ <<1>>
+	CMP #49
+	BNE <<2>>
+	DEC 2:91
+	JMP <<1>>
+	CMP #51     [2]
+	BNE <<3>>
+	INC 2:91
+	JMP <<1>>
+	CMP #42     [3]
+	BNE <<1>>
 
-	#| %|Color
-	-+--+------
-	0|00|WHITE
-	1|01|RED
-	2|10|YELLOW
-	3|11|GREEN
-
-The following image:
-
-	RR..GG
-	..YY..
-
-can be turned into the following bits:
-
-	01 01 00 00 11 11
-	00 00 10 10 00 00
-
-The bits can then be regrouped and each row can be extended to reach the
-first multiple of 8:
-
-	01010000 11110000
-	00001010 00000000
-
-Here is the resulting request:
-
-	(18 0)
-	25 1 6 0 2 0 2
-	3 3 3 1 2 7 5
-	80 240 10 0
-
-If Depth is 4, the order of the bit patterns matching the image palette can
-be found on the table you used to convert bits to bytes.
-
-When you start using lots of images, available data pages can run out
-quickly. This is especially a problem with phones with a high resolution
-display. The IPNGGEN request for a 16 colors, 16x16 image takes up more than
-half a page... and 16x16 might be quite small on a tiny 320x240 display!
-
-You can add one of the following values (ZOOM0/ZOOM1) to Flags:
-
-	ZOOM
-	--+--
-	 0|x1
-	 4|x2
-	 8|x3
-	12|x4
-
-If, for example, you create a 8x8 image with a zoom factor of x3 (+8), the
-actual image is going to be a 24x24 image. Note that, while this helps you to
-keep your program small, inside the IO chip the image still consumes as much
-memory as a regular 24x24 image. On the other hand, phones with high
-resolution displays usually have lots of memory, so this might be an
-acceptable trade off.
+If you have problem understanding it at first, you can set a break point on
+the instruction CMP #49 (i.e. from within the editor, go to 4:5 and select
+SetBrkPt before running the program). Once you press a key, the program is
+stopped and you can start pressing '1' to see what happens. If you are lost,
+you can press '*' to resume the program and try again with another key.
 

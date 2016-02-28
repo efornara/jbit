@@ -87,15 +87,10 @@ terse quick start, followed by some support tables. It should contain
 everything you need to know to get you started writing simple, small programs
 with JBit.
 
-### gameapi
+### ioprg*
 
-This is the beginning of a tutorial on the template demo and the GameKit
-Empty demo.
-
-### ioprg1
-
-The first part of a guide on how to program the IO chip. There is an
-introduction to IO requests, a fairly complete treatment of images and an
+A guide on how to program the IO chip. There is an introduction to the
+GAMESET, IO requests, a fairly complete treatment of images and an
 introduction to sprites.
 
 ### modules
