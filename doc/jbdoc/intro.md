@@ -98,6 +98,10 @@ The first part of a guide on how to program the IO chip. There is an
 introduction to IO requests, a fairly complete treatment of images and an
 introduction to sprites.
 
+### modules
+
+At the moment, just a short description of the Paint module.
+
 ### ioref
 
 A short description of the registers and requests of the IO chip. It is terse

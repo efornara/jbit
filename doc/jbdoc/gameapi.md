@@ -106,33 +106,9 @@ single item in it:
 	21:0 (64x96).
 
 This means that the program includes a single image of 64x96 pixels at
-location 21:0. Select the item.
-
-You can move the red square and then press fire to change the pixels of the
-image one by one. Tiles in the "template" demo are 8x8 pixels big and the
-tile number one is located at the top left corner. On some old phones, moving
-the cursor can be really slow. If this is the case, selecting the
-"(No)Coords" item from the menu should help.
-
-When you have changed the tile number one to your liking, you can test the
-result by pressing *.
-
-Here is a short, partial and terse description of the Paint module. There are
-two major modes: image and palette. You can switch between the two by
-pressing 0.
-
-There are two sub modes for the image mode: pixel and tile. Tile mode is only
-available if the the dimensions of the image are multiple of 8. You can
-switch between the two by pressing #.
-
-Image/pixel mode: 2, 4, 6, 8: move the cursor, 5: change the current pixel,
-1: cycle foreground color, 3: cycle background color, 7: pick foreground
-color, 9: pick background color.
-
-Image/tile mode: 2, 4, 6, 8: move the cursor, 1: cycle foreground color, 3:
-cycle background color, 7: copy tile, 5: paste/clear tile. Be careful when
-you use tile mode, as no undo is available and it is easy to clear entire
-tiles.
+location 21:0. Select the item and edit it.
+Tiles in the "template" demo are 8x8 pixels big and the
+tile number one is located at the top left corner.
 
 To practice painting, an idea could be to paint the first row of tiles using
 the descriptions above (e.g. 2 lightbulb_off) as a source of ispiration. When
