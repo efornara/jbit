@@ -512,7 +512,7 @@ and make it visible and current.
 The tiled layer is used to center the view.
 
 Syntax: GAMESET(60) [(ImageId | TileSet=SILK) [Cols=0 Rows=0 [LayerId=1
-[TWidth=0 THeight=0]]]] ; TileSet(C): SILK(255) ; Result: Cols:U16 Rows:U16
+[TWidth=0 THeight=0]]]] ; TileSet(C): SILK(255), FONT(254) ; Result: Cols:U16 Rows:U16
 
 ## Effects
 

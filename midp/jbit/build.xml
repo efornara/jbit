@@ -25,7 +25,7 @@
 	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,gameset.jb,effects.jb"/>
 	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
 	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>
-	<property name="extra_res" value="cga.rom,silk.png"/>
+	<property name="extra_res" value="cga.rom,silk.png,font.png"/>
 	
 	<target name="build">
 		
