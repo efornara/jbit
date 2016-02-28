@@ -79,6 +79,14 @@ OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 jbit.exe: $(OBJS)
 	wcl386 -l=dos4g -fe=jbit $(OBJS)
 endif
+ifeq ($(ARCH),dos16)
+# broken target: large segments, 16-bit ints, stack overflow, etc...
+CXX = wcl
+CXXFLAGS = -bt=dos -ml -os
+OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
+jbit.exe: $(OBJS)
+	wcl -l=dos -fe=jbit $(OBJS)
+endif
 endif
 
 ifeq ($(PLATFORM),local)
