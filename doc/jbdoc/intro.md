@@ -28,6 +28,10 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.0.3
+
+The new GAMESET request replaces the old gameapi / JBitGameKit.
+
 ### JBit 2.0.2
 
 Basic TTY support in xv65. MicroIO ported to MS-DOS.
