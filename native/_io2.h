@@ -182,6 +182,7 @@
 #define GAMESET_ROWS 0x02
 #define TILESET_SILK 0xFF
 #define TILESET_FONT 0xFE
+#define TILESET_MICRO 0xFD
 #define ALINE_TOP 0x01
 #define ALINE_LEFT 0x02
 #define ALINE_RIGHT 0x04

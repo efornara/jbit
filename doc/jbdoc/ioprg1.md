@@ -40,7 +40,7 @@ Thanks to:
 
 	http://www.famfamfam.com/lab/icons/silk/
 
-Here is the description of the first 8 tiles:
+Here is the description of the first 7 tiles:
 
 	 1 shape_square
 	 2 lightbulb_off
@@ -49,7 +49,6 @@ Here is the description of the first 8 tiles:
 	 5 lock
 	 6 emoticon_unhappy
 	 7 emoticon_smile
-	 8 door
 
 So, is it just a matter of writing 3 into 2:42 to make a bulb appear?
 Unfortunately not. A direct link of cells to tiles is fine for a small

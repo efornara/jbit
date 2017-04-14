@@ -247,6 +247,7 @@ public static final byte VAL_GAMESET_COLS = (byte)0x00;
 public static final byte VAL_GAMESET_ROWS = (byte)0x02;
 public static final byte VAL_TILESET_SILK = (byte)0xFF;
 public static final byte VAL_TILESET_FONT = (byte)0xFE;
+public static final byte VAL_TILESET_MICRO = (byte)0xFD;
 public static final byte ALINE_TOP = (byte)0x01;
 public static final byte ALINE_LEFT = (byte)0x02;
 public static final byte ALINE_RIGHT = (byte)0x04;
@@ -430,6 +431,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "VAL_" + "GAMESET_ROWS", "02" },
 //@{ "VAL_" + "TILESET_SILK", "FF" },
 //@{ "VAL_" + "TILESET_FONT", "FE" },
+//@{ "VAL_" + "TILESET_MICRO", "FD" },
 //@	};
 //@	
 //@	String labelToString(String prefix, int value) {
@@ -2065,6 +2067,8 @@ public static final byte CH_CROSS = (byte)0x8F;
 			defaultTileHeight = 16;
 		} else if (imageId == VAL_TILESET_FONT) {
 			image = Image.createImage("/font.png");
+		} else if (imageId == VAL_TILESET_MICRO) {
+			image = Image.createImage("/micro.png");
 		} else {
 			image = images[imageId];
 		}

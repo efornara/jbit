@@ -25,7 +25,7 @@
 	<property name="demos_IO2" value="irawrgba.jb,gamekeys.jb,sprites.jb,tiles.jb,vintage.jb,maze.jb,gameset.jb,effects.jb"/>
 	<property name="demos1" value="${demos_6502},${demos_IO1},demos.txt"/>
 	<property name="demos2" value="${demos_6502},${demos_IO1},${demos_IO2},demos.txt"/>
-	<property name="extra_res" value="cga.rom,silk.png,font.png"/>
+	<property name="extra_res" value="cga.rom,silk.png,font.png,micro.png"/>
 	
 	<target name="build">
 		
@@ -202,7 +202,7 @@
 			<param name="midp2" value="yes"/>
 			<param name="skipdemos" value="yes"/>
 			<param name="preproc.symbols" value="IO_DISABLE_DUMMY=1"/>
-			<param name="res.includes" value="about.txt"/>
+			<param name="res.includes" value="micro.png,about.txt"/>
 		</antcall>
 	</target>
 
