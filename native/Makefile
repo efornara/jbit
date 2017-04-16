@@ -126,7 +126,7 @@ touch:
 	touch jbit.1 BSD.mk *.h
 
 clean:
-	rm -f jbit jbit.exe *.o *.bin
+	rm -f jbit jbit*.exe *.bin *.dll *.so *.o
 
 distclean: clean
 	rm -f jbit.1

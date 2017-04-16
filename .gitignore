@@ -6,9 +6,11 @@
 *.swp
 *.map
 *.exe
+*.dll
 *.zip
 *.tar.gz
 *.bin
+*.so
 *.log
 *.aux
 *.pdf
