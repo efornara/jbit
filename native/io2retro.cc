@@ -97,10 +97,52 @@ static void fetch_input() {
 	}
 }
 
+#include "rom.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_STDIO
+#define STBI_ONLY_PNG
+#include "stb_image.h"
+
+static uint8_t *rom;
+static const int font_width = 8;
+static const int font_height = 14;
+
+static const uint32_t bg_color = 0x00aaff88;
+static const uint32_t fg_color = 0x00000000;
+
+static void font_init() {
+	RomEntry *e = &rom_entries[0];
+	const int n = e->original_size;
+	rom = new uint8_t[n];
+	const int decoded_n = stbi_zlib_decode_buffer((char *)rom, n,
+	  (const char *)e->data, e->compressed_size);
+	assert(n == decoded_n);
+}
+
+static void font_draw(int x, int y, uint8_t c) {
+	const uint8_t *r = &rom[c * font_height];
+	uint32_t *b = &buffer[y * width + x];
+	for (int y = 0; y < font_height; y++) {
+		int mask = 0x80;
+		for (int x = 0; x < font_width; x++) {
+			uint32_t color;
+			if (*r & mask)
+				color = fg_color;
+			else
+				color = bg_color;
+			*b++ = color;
+			mask >>= 1;
+		}
+		b += (width - font_width);
+		r++;
+	}
+}
+
 static void dispatch_keypress() {
 	for (int i = 0; keypad[i].label; i++)
 		if (keypad[i].current && !keypad[i].last)
-			buffer[width * (height - 2) + i] ^= 0x000000ff;
+			font_draw(10, 10, keypad[i].label);
 }
 
 static void commit_input() {
@@ -109,10 +151,14 @@ static void commit_input() {
 }
 
 static void render() {
-	static int bi = 0;
-	buffer[bi] ^= 0x00ffffff;
-	if (++bi == width * 32)
-		bi = 0;
+	static int n = 0;
+	static uint8_t c = ' ';
+	if (++n == 10) {
+		font_draw(10, 30, c++);
+		if (c > 'z')
+			c = ' ';
+		n = 0;
+	}
 	for (int i = 0; keypad[i].label; i++) {
 		uint32_t color;
 		if (keypad[i].current & KEYPAD_MASK_KEYBOARD)
@@ -155,10 +201,12 @@ extern "C"
 void retro_init() {
 	buffer = new uint32_t[width * height];
 	memset(buffer, 0, width * height * sizeof(uint32_t));
+	font_init();
 }
 
 extern "C"
 void retro_deinit() {
+	delete[] rom;
 	delete[] buffer;
 	buffer = 0;
 }
