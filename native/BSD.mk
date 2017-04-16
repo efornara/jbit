@@ -8,8 +8,6 @@ CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
 DEVSYMS = d_xv65.h d_io2.h d_mio.h
-OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
-EXE = jbit
 
 #
 # BSD DEFAULTS AND LOCAL PLATFORM OVERRIDE (tested on NetBSD 1.6.2)
@@ -32,10 +30,10 @@ OBJS += stdout.o xv65.o
 # RULES
 #
 
-all: $(EXE) jbit.1 BSD.mk
+all: $(OUT) jbit.1 BSD.mk
 
-$(EXE): $(DEVSYMS) $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(EXE) $(OBJS) $(LIBS)
+$(OUT): $(DEVSYMS) $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
 jbit.1: jbit.ron
 	ronn <jbit.ron >jbit.1
@@ -61,7 +59,7 @@ touch:
 	touch jbit.1 BSD.mk *.h
 
 clean:
-	rm -f jbit jbit.exe *.o *.bin
+	rm -f jbit jbit*.exe *.bin *.dll *.so *.o
 
 distclean: clean
 	rm -f jbit.1

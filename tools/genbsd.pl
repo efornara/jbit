@@ -27,7 +27,7 @@ END
 $out = 1;
 while (<>) {
 	chop;
-	if (/^# PLATFORM SELECTION$/) { $out = 0; print $BSD; }
+	if (/^# TARGET \/ PLATFORM DEFAULT$/) { $out = 0; print $BSD; }
 	elsif (/^# RULES$/) { $out = 1; }
 	if ($out) { print "$_\n"; }
 }

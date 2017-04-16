@@ -23,6 +23,7 @@ midp/
 
 win32/
   jbit.exe - The native version of JBit for Windows.
+  jbitio2.exe - The native version of JBit IO2 for Windows (WIP).
 
 linux/
   jbit*.bin - The native versions of JBit for Linux/Android.
