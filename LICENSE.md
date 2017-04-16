@@ -1,7 +1,7 @@
 ## Code (J2ME)
 
     JBit / JBDoc
-    Copyright (C) 2007-2016  Emanuele Fornara
+    Copyright (C) 2007-2017  Emanuele Fornara
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 
 ## Code (Native)
 
-    Copyright (C) 2012-2016  Emanuele Fornara
+    Copyright (C) 2012-2017  Emanuele Fornara
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

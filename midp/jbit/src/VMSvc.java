@@ -1,6 +1,6 @@
 /*
 	JBit - A 6502 framework for mobile phones
-	Copyright (C) 2007-2016  Emanuele Fornara
+	Copyright (C) 2007-2017  Emanuele Fornara
 	
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public

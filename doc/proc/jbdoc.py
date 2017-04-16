@@ -1,7 +1,7 @@
 #! /usr/bin/python2
 
 #
-# Copyright (C) 2015-2016  Emanuele Fornara
+# Copyright (C) 2015-2017  Emanuele Fornara
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
