@@ -42,11 +42,24 @@ static RomResource *font = 0;
 static const int font_width = 8;
 static const int font_height = 14;
 
-static const uint32_t bg_color = 0x00c0e090;
-static const uint32_t console_bg_color = 0x00b4c878;
+static const uint32_t bg_color = 0x0090e0c0;
+static const uint32_t console_bg_color = 0x0078c8b4;
 static const uint32_t console_fg_color = 0x00000000;
 
-static void font_draw(int x, int y, uint8_t c) {
+bool io2_opengl = false;
+
+// TODO: check endianness
+static inline uint32_t get_color(uint32_t c) {
+	if (io2_opengl) {
+		uint32_t out = c & 0xff00ff00;
+		out |= ((c & 0x000000ff) << 16);
+		out |= ((c & 0x00ff0000) >> 16);
+		return out;
+	}
+	return c;
+}
+
+static void font_draw(int x, int y, uint32_t bg, uint32_t fg, uint8_t c) {
 	const uint8_t *r = &font->get_data()[c * font_height];
 	uint32_t *b = &buffer[y * stride + x];
 	for (int y = 0; y < font_height; y++) {
@@ -54,9 +67,9 @@ static void font_draw(int x, int y, uint8_t c) {
 		for (int x = 0; x < font_width; x++) {
 			uint32_t color;
 			if (*r & mask)
-				color = console_fg_color;
+				color = fg;
 			else
-				color = console_bg_color;
+				color = bg;
 			*b++ = color;
 			mask >>= 1;
 		}
@@ -70,6 +83,7 @@ private:
 	uint8_t *buf;
 	int cols, rows;
 	int ox, oy;
+	uint32_t fg, bg;
 public:
 	Console() : buf(0), cols(0), rows(0)  {}
 	~Console() { delete[] buf; }
@@ -81,6 +95,8 @@ public:
 		ox = (width - cols * font_width)  / 2;
 		oy = (height - rows * font_height)  / 2;
 		memset(buf, ' ', rows * cols);
+		fg = get_color(console_fg_color);
+		bg = get_color(console_bg_color);
 	}
 	void put(int address, uint8_t value) {
 		buf[address] = value;
@@ -90,7 +106,7 @@ public:
 		for (int r = 0; r < rows; r++) {
 			int x = ox;
 			for (int c = 0; c < cols; c++) {
-				font_draw(x, y, buf[i++]);
+				font_draw(x, y, bg, fg, buf[i++]);
 				x += font_width;
 			}
 			y += font_height;
@@ -103,8 +119,9 @@ private:
 	int frameno;
 	Console console;
 	void render_background() {
+		uint32_t bg = get_color(bg_color);
 		for (int i = 0; i < width * height; i++)
-			buffer[i] = bg_color;
+			buffer[i] = bg;
 	}
 	void render() {
 		render_background();

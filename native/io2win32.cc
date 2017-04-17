@@ -44,6 +44,8 @@
 
 #include "libretro.h"
 
+extern bool io2_opengl;
+
 static const int width = 128;
 static const int height = 128;
 
@@ -196,6 +198,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     HGLRC hRC;
     hRC = wglCreateContext(hDC);
     wglMakeCurrent(hDC, hRC);
+	io2_opengl = true;
 	retro_set_environment(env);
 	retro_init();
 	retro_set_video_refresh(video_refresh);
