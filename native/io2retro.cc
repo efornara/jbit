@@ -35,12 +35,9 @@
 #include <string.h>
 #include <math.h>
 
-#include "core.h"
+#include "jbit.h"
 
 #include "libretro.h"
-
-static const int width = 128;
-static const int height = 128;
 
 static retro_environment_t env;
 static retro_video_refresh_t video_refresh;
@@ -49,7 +46,7 @@ static retro_input_state_t input_state;
 
 static retro_log_printf_t l;
 
-static uint32_t *buffer;
+static IO2 *io2 = 0;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
 	va_list va;
@@ -97,67 +94,15 @@ static void fetch_input() {
 	}
 }
 
-#include "rom.h"
-
-static RomResource *font = 0;
-static const int font_width = 8;
-static const int font_height = 14;
-
-static const uint32_t bg_color = 0x00aaff88;
-static const uint32_t fg_color = 0x00000000;
-
-static void font_draw(int x, int y, uint8_t c) {
-	const uint8_t *r = &font->get_data()[c * font_height];
-	uint32_t *b = &buffer[y * width + x];
-	for (int y = 0; y < font_height; y++) {
-		int mask = 0x80;
-		for (int x = 0; x < font_width; x++) {
-			uint32_t color;
-			if (*r & mask)
-				color = fg_color;
-			else
-				color = bg_color;
-			*b++ = color;
-			mask >>= 1;
-		}
-		b += (width - font_width);
-		r++;
-	}
-}
-
 static void dispatch_keypress() {
 	for (int i = 0; keypad[i].label; i++)
 		if (keypad[i].current && !keypad[i].last)
-			font_draw(10, 10, keypad[i].label);
+			io2->keypress(keypad[i].label);
 }
 
 static void commit_input() {
 	for (int i = 0; keypad[i].label; i++)
 		keypad[i].last = keypad[i].current;
-}
-
-static void render() {
-	static int n = 0;
-	static uint8_t c = ' ';
-	if (++n == 10) {
-		font_draw(10, 30, c++);
-		if (c > 'z')
-			c = ' ';
-		n = 0;
-	}
-	for (int i = 0; keypad[i].label; i++) {
-		uint32_t color;
-		if (keypad[i].current & KEYPAD_MASK_KEYBOARD)
-			color = 0x00ff0000;
-		else
-			color = 0x00000000;
-		buffer[width * (height - 1) + i] = color;
-		if (keypad[i].current & KEYPAD_MASK_JOYPAD)
-			color = 0x0000ff00;
-		else
-			color = 0x00000000;
-		buffer[width * (height - 1) + i + 20] = color;
-	}
 }
 
 extern "C"
@@ -185,16 +130,13 @@ void retro_set_input_state(retro_input_state_t cb) {
 
 extern "C"
 void retro_init() {
-	buffer = new uint32_t[width * height];
-	memset(buffer, 0, width * height * sizeof(uint32_t));
-	font = RomResource::load("vga14.rom");
+	io2 = new_IO2();
 }
 
 extern "C"
 void retro_deinit() {
-	RomResource::cleanup();
-	delete[] buffer;
-	buffer = 0;
+	delete io2;
+	io2 = 0;
 }
 
 extern "C"
@@ -213,6 +155,8 @@ void retro_get_system_info(struct retro_system_info *info) {
 
 extern "C"
 void retro_get_system_av_info(struct retro_system_av_info *info) {
+	const int width = io2->get_width();
+	const int height = io2->get_width();
 	info->timing.fps = 60.0f;
 	info->timing.sample_rate = 44100.0f;
 	info->geometry.base_width = width;
@@ -228,15 +172,20 @@ void retro_set_controller_port_device(unsigned port, unsigned device) {
 
 extern "C"
 void retro_reset() {
+	io2->reset();
 }
 
 extern "C"
 void retro_run() {
 	fetch_input();
 	dispatch_keypress();
-	render();
+	io2->frame();
 	commit_input();
-	video_refresh(buffer, width, height, width * sizeof(uint32_t));
+	const void *data = io2->get_framebuffer();
+	const int width = io2->get_width();
+	const int height = io2->get_width();
+	const int stride = width * sizeof(uint32_t);
+	video_refresh(data, width, height, stride);
 	bool updated = false;
 	if (!env(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated))
 		return;

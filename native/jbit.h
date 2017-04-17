@@ -87,4 +87,19 @@ struct DeviceEntry {
 	}
 };
 
-extern void send_file(const Program *prg, const char *port); 
+// IO2 might become a Device later on. For now, get a chance to review arch.
+class IO2 : public IO {
+protected:
+	// fixed for easy development, but a TV-friendly 320x180 is also likely
+	static const int width = 128;
+	static const int height = 128;
+public:
+	int get_width() const { return width; }
+	int get_height() const { return height; }
+	virtual const void *get_framebuffer() = 0;
+	virtual void keypress(int key) = 0;
+	virtual void frame() = 0;
+	virtual ~IO2() {}
+};
+
+extern IO2 *new_IO2();
