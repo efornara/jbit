@@ -26,25 +26,56 @@
  * SUCH DAMAGE.
  */
 
-// rom.h
+// rom.cc
 
-struct RomEntry {
-	const char *file_name;
-	const unsigned char *data;
-	int compressed_size;
-	int original_size;
+#include "rom.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_STDIO
+#define STBI_ONLY_PNG
+#include "stb_image.h"
+
+extern const RomEntry rom_entries[];
+extern RomResource rom_resources[];
+extern int n_of_roms;
+
+void RomResource::release() {
+	delete[] data;
+	data = 0;
+}
+
+struct Rom {
+	const RomEntry *e;
+	RomResource *r;
 };
 
-class RomResource {
-private:
-	unsigned char *data;
-	int size;
-	void release();
-public:
-	RomResource() : data(0) {}
-	~RomResource() { release(); }
-	const unsigned char *get_data() const { return data; };
-	int get_size() const { return size; }
-	static RomResource *load(const char *name);
-	static void cleanup();
-};
+static Rom find(const char *name) {
+	Rom rom = { 0, 0 };
+	for (int i = 0; i < n_of_roms; i++) {
+		if (!strcmp(name, rom_entries[i].file_name)) {
+			rom.e = &rom_entries[i];
+			rom.r = &rom_resources[i];
+			break;
+		}
+	}
+	return rom;
+}
+
+RomResource *RomResource::load(const char *name) {
+	Rom rom = find(name);
+	if (!rom.e)
+		return 0;
+	if (rom.r->data)
+		return rom.r;
+	const int n = rom.e->original_size;
+	rom.r->data = new uint8_t[n];
+	const int decoded_n = stbi_zlib_decode_buffer((char *)rom.r->data, n,
+	  (const char *)rom.e->data, rom.e->compressed_size);
+	assert(n == decoded_n);
+	return rom.r;
+}
+
+void RomResource::cleanup() {
+	for (int i = 0; i < n_of_roms; i++)
+		rom_resources[i].release();
+}

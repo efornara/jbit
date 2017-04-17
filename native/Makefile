@@ -29,7 +29,7 @@ OUT = jbit
 endif
 
 ifeq ($(TARGET),jbitio2)
-OBJS = io2retro.o utils.o romdata.o
+OBJS = io2retro.o utils.o rom.o romdata.o
 LDFLAGS += -shared
 LIBS =
 endif

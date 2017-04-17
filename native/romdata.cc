@@ -72,5 +72,6 @@ static const unsigned char vga14_data[] = {
 
 RomEntry rom_entries[] = {
 	{ "vga14.rom", vga14_data, 1040, 3584 },
-	{ 0, 0, 0, 0 }
 };
+RomResource rom_resources[1];
+int n_of_roms = 1;
