@@ -42,8 +42,9 @@ static RomResource *font = 0;
 static const int font_width = 8;
 static const int font_height = 14;
 
-static const uint32_t bg_color = 0x00aaff88;
-static const uint32_t fg_color = 0x00000000;
+static const uint32_t bg_color = 0x00c0e090;
+static const uint32_t console_bg_color = 0x00b4c878;
+static const uint32_t console_fg_color = 0x00000000;
 
 static void font_draw(int x, int y, uint8_t c) {
 	const uint8_t *r = &font->get_data()[c * font_height];
@@ -53,9 +54,9 @@ static void font_draw(int x, int y, uint8_t c) {
 		for (int x = 0; x < font_width; x++) {
 			uint32_t color;
 			if (*r & mask)
-				color = fg_color;
+				color = console_fg_color;
 			else
-				color = bg_color;
+				color = console_bg_color;
 			*b++ = color;
 			mask >>= 1;
 		}
@@ -64,31 +65,73 @@ static void font_draw(int x, int y, uint8_t c) {
 	}
 }
 
-static void render() {
-	static int n = 0;
-	static uint8_t c = ' ';
-	if (++n == 10) {
-		font_draw(10, 30, c++);
-		if (c > 'z')
-			c = ' ';
-		n = 0;
+class Console {
+private:
+	uint8_t *buf;
+	int cols, rows;
+	int ox, oy;
+public:
+	Console() : buf(0), cols(0), rows(0)  {}
+	~Console() { delete[] buf; }
+	void reset(int cols, int rows, int width, int height) {
+		this->cols = cols;
+		this->rows = rows;
+		delete[] buf;
+		buf = new uint8_t[cols * rows];
+		ox = (width - cols * font_width)  / 2;
+		oy = (height - rows * font_height)  / 2;
+		memset(buf, ' ', rows * cols);
 	}
-}
+	void put(int address, uint8_t value) {
+		buf[address] = value;
+	}
+	void render() {
+		int i = 0, y = oy;
+		for (int r = 0; r < rows; r++) {
+			int x = ox;
+			for (int c = 0; c < cols; c++) {
+				font_draw(x, y, buf[i++]);
+				x += font_width;
+			}
+			y += font_height;
+		}
+	}
+};
 
 class IO2Impl : public IO2 {
+private:
+	int frameno;
+	Console console;
+	void render_background() {
+		for (int i = 0; i < width * height; i++)
+			buffer[i] = bg_color;
+	}
+	void render() {
+		render_background();
+		console.render();
+	}
+	void update() {
+		if (frameno++ % 10 == 0)
+			console.put(0, (uint8_t)(frameno / 10 + ' '));
+	}
 public:
 	// AddressSpace
 	void put(int address, int value) {}
 	int get(int address) { return 0; }
 	// IO
 	void set_address_space(AddressSpace *dma) {}
-	void reset() {}
+	void reset() {
+		console.reset(10, 4, width, height);
+	}
 	// IO2
 	const void *get_framebuffer() { return buffer; }
 	void keypress(int key) {}
-	void frame() { render(); }
+	void frame() {
+		update();
+		render();
+	}
 	// IO2Impl
-	IO2Impl() {
+	IO2Impl() : frameno(0) {
 		buffer = new uint32_t[width * height];
 		memset(buffer, 0, width * height * sizeof(uint32_t));
 		font = RomResource::load("vga14.rom");

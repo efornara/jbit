@@ -131,6 +131,7 @@ void retro_set_input_state(retro_input_state_t cb) {
 extern "C"
 void retro_init() {
 	io2 = new_IO2();
+	io2->reset();
 }
 
 extern "C"
