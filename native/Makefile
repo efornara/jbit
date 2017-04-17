@@ -157,10 +157,12 @@ endif
 # RULES
 #
 
-all: $(OUT) jbit.1 BSD.mk
+all: $(OUT)
 
-$(OUT): $(DEVSYMS) $(OBJS)
+$(OUT): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
+
+gen: jbit.1 BSD.mk $(DEVSYMS)
 
 jbit.1: jbit.ron
 	ronn <jbit.ron >jbit.1
@@ -181,9 +183,6 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
-
-touch:
-	touch jbit.1 BSD.mk *.h
 
 clean:
 	rm -f jbit jbit*.exe *.bin *.dll *.so *.o

@@ -6,5 +6,4 @@ os:
   - linux
   - osx
 script:
-  - make -C native touch
   - make -C native PLATFORM="$TRAVIS_OS_NAME"
