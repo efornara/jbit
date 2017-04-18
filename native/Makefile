@@ -120,12 +120,17 @@ endif
 ifeq ($(TARGET),io2sim)
 
 ifeq ($(PLATFORM),osx)
-LDFLAGS += -dynamiclib
+LDFLAGS = -dynamiclib
 else
 LDFLAGS += -shared
 endif
 
 ifeq ($(PLATFORM),posix)
+CXXFLAGS += -fPIC
+OUT = io2sim.so
+endif
+
+ifeq ($(PLATFORM),linux)
 CXXFLAGS += -fPIC
 OUT = io2sim.so
 endif
