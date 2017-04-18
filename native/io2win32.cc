@@ -41,6 +41,7 @@
 #endif
 
 #include "core.h"
+#include "resource.h"
 
 #include "libretro.h"
 
@@ -153,6 +154,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_KEYUP:
 		key(wParam, false);
 		break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case ID_FILE_EXIT:
+			PostMessage(hWnd, WM_CLOSE, 0, 0);
+			break;
+		case ID_HELP_ABOUT:
+			MessageBox(hWnd, get_jbit_version(), "JBit",
+			  MB_OK | MB_ICONINFORMATION);
+			break;
+		}
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
@@ -174,13 +186,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wcex.hIcon = LoadIcon(hInstance, (char *)IDI_APPLICATION);
 	wcex.hCursor = LoadCursor(0, IDC_ARROW);
 	wcex.hbrBackground = 0;
-	wcex.lpszMenuName = 0;
+	wcex.lpszMenuName = MAKEINTRESOURCE(IDR_APPMENU);
 	wcex.lpszClassName = szClassName;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (char *)IDI_APPLICATION);
 	RegisterClassEx(&wcex);
+	const DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
+	  | WS_MINIMIZEBOX;
+	RECT rect = { 0, 0, width * 3, height * 3 };
+	AdjustWindowRect(&rect, style, TRUE);
 	HWND hWnd = CreateWindow(szClassName, "JBit IO2 Simulator",
-	  WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-	  CW_USEDEFAULT, CW_USEDEFAULT, width * 3, height * 3, 0, 0, hInstance, 0);
+	  style, CW_USEDEFAULT, CW_USEDEFAULT,
+	  rect.right - rect.left, rect.bottom - rect.top,
+	  0, 0, hInstance, 0);
     HDC hDC;
     hDC = GetDC(hWnd);
     PIXELFORMATDESCRIPTOR pfd;

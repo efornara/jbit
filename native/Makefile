@@ -137,8 +137,9 @@ endif
 
 ifeq ($(PLATFORM),win32)
 CXX = i586-mingw32msvc-g++
+WINDRES = i586-mingw32msvc-windres
 LDFLAGS = -s -mwindows
-OBJS += io2win32.o
+OBJS += io2win32.o resource.o
 LIBS += -lopengl32 -lgdi32
 OUT = io2sim.exe
 endif
@@ -181,6 +182,9 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+resource.o: resource.rc
+	$(WINDRES) resource.rc resource.o
 
 local:
 	git update-index --assume-unchanged Local.mk

@@ -52,6 +52,9 @@ d_io2.h: io2.inc
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
 
+resource.o: resource.rc
+	$(WINDRES) resource.rc resource.o
+
 local:
 	git update-index --assume-unchanged Local.mk
 
