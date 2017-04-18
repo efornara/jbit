@@ -36,6 +36,7 @@
 #include <math.h>
 
 #include "jbit.h"
+#include "rom.h"
 
 #include "libretro.h"
 
@@ -217,8 +218,19 @@ extern "C"
 void retro_cheat_set(unsigned index, bool enabled, const char *code) {
 }
 
+static struct TestVM : public AddressSpace {
+	const uint8_t *data;
+	void put(int address, int value) {}
+	int get(int address) { return data[12 + address]; }
+} vm;
+
 extern "C"
 bool retro_load_game(const struct retro_game_info *info) {
+	if (info)
+		vm.data = (const uint8_t *)info->data;
+	else
+		vm.data = RomResource::load("intro17.jb")->get_data();
+	io2->set_address_space(&vm);
 	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
 	if (!env(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
 		l(RETRO_LOG_ERROR, "Failed setting pixel format (XRGB8888).\n");
@@ -255,7 +267,7 @@ size_t retro_get_memory_size(unsigned id) {
 extern "C"
 void retro_set_environment(retro_environment_t cb) {
 	env = cb;
-	bool support_no_game = true; // TODO
+	bool support_no_game = true;
 	env(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &support_no_game);
 	struct retro_log_callback log_callback;
 	if (env(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log_callback))

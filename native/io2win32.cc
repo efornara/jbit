@@ -102,7 +102,7 @@ static void video_refresh(const void *data, unsigned width_, unsigned height_,
 }
 
 static bool env(unsigned cmd, void *data) {
-	return false;
+	return true;
 }
 
 static void input_poll() {
@@ -204,6 +204,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	retro_set_video_refresh(video_refresh);
 	retro_set_input_poll(input_poll);
 	retro_set_input_state(input_state);
+	retro_load_game(0);
 	gl.init();
 	wglSwapInterval = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress(
 	  "wglSwapIntervalEXT");
