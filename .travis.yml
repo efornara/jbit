@@ -6,4 +6,5 @@ os:
   - linux
   - osx
 script:
-  - make -C native PLATFORM="$TRAVIS_OS_NAME"
+  - make -C native clean all PLATFORM="$TRAVIS_OS_NAME" TARGET=jbit
+  - make -C native clean all PLATFORM="$TRAVIS_OS_NAME" TARGET=io2sim

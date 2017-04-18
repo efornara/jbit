@@ -63,7 +63,7 @@ restore:
 	git update-index --no-assume-unchanged Local.mk
 
 clean:
-	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.o
+	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.dylib *.o
 
 distclean: clean
 	rm -f jbit.1

@@ -30,7 +30,6 @@ endif
 
 ifeq ($(TARGET),io2sim)
 OBJS = io2retro.o io2impl.o utils.o rom.o romdata.o
-LDFLAGS += -shared
 LIBS =
 endif
 
@@ -120,6 +119,12 @@ endif
 
 ifeq ($(TARGET),io2sim)
 
+ifeq ($(PLATFORM),osx)
+LDFLAGS += -dynamiclib
+else
+LDFLAGS += -shared
+endif
+
 ifeq ($(PLATFORM),posix)
 CXXFLAGS += -fPIC
 OUT = io2sim.so
@@ -142,6 +147,11 @@ LDFLAGS = -s -mwindows
 OBJS += io2win32.o resource.o
 LIBS += -lopengl32 -lgdi32
 OUT = io2sim.exe
+endif
+
+ifeq ($(PLATFORM),osx)
+CXXFLAGS += -fPIC
+OUT = io2sim.dylib
 endif
 
 endif
@@ -194,7 +204,7 @@ restore:
 	git update-index --no-assume-unchanged Local.mk
 
 clean:
-	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.o
+	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.dylib *.o
 
 distclean: clean
 	rm -f jbit.1

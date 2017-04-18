@@ -11,6 +11,7 @@
 *.tar.gz
 *.bin
 *.so
+*.dylib
 *.log
 *.aux
 *.pdf
