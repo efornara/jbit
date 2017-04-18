@@ -14,7 +14,6 @@
 *.log
 *.aux
 *.pdf
-Local.mk
 native/jbit
 private
 .c9

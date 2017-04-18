@@ -146,12 +146,10 @@ endif
 endif
 
 #
-# LOCAL PLATFORM OVERRIDE
+# LOCAL OVERRIDE
 #
 
-ifeq ($(PLATFORM),local)
 include Local.mk
-endif
 
 #
 # RULES
@@ -183,6 +181,13 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+local:
+	git update-index --assume-unchanged Local.mk
+
+restore:
+	git checkout Local.mk
+	git update-index --no-assume-unchanged Local.mk
 
 clean:
 	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.o

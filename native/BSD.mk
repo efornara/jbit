@@ -10,21 +10,16 @@ LDFLAGS ?= -s
 DEVSYMS = d_xv65.h d_io2.h d_mio.h
 
 #
-# BSD DEFAULTS AND LOCAL PLATFORM OVERRIDE (tested on NetBSD 1.6.2)
+# BSD DEFAULTS
 #
-
-HAS_LOCAL_MK = 0
-.ifdef PLATFORM
-.if $(PLATFORM) == "local"
-HAS_LOCAL_MK = 1
-.include "Local.mk"
-.endif
-.endif
-.if $(HAS_LOCAL_MK) == 0
 
 OBJS += stdout.o xv65.o
 
-.endif
+#
+# LOCAL OVERRIDE
+#
+
+include Local.mk
 
 #
 # RULES
@@ -56,6 +51,13 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+local:
+	git update-index --assume-unchanged Local.mk
+
+restore:
+	git checkout Local.mk
+	git update-index --no-assume-unchanged Local.mk
 
 clean:
 	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.o
