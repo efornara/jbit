@@ -178,7 +178,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wcex.lpszClassName = szClassName;
 	wcex.hIconSm = LoadIcon(wcex.hInstance, (char *)IDI_APPLICATION);
 	RegisterClassEx(&wcex);
-	HWND hWnd = CreateWindow(szClassName, "JBit",
+	HWND hWnd = CreateWindow(szClassName, "JBit IO2 Simulator",
 	  WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 	  CW_USEDEFAULT, CW_USEDEFAULT, width * 3, height * 3, 0, 0, hInstance, 0);
     HDC hDC;

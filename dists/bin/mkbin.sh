@@ -19,12 +19,12 @@ mkdir -p $OUT
 cp -r template/* $OUT
 cp -r $IN/LICENSE.md $OUT/LICENSE.txt
 
-# copy jbit.exe and jbitio2.exe
+# copy jbit.exe and io2sim.exe
 mkdir -p $OUT/win32
 ( cd $IN/native ; make clean ; make PLATFORM=win32 TARGET=jbit )
 cp $IN/native/jbit.exe $OUT/win32
-( cd $IN/native ; make clean ; make PLATFORM=win32 TARGET=jbitio2 )
-cp $IN/native/jbitio2.exe $OUT/win32
+( cd $IN/native ; make clean ; make PLATFORM=win32 TARGET=io2sim )
+cp $IN/native/io2sim.exe $OUT/win32
 ( cd $IN/native ; make clean )
 
 # copy linux/android binaries

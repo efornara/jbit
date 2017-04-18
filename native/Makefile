@@ -28,7 +28,7 @@ OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
 OUT = jbit
 endif
 
-ifeq ($(TARGET),jbitio2)
+ifeq ($(TARGET),io2sim)
 OBJS = io2retro.o io2impl.o utils.o rom.o romdata.o
 LDFLAGS += -shared
 LIBS =
@@ -115,24 +115,24 @@ endif
 endif
 
 #
-# PLATFORM SELECTION (jbitio2)
+# PLATFORM SELECTION (io2sim)
 #
 
-ifeq ($(TARGET),jbitio2)
+ifeq ($(TARGET),io2sim)
 
 ifeq ($(PLATFORM),posix)
 CXXFLAGS += -fPIC
-OUT = jbitio2.so
+OUT = io2sim.so
 endif
 
 ifeq ($(PLATFORM),dll64)
 CXX = x86_64-w64-mingw32-g++
-OUT = jbitio2-x86_64.dll
+OUT = io2sim-x86_64.dll
 endif
 
 ifeq ($(PLATFORM),dll32)
 CXX = i686-w64-mingw32-g++
-OUT = jbitio2-i686.dll
+OUT = io2sim-i686.dll
 endif
 
 ifeq ($(PLATFORM),win32)
@@ -140,7 +140,7 @@ CXX = i586-mingw32msvc-g++
 LDFLAGS = -s -mwindows
 OBJS += io2win32.o
 LIBS += -lopengl32 -lgdi32
-OUT = jbitio2.exe
+OUT = io2sim.exe
 endif
 
 endif
@@ -185,7 +185,7 @@ d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
 
 clean:
-	rm -f jbit jbit*.exe *.bin *.dll *.so *.o
+	rm -f jbit jbit.exe io2sim.exe *.bin *.dll *.so *.o
 
 distclean: clean
 	rm -f jbit.1
