@@ -28,6 +28,7 @@
 
 // io2win32.cc
 
+#include <stdarg.h>
 #include <stdio.h>
 
 #define WINVER 0x500
@@ -59,7 +60,63 @@ static const char *szClassName = "jbit";
 typedef GL12Renderer GLRenderer;
 static GLRenderer gl;
 
+// TODO: MessageBox
+static void error(const char *format, ...) {
+	va_list ap;
+
+	va_start(ap, format);
+	fprintf(stderr, "jbit: ");
+	vfprintf(stderr, format, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+}
+
+static Buffer jb;
 static bool valid_program = false;
+
+static void load_program(const char *file_name) {
+	FILE *f = 0;
+
+	if (valid_program) {
+		retro_unload_game();
+		valid_program = false;
+	}
+	if (!file_name) {
+		valid_program = retro_load_game(0);
+		return;
+	}
+	if (!(f = fopen(file_name, "rb"))) {
+		error("Failed opening file '%s'.", file_name);
+		return;
+	}
+	jb.reset();
+	fseek(f, 0, SEEK_END);
+	int n = ftell(f);
+	if (n > 1024 * 1024) {
+		error("Invalid file '%s' (size >1M).", file_name);
+		fclose(f);
+		return;
+	}
+	rewind(f);
+	char *buf = jb.append_raw(n);
+	int i = 0, j;
+	while (i < n) {
+		if ((j = fread(&buf[i], 1, n - 1, f)) == 0)
+			break;
+		i += j;
+	}
+	fclose(f);
+	if (i != n) {
+		error("Size check failed for '%s'.", file_name);
+		return;
+	}
+	retro_game_info info;
+	info.path = 0;
+	info.data = jb.get_data();
+	info.size = jb.get_length();
+	info.meta = "";
+	valid_program = retro_load_game(&info);
+}
 
 #define JOYPAD_NULL 1000
 
@@ -130,6 +187,21 @@ static PFNWGLSWAPINTERVALFARPROC wglSwapInterval;
 
 static HDC hDC;
 
+static void load_file_dialog(HWND hWnd) {
+	OPENFILENAME ofn;
+	char szFileName[1024] = "";
+	memset(&ofn, 0, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = "JBit Files (*.jb)\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = sizeof(szFileName);
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
+	ofn.lpstrDefExt = "jb";
+	if (GetOpenFileName(&ofn))
+		load_program(szFileName);
+}
+
 static WPARAM main_loop() {
 	MSG msg;
 	while (1) {
@@ -165,6 +237,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		break;
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
+		case ID_FILE_LOAD:
+			load_file_dialog(hWnd);
+			break;
 		case ID_FILE_EXIT:
 			PostMessage(hWnd, WM_CLOSE, 0, 0);
 			break;
@@ -233,7 +308,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	retro_set_video_refresh(video_refresh);
 	retro_set_input_poll(input_poll);
 	retro_set_input_state(input_state);
-	valid_program = retro_load_game(0);
+	load_program(0);
 	gl.init();
 	wglSwapInterval = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress(
 	  "wglSwapIntervalEXT");
