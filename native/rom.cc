@@ -72,6 +72,7 @@ RomResource *RomResource::load(const char *name) {
 	const int decoded_n = stbi_zlib_decode_buffer((char *)rom.r->data, n,
 	  (const char *)rom.e->data, rom.e->compressed_size);
 	assert(n == decoded_n);
+	rom.r->size = n;
 	return rom.r;
 }
 

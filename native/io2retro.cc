@@ -48,6 +48,10 @@ static retro_input_state_t input_state;
 static retro_log_printf_t l;
 
 static IO2 *io2 = 0;
+static VM *vm = 0;
+static Program prg;
+static int vm_status;
+static bool vm_terminated;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...) {
 	va_list va;
@@ -132,12 +136,14 @@ void retro_set_input_state(retro_input_state_t cb) {
 extern "C"
 void retro_init() {
 	io2 = new_IO2();
-	io2->reset();
+	vm = new_VM(io2);
 }
 
 extern "C"
 void retro_deinit() {
+	delete vm;
 	delete io2;
+	vm = 0;
 	io2 = 0;
 }
 
@@ -174,15 +180,37 @@ void retro_set_controller_port_device(unsigned port, unsigned device) {
 
 extern "C"
 void retro_reset() {
-	io2->reset();
+	vm->reset();
+	vm->load(&prg);
+	vm_status = 0;
+	vm_terminated = false;
 }
+
+// TODO
+static const int CPUSvc_HALT = 1;
 
 extern "C"
 void retro_run() {
 	fetch_input();
-	dispatch_keypress();
-	io2->frame();
-	commit_input();
+	if (!vm_terminated) {
+		dispatch_keypress();
+		for (int i = 0; i < 100000; i++) {
+			if ((vm_status = vm->step()))
+				break;
+		}
+		io2->frame();
+		commit_input();
+		if (vm_status) {
+			struct retro_message msg;
+			msg.frames = 100;
+			if (vm_status == CPUSvc_HALT)
+				msg.msg = "Halted.";
+			else
+				msg.msg = "Inv. Opcode.";
+			env(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+			vm_terminated = true;
+		}
+	}
 	const void *data = io2->get_framebuffer();
 	const int width = io2->get_width();
 	const int height = io2->get_width();
@@ -218,25 +246,49 @@ extern "C"
 void retro_cheat_set(unsigned index, bool enabled, const char *code) {
 }
 
-static struct TestVM : public AddressSpace {
-	const uint8_t *data;
-	void put(int address, int value) {}
-	int get(int address) { return data[12 + address]; }
-} vm;
+static const char *parse_program(const uint8_t *jb, size_t size) {
+	if (size < 12)
+		return "Invalid jb format (size < 12).\n";
+	if (memcmp(jb, "JBit", 4))
+		return "Invalid jb format (signature).\n";
+	size_t code_pages = jb[8] & 0xFF;
+	size_t data_pages = jb[9] & 0xFF;
+	if (code_pages == 0 || code_pages + data_pages > 251)
+		return "Invalid jb format (pages).\n";
+	size_t program_size = (code_pages + data_pages) * 256;
+	if (size != 12 + program_size)
+		return "Invalid jb format (size/pages mismatch).\n";
+	prg.reset();
+	char *raw = prg.append_raw(program_size);
+	memcpy(raw, &jb[12], program_size);
+	prg.n_of_code_pages = code_pages;
+	prg.n_of_data_pages = data_pages;
+	return 0;
+}
 
 extern "C"
 bool retro_load_game(const struct retro_game_info *info) {
-	if (info)
-		vm.data = (const uint8_t *)info->data;
-	else
-		vm.data = RomResource::load("intro17.jb")->get_data();
-	io2->set_address_space(&vm);
 	enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
 	if (!env(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
 		l(RETRO_LOG_ERROR, "Failed setting pixel format (XRGB8888).\n");
 		return false;
 	}
-	check_variables();
+	const uint8_t *data;
+	size_t size;
+	if (info) {
+		data = (const uint8_t *)info->data;
+		size = info->size;
+	} else {
+		RomResource *rom = RomResource::load("intro17.jb");
+		data = rom->get_data();
+		size = rom->get_size();
+	}
+	const char *error = parse_program(data, size);
+	if (error) {
+		l(RETRO_LOG_ERROR, error);
+		return false;
+	}
+	retro_reset();
 	return true;
 }
 
@@ -247,6 +299,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 
 extern "C"
 void retro_unload_game() {
+	vm_terminated = true;
 }
 
 extern "C"

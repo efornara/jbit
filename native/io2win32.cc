@@ -54,7 +54,9 @@ static const char *szClassName = "jbit";
 
 #include "io2gl12.h"
 typedef GL12Renderer GLRenderer;
-GLRenderer gl;
+static GLRenderer gl;
+
+static bool valid_program = false;
 
 #define JOYPAD_NULL 1000
 
@@ -103,7 +105,7 @@ static void video_refresh(const void *data, unsigned width_, unsigned height_,
 }
 
 static bool env(unsigned cmd, void *data) {
-	return true;
+	return cmd != RETRO_ENVIRONMENT_GET_LOG_INTERFACE;
 }
 
 static void input_poll() {
@@ -132,7 +134,8 @@ static WPARAM main_loop(HDC hDC) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		retro_run();
+		if (valid_program)
+			retro_run();
 		if (!wglSwapInterval)
 			Sleep(10); // TODO: better
 		SwapBuffers(hDC);
@@ -221,7 +224,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	retro_set_video_refresh(video_refresh);
 	retro_set_input_poll(input_poll);
 	retro_set_input_state(input_state);
-	retro_load_game(0);
+	valid_program = retro_load_game(0);
 	gl.init();
 	wglSwapInterval = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress(
 	  "wglSwapIntervalEXT");

@@ -129,20 +129,15 @@ private:
 		render_background();
 		console.render();
 	}
-	void update() {
-		for (int i = 0, pos = 0; i < 10; i++) {
-			char buf[5];
-			int n = sprintf(buf, "%d ", m->get(i));
-			for (int j = 0; j < n; j++)
-				console.put(pos++, (uint8_t)buf[j]);
-		}
-		if (frameno++ % 10 == 0)
-			console.put(39, (uint8_t)(frameno / 10 + ' '));
-	}
 public:
 	// AddressSpace
-	void put(int address, int value) {}
-	int get(int address) { return 0; }
+	void put(int address, int value) {
+		if (address >= 40 && address < 80)
+			console.put(address - 40, (uint8_t)value);
+	}
+	int get(int address) {
+		return 0;
+	}
 	// IO
 	void set_address_space(AddressSpace *dma) {
 		m = dma;
@@ -154,8 +149,8 @@ public:
 	const void *get_framebuffer() { return buffer; }
 	void keypress(int key) {}
 	void frame() {
-		update();
 		render();
+		frameno++;
 	}
 	// IO2Impl
 	IO2Impl() : frameno(0) {
