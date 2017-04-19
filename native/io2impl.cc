@@ -33,6 +33,11 @@
 #include <stdint.h>
 
 #include "jbit.h"
+#include "devimpl.h"
+
+#include "_io2.h"
+
+#define IO_BASE 0x200
 
 static uint32_t *buffer;
 static const int stride = 128;
@@ -102,6 +107,9 @@ public:
 	void put(int address, uint8_t value) {
 		buf[address] = value;
 	}
+	uint8_t get(int address) {
+		return buf[address];
+	}
 	void render() {
 		int i = 0, y = oy;
 		for (int r = 0; r < rows; r++) {
@@ -119,7 +127,10 @@ class IO2Impl : public IO2 {
 private:
 	AddressSpace *m;
 	int frameno;
+	Random random;
+	MicroIOKeybuf keybuf;
 	Console console;
+	int v_FRMFPS;
 	void render_background() {
 		uint32_t bg = get_color(bg_color);
 		for (int i = 0; i < width * height; i++)
@@ -129,25 +140,61 @@ private:
 		render_background();
 		console.render();
 	}
+	void put_FRMDRAW() {
+	}
 public:
 	// AddressSpace
-	void put(int address, int value) {
-		if (address >= 40 && address < 80)
-			console.put(address - 40, (uint8_t)value);
-	}
 	int get(int address) {
+		address += IO_BASE;
+		switch (address) {
+		case FRMFPS:
+			return v_FRMFPS;
+		case RANDOM:
+			return random.get();
+		default:
+			if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE)
+				return keybuf.get(address - KEYBUF);
+			else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+				return console.get(address - CONVIDEO);
+		}
 		return 0;
+	}
+	void put(int address, int value) {
+		address += IO_BASE;
+		value &= 0xff;
+		switch (address) {
+		case FRMFPS:
+			v_FRMFPS = value;
+			break;
+		case FRMDRAW:
+			put_FRMDRAW();
+			break;
+		case RANDOM:
+			random.put(value);
+			break;
+		case KEYBUF:
+			keybuf.put(address - KEYBUF, value);
+			break;
+		default:
+			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+				console.put(address - CONVIDEO, (uint8_t)value);
+		}
 	}
 	// IO
 	void set_address_space(AddressSpace *dma) {
 		m = dma;
 	}
 	void reset() {
+		random.reset();
+		keybuf.reset();
 		console.reset(10, 4, width, height);
+		v_FRMFPS = 40;
 	}
 	// IO2
 	const void *get_framebuffer() { return buffer; }
-	void keypress(int key) {}
+	void keypress(int key) {
+		keybuf.enque(key);
+	}
 	void frame() {
 		render();
 		frameno++;

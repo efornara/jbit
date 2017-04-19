@@ -29,7 +29,7 @@ OUT = jbit
 endif
 
 ifeq ($(TARGET),io2sim)
-OBJS = io2retro.o io2impl.o cpu.o utils.o rom.o romdata.o
+OBJS = io2retro.o io2impl.o devimpl.o cpu.o utils.o rom.o romdata.o
 LIBS =
 endif
 
