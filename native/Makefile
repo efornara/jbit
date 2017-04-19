@@ -150,7 +150,7 @@ CXX = i586-mingw32msvc-g++
 WINDRES = i586-mingw32msvc-windres
 LDFLAGS = -s -mwindows
 OBJS += io2win32.o resource.o
-LIBS += -lopengl32 -lgdi32
+LIBS += -lcomctl32 -lopengl32 -lgdi32
 OUT = io2sim.exe
 endif
 

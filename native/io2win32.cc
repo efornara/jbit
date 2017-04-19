@@ -30,7 +30,10 @@
 
 #include <stdio.h>
 
+#define WINVER 0x500
+#define _WIN32_IE 0x0500
 #include <windows.h>
+#include <commctrl.h>
 
 // TODO: better
 #ifndef VK_OEM_COMMA
@@ -179,6 +182,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LPSTR lpCmdLine, int nCmdShow) {
+	INITCOMMONCONTROLSEX icc;
+	icc.dwSize = sizeof(icc);
+	icc.dwICC = ICC_WIN95_CLASSES;
+	InitCommonControlsEx(&icc);
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -201,23 +208,23 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	  style, CW_USEDEFAULT, CW_USEDEFAULT,
 	  rect.right - rect.left, rect.bottom - rect.top,
 	  0, 0, hInstance, 0);
-    HDC hDC;
-    hDC = GetDC(hWnd);
-    PIXELFORMATDESCRIPTOR pfd;
-    memset(&pfd, 0, sizeof(pfd));
-    pfd.nSize = sizeof(pfd);
-    pfd.nVersion = 1;
-    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.cColorBits = 32;
-    int pf = ChoosePixelFormat(hDC, &pfd);
-    if (pf == 0)
+	HDC hDC;
+	hDC = GetDC(hWnd);
+	PIXELFORMATDESCRIPTOR pfd;
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.nSize = sizeof(pfd);
+	pfd.nVersion = 1;
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cColorBits = 32;
+	int pf = ChoosePixelFormat(hDC, &pfd);
+	if (pf == 0)
 		return 0;
-    if (!SetPixelFormat(hDC, pf, &pfd))
+	if (!SetPixelFormat(hDC, pf, &pfd))
 		return 0;
-    HGLRC hRC;
-    hRC = wglCreateContext(hDC);
-    wglMakeCurrent(hDC, hRC);
+	HGLRC hRC;
+	hRC = wglCreateContext(hDC);
+	wglMakeCurrent(hDC, hRC);
 	io2_opengl = true;
 	retro_set_environment(env);
 	retro_init();
@@ -233,10 +240,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
 	WPARAM ret = main_loop(hDC);
-    wglMakeCurrent(0, 0);
-    ReleaseDC(hWnd, hDC);
-    wglDeleteContext(hRC);
-    DestroyWindow(hWnd);
+	wglMakeCurrent(0, 0);
+	ReleaseDC(hWnd, hDC);
+	wglDeleteContext(hRC);
+	DestroyWindow(hWnd);
 	retro_deinit();
 	return ret;
 }

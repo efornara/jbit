@@ -28,6 +28,8 @@
 
 // resource.rc
 
+#include <winuser.h>
+
 #include "resource.h"
 
 IDR_APPMENU MENU
@@ -42,3 +44,5 @@ BEGIN
 		MENUITEM "&About", ID_HELP_ABOUT
 	END
 END
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST manifest.xml
