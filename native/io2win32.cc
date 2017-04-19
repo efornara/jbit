@@ -128,7 +128,9 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index,
 typedef BOOL (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
 static PFNWGLSWAPINTERVALFARPROC wglSwapInterval;
 
-static WPARAM main_loop(HDC hDC) {
+static HDC hDC;
+
+static WPARAM main_loop() {
 	MSG msg;
 	while (1) {
 		while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
@@ -151,6 +153,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps;
 		BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);
+		SwapBuffers(hDC);
 		} break;
 	case WM_KEYDOWN:
 		key(wParam, true);
@@ -208,7 +211,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	  style, CW_USEDEFAULT, CW_USEDEFAULT,
 	  rect.right - rect.left, rect.bottom - rect.top,
 	  0, 0, hInstance, 0);
-	HDC hDC;
 	hDC = GetDC(hWnd);
 	PIXELFORMATDESCRIPTOR pfd;
 	memset(&pfd, 0, sizeof(pfd));
@@ -239,7 +241,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapInterval(1);
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	WPARAM ret = main_loop(hDC);
+	WPARAM ret = main_loop();
 	wglMakeCurrent(0, 0);
 	ReleaseDC(hWnd, hDC);
 	wglDeleteContext(hRC);
