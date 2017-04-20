@@ -124,6 +124,8 @@ public:
 };
 
 class IO2Impl : public IO2 {
+public:
+	static const int FRAME_MIN_WAIT = 10000;
 private:
 	AddressSpace *m;
 	int frameno;
@@ -131,6 +133,8 @@ private:
 	MicroIOKeybuf keybuf;
 	Console console;
 	int v_FRMFPS;
+	int wait_us;
+	int rel_time;
 	void render_background() {
 		uint32_t bg = get_color(bg_color);
 		for (int i = 0; i < width * height; i++)
@@ -141,6 +145,11 @@ private:
 		console.render();
 	}
 	void put_FRMDRAW() {
+		int fps4 = v_FRMFPS;
+		wait_us = (int)(1000000.0 / (fps4 / 4.0));
+		if (wait_us < FRAME_MIN_WAIT)
+			wait_us = FRAME_MIN_WAIT;
+		rel_time = 0;
 	}
 public:
 	// AddressSpace
@@ -189,15 +198,26 @@ public:
 		keybuf.reset();
 		console.reset(10, 4, width, height);
 		v_FRMFPS = 40;
+		wait_us = 0;
 	}
 	// IO2
 	const void *get_framebuffer() { return buffer; }
 	void keypress(int key) {
 		keybuf.enque(key);
 	}
-	void frame() {
-		render();
-		frameno++;
+	bool update(int dt_us) {
+		if (dt_us)
+			frameno++;
+		if (wait_us) {
+			rel_time += dt_us;
+			if (rel_time < wait_us)
+				return true;
+			wait_us = 0;
+			rel_time = 0;
+		}
+		if (dt_us)
+			render();
+		return false;
 	}
 	// IO2Impl
 	IO2Impl() : frameno(0) {

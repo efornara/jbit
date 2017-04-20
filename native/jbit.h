@@ -98,7 +98,7 @@ public:
 	int get_height() const { return height; }
 	virtual const void *get_framebuffer() = 0;
 	virtual void keypress(int key) = 0;
-	virtual void frame() = 0;
+	virtual bool update(int dt_us) = 0;
 	virtual ~IO2() {}
 };
 
