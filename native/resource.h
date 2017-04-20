@@ -28,9 +28,12 @@
 
 // resource.h
 
-#define IDR_APPMENU 100
+#define ID_APPICON 100
+#define ID_APPMENU 101
+#define ID_ACCEL 102
 
 #define ID_FILE_LOAD 1000
-#define ID_FILE_EXIT 1001
+#define ID_FILE_RELOAD 1001
+#define ID_FILE_EXIT 1002
 
 #define ID_HELP_ABOUT 1201

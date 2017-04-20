@@ -30,6 +30,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define WINVER 0x500
 #define _WIN32_IE 0x0500
@@ -54,46 +55,62 @@ extern bool io2_opengl;
 static const int width = 128;
 static const int height = 128;
 
+static const char *app_name = "JBit IO2 Simulator";
+
 static const char *szClassName = "jbit";
 
 #include "io2gl12.h"
 typedef GL12Renderer GLRenderer;
 static GLRenderer gl;
 
-// TODO: MessageBox
-static void error(const char *format, ...) {
-	va_list ap;
+static void show_error(const char *fmt, va_list arg) {
+	char s[1024];
+	vsnprintf(s, sizeof(s), fmt, arg);
+	s[sizeof(s) - 1] = '\0';
+	MessageBox(0, s, app_name, MB_OK | MB_ICONERROR);
+}
 
-	va_start(ap, format);
-	fprintf(stderr, "jbit: ");
-	vfprintf(stderr, format, ap);
-	fprintf(stderr, "\n");
+static void error(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	show_error(fmt, ap);
 	va_end(ap);
 }
 
+static void log(enum retro_log_level level, const char *fmt, ...) {
+	va_list ap;
+	if (level < RETRO_LOG_ERROR)
+		return;
+	va_start(ap, fmt);
+	show_error(fmt, ap);
+	va_end(ap);
+}
+
+static Buffer file_name;
 static Buffer jb;
 static bool valid_program = false;
 
-static void load_program(const char *file_name) {
+static void load_program() {
 	FILE *f = 0;
 
 	if (valid_program) {
 		retro_unload_game();
 		valid_program = false;
 	}
-	if (!file_name) {
+	if (file_name.get_length() == 0) {
 		valid_program = retro_load_game(0);
 		return;
 	}
-	if (!(f = fopen(file_name, "rb"))) {
-		error("Failed opening file '%s'.", file_name);
+	const char *s = file_name.get_data();
+	if (!(f = fopen(s, "rb"))) {
+		error("Failed opening file '%s'.", s);
 		return;
 	}
 	jb.reset();
 	fseek(f, 0, SEEK_END);
 	int n = ftell(f);
 	if (n > 1024 * 1024) {
-		error("Invalid file '%s' (size >1M).", file_name);
+		error("Invalid file '%s' (size >1M).", s);
 		fclose(f);
 		return;
 	}
@@ -107,7 +124,7 @@ static void load_program(const char *file_name) {
 	}
 	fclose(f);
 	if (i != n) {
-		error("Size check failed for '%s'.", file_name);
+		error("Size check failed for '%s'.", s);
 		return;
 	}
 	retro_game_info info;
@@ -116,6 +133,31 @@ static void load_program(const char *file_name) {
 	info.size = jb.get_length();
 	info.meta = "";
 	valid_program = retro_load_game(&info);
+}
+
+static void parse_arg(const char *arg) {
+	bool inside = false;
+	bool quoted = false;
+	for (int i = 0; arg[i]; i++) {
+		char c = arg[i];
+		if (inside) {
+			if (quoted && c == '"')
+				break;
+			if (!quoted && isspace(c))
+				break;
+			file_name.append_char(c);
+		} else {
+			if (c == '"') {
+				inside = true;
+				quoted = true;
+			} else if (!isspace(c)) {
+				file_name.append_char(c);
+				inside = true;
+			}
+		}
+	}
+	if (inside)
+		file_name.append_char(0);
 }
 
 #define JOYPAD_NULL 1000
@@ -165,7 +207,11 @@ static void video_refresh(const void *data, unsigned width_, unsigned height_,
 }
 
 static bool env(unsigned cmd, void *data) {
-	return cmd != RETRO_ENVIRONMENT_GET_LOG_INTERFACE;
+	if (cmd == RETRO_ENVIRONMENT_GET_LOG_INTERFACE) {
+		retro_log_callback *l = (retro_log_callback *)data;
+		l->log = log;
+	}
+	return true;
 }
 
 static void input_poll() {
@@ -198,18 +244,23 @@ static void load_file_dialog(HWND hWnd) {
 	ofn.nMaxFile = sizeof(szFileName);
 	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST;
 	ofn.lpstrDefExt = "jb";
-	if (GetOpenFileName(&ofn))
-		load_program(szFileName);
+	if (GetOpenFileName(&ofn)) {
+		file_name.reset();
+		file_name.append_string(szFileName);
+		load_program();
+	}
 }
 
-static WPARAM main_loop() {
+static WPARAM main_loop(HACCEL hAccel) {
 	MSG msg;
 	while (1) {
 		while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
 			if (!GetMessage(&msg, 0, 0, 0))
 				return msg.wParam;
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (!TranslateAccelerator(msg.hwnd, hAccel, &msg)) {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 		if (valid_program)
 			retro_run();
@@ -221,6 +272,9 @@ static WPARAM main_loop() {
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
+	case WM_CREATE:
+		DragAcceptFiles(hWnd, TRUE);
+		break;
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 		BeginPaint(hWnd, &ps);
@@ -240,16 +294,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		case ID_FILE_LOAD:
 			load_file_dialog(hWnd);
 			break;
+		case ID_FILE_RELOAD:
+			load_program();
+			break;
 		case ID_FILE_EXIT:
 			PostMessage(hWnd, WM_CLOSE, 0, 0);
 			break;
 		case ID_HELP_ABOUT:
-			MessageBox(hWnd, get_jbit_version(), "JBit",
+			MessageBox(hWnd, get_jbit_version(), app_name,
 			  MB_OK | MB_ICONINFORMATION);
 			break;
 		}
 		break;
+	case WM_DROPFILES: {
+		char szFileName[1024];
+		HDROP hDrop = (HDROP)wParam;
+		DragQueryFile(hDrop, 0, szFileName, sizeof(szFileName));
+		DragFinish(hDrop);
+		file_name.reset();
+		file_name.append_string(szFileName);
+		load_program();
+		} break;
 	case WM_DESTROY:
+		DragAcceptFiles(hWnd, FALSE);
 		PostQuitMessage(0);
 		break;
 	default:
@@ -260,6 +327,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LPSTR lpCmdLine, int nCmdShow) {
+	parse_arg(lpCmdLine);
 	INITCOMMONCONTROLSEX icc;
 	icc.dwSize = sizeof(icc);
 	icc.dwICC = ICC_WIN95_CLASSES;
@@ -271,18 +339,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
 	wcex.hInstance = hInstance;
-	wcex.hIcon = LoadIcon(hInstance, (char *)IDI_APPLICATION);
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(ID_APPICON));
 	wcex.hCursor = LoadCursor(0, IDC_ARROW);
 	wcex.hbrBackground = 0;
-	wcex.lpszMenuName = MAKEINTRESOURCE(IDR_APPMENU);
+	wcex.lpszMenuName = MAKEINTRESOURCE(ID_APPMENU);
 	wcex.lpszClassName = szClassName;
-	wcex.hIconSm = LoadIcon(wcex.hInstance, (char *)IDI_APPLICATION);
+	wcex.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(ID_APPICON));
 	RegisterClassEx(&wcex);
 	const DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU
 	  | WS_MINIMIZEBOX;
 	RECT rect = { 0, 0, width * 3, height * 3 };
 	AdjustWindowRect(&rect, style, TRUE);
-	HWND hWnd = CreateWindow(szClassName, "JBit IO2 Simulator",
+	HWND hWnd = CreateWindow(szClassName, app_name,
 	  style, CW_USEDEFAULT, CW_USEDEFAULT,
 	  rect.right - rect.left, rect.bottom - rect.top,
 	  0, 0, hInstance, 0);
@@ -308,7 +376,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	retro_set_video_refresh(video_refresh);
 	retro_set_input_poll(input_poll);
 	retro_set_input_state(input_state);
-	load_program(0);
+	load_program();
 	gl.init();
 	wglSwapInterval = (PFNWGLSWAPINTERVALFARPROC)wglGetProcAddress(
 	  "wglSwapIntervalEXT");
@@ -316,7 +384,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapInterval(1);
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	WPARAM ret = main_loop();
+	HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(ID_ACCEL));
+	WPARAM ret = main_loop(hAccel);
 	wglMakeCurrent(0, 0);
 	ReleaseDC(hWnd, hDC);
 	wglDeleteContext(hRC);
