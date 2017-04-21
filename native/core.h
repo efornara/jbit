@@ -98,6 +98,7 @@ struct ParseError {
 const ParseError *parse_asm(const Buffer *src, Program *prg);
 
 extern const char *get_jbit_version();
+extern const char *jbit_license;
 
 struct SymDef {
 	const char *name; // last name is 0

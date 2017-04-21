@@ -77,6 +77,7 @@ static void usage(int code = 1) {
 	 "\n"
 	 "options:\n"
 	 "  -v            show version and exit\n"
+	 "  -l            show license and exit\n"
 	 "  -d device     override device selection (? for device list)\n"
 	 "  -s device     list symbols and exit (? for device list)\n"
 	 "  -c jb|asm     convert file (warning: output to stdout)\n"
@@ -332,6 +333,9 @@ int main(int argc, char *argv[])
 		const char *s = argv[i];
 		if (!strcmp(s, "-v")) {
 			printf("jbit %s\n", get_jbit_version());
+			exit(0);
+		} else if (!strcmp(s, "-l")) {
+			printf("%s", jbit_license);
 			exit(0);
 		} else if (!strcmp(s, "-d")) {
 			if (++i == argc)
