@@ -55,8 +55,6 @@ extern bool io2_opengl;
 static const int width = 128;
 static const int height = 128;
 
-static const char *app_name = "JBit IO2 Simulator";
-
 static const char *szClassName = "jbit";
 
 #include "io2gl12.h"
@@ -67,7 +65,7 @@ static void show_error(const char *fmt, va_list arg) {
 	char s[1024];
 	vsnprintf(s, sizeof(s), fmt, arg);
 	s[sizeof(s) - 1] = '\0';
-	MessageBox(0, s, app_name, MB_OK | MB_ICONERROR);
+	MessageBox(0, s, "Error", MB_OK | MB_ICONERROR);
 }
 
 static void error(const char *fmt, ...) {
@@ -89,6 +87,7 @@ static void log(enum retro_log_level level, const char *fmt, ...) {
 static Buffer file_name;
 static Buffer jb;
 static bool valid_program = false;
+static bool running = false;
 
 static void load_program() {
 	FILE *f = 0;
@@ -96,9 +95,11 @@ static void load_program() {
 	if (valid_program) {
 		retro_unload_game();
 		valid_program = false;
+		running = false;
 	}
 	if (file_name.get_length() == 0) {
 		valid_program = retro_load_game(0);
+		running = valid_program;
 		return;
 	}
 	const char *s = file_name.get_data();
@@ -133,6 +134,7 @@ static void load_program() {
 	info.size = jb.get_length();
 	info.meta = "";
 	valid_program = retro_load_game(&info);
+	running = valid_program;
 }
 
 static void parse_arg(const char *arg) {
@@ -210,6 +212,8 @@ static bool env(unsigned cmd, void *data) {
 	if (cmd == RETRO_ENVIRONMENT_GET_LOG_INTERFACE) {
 		retro_log_callback *l = (retro_log_callback *)data;
 		l->log = log;
+	} else if (cmd == RETRO_ENVIRONMENT_SET_MESSAGE) {
+		running = false;
 	}
 	return true;
 }
@@ -231,6 +235,7 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index,
 typedef BOOL (APIENTRY *PFNWGLSWAPINTERVALFARPROC)(int);
 static PFNWGLSWAPINTERVALFARPROC wglSwapInterval;
 
+static HINSTANCE hInst;
 static HDC hDC;
 
 static void load_file_dialog(HWND hWnd) {
@@ -251,10 +256,14 @@ static void load_file_dialog(HWND hWnd) {
 	}
 }
 
-static WPARAM main_loop(HACCEL hAccel) {
+static WPARAM main_loop() {
+	HACCEL hAccel = LoadAccelerators(hInst, MAKEINTRESOURCE(ID_ACCEL));
 	MSG msg;
 	while (1) {
-		while (PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE)) {
+		while (1) {
+			bool busy_loop = valid_program && running;
+			if (busy_loop && !PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE))
+				break;
 			if (!GetMessage(&msg, 0, 0, 0))
 				return msg.wParam;
 			if (!TranslateAccelerator(msg.hwnd, hAccel, &msg)) {
@@ -268,6 +277,34 @@ static WPARAM main_loop(HACCEL hAccel) {
 			Sleep(10); // TODO: better
 		SwapBuffers(hDC);
 	}
+}
+
+INT_PTR CALLBACK AboutDlgProc(HWND hWndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case IDOK:
+		case IDCANCEL:
+			EndDialog(hWndDlg, (INT_PTR)LOWORD(wParam));
+			return (INT_PTR)TRUE;
+		}
+		break;
+	case WM_INITDIALOG: {
+		HWND hWnd;
+		hWnd = GetDlgItem(hWndDlg, ID_VERSION);
+		SetWindowText(hWnd, get_jbit_version());
+		char license[2048], c, *p = license;
+		for (int i = 0; (c = jbit_license[i]); i++) {
+			if (c == '\n')
+				*p++ = '\r';
+			*p++ = c;
+		}
+		*p++ = '\0';
+		hWnd = GetDlgItem(hWndDlg, ID_LICENSE);
+		SetWindowText(hWnd, license);
+		} return (INT_PTR)TRUE;
+	}
+	return (INT_PTR) FALSE;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -301,8 +338,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 			PostMessage(hWnd, WM_CLOSE, 0, 0);
 			break;
 		case ID_HELP_ABOUT:
-			MessageBox(hWnd, get_jbit_version(), app_name,
-			  MB_OK | MB_ICONINFORMATION);
+			DialogBox(hInst, MAKEINTRESOURCE(ID_ABOUTDLG), hWnd, AboutDlgProc);
 			break;
 		}
 		break;
@@ -328,6 +364,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   LPSTR lpCmdLine, int nCmdShow) {
 	parse_arg(lpCmdLine);
+	hInst = hInstance;
 	INITCOMMONCONTROLSEX icc;
 	icc.dwSize = sizeof(icc);
 	icc.dwICC = ICC_WIN95_CLASSES;
@@ -350,7 +387,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	  | WS_MINIMIZEBOX;
 	RECT rect = { 0, 0, width * 3, height * 3 };
 	AdjustWindowRect(&rect, style, TRUE);
-	HWND hWnd = CreateWindow(szClassName, app_name,
+	HWND hWnd = CreateWindow(szClassName, APP_NAME,
 	  style, CW_USEDEFAULT, CW_USEDEFAULT,
 	  rect.right - rect.left, rect.bottom - rect.top,
 	  0, 0, hInstance, 0);
@@ -384,8 +421,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapInterval(1);
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(ID_ACCEL));
-	WPARAM ret = main_loop(hAccel);
+	WPARAM ret = main_loop();
 	wglMakeCurrent(0, 0);
 	ReleaseDC(hWnd, hDC);
 	wglDeleteContext(hRC);

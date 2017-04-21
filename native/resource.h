@@ -28,9 +28,15 @@
 
 // resource.h
 
+#define APP_NAME "JBit IO2 Simulator"
+
 #define ID_APPICON 100
 #define ID_APPMENU 101
-#define ID_ACCEL 102
+#define ID_ABOUTDLG 102
+#define ID_ACCEL 103
+
+#define ID_VERSION 200
+#define ID_LICENSE 201
 
 #define ID_FILE_LOAD 1000
 #define ID_FILE_RELOAD 1001
