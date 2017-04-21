@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "JBIT" "1" "February 2016" "" ""
+.TH "JBIT" "1" "April 2017" "" ""
 .
 .SH "NAME"
 \fBjbit\fR \- 6502 Assembler and Simulator
@@ -148,6 +148,10 @@ Check in the samples directories (in particular the format subdirectory) for mor
 Show the program version and exit\.
 .
 .TP
+\fB\-l\fR
+Show the program license and exit\.
+.
+.TP
 \fB\-d\fR \fIdevice\fR
 Override the device used by the simulator\. If \fIdevice\fR is \fI?\fR, show the list of the available devices and exit\.
 .
@@ -156,11 +160,11 @@ Override the device used by the simulator\. If \fIdevice\fR is \fI?\fR, show the
 Show the symbols defined by the assembler for a given device\. If \fIdevice\fR is \fI?\fR, show the list of the devices with symbols available\.
 .
 .TP
-\fB\-c\fR jb|asm
-Convert the program to a sequence of bytes, writing them to stdout\. WARNING: the \fIjb\fR format is a binary format!
+\fB\-c\fR jb|asm \fIfile\fR|\-
+Convert the program to a sequence of bytes, writing them to a file, or stdout if \fIfile\fR is \-\. WARNING: the \fIjb\fR format is a binary format!
 .
 .SH "STDOUT"
-This is a very simple device and is the only one that can be emulated on Windows\.
+This is a very simple device\.
 .
 .P
 Registers:
@@ -398,6 +402,9 @@ A fair amount of documentation for the io2 device is available here:
 .
 .P
 \fIhttp://jbit\.sourceforge\.net/doc/jbdoc\.html\fR
+.
+.P
+UPDATE: An experimental IO2 simulator is in development, but at the moment it can only simulate the MICROIO subset of IO2\.
 .
 .SH "EXAMPLES"
 Find constants for IPNGGEN:

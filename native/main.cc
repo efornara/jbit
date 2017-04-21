@@ -76,11 +76,11 @@ static void usage(int code = 1) {
 	 "       jbit [options] -a file arg...\n"
 	 "\n"
 	 "options:\n"
-	 "  -v            show version and exit\n"
-	 "  -l            show license and exit\n"
-	 "  -d device     override device selection (? for device list)\n"
-	 "  -s device     list symbols and exit (? for device list)\n"
-	 "  -c jb|asm     convert file (warning: output to stdout)\n"
+	 "  -v                  show version and exit\n"
+	 "  -l                  show license and exit\n"
+	 "  -d device           override device selection (? for device list)\n"
+	 "  -s device           list symbols and exit (? for device list)\n"
+	 "  -c jb|asm file|-    convert file (if -, output to stdout)\n"
 	 "\n");
 	exit(code);
 }
@@ -241,7 +241,8 @@ static void run(int argc, char *argv[], Tag dev_tag) {
 	delete dev;
 }
 
-static void dump_page(const Program *prg, int page, bool truncate = false) {
+static void dump_page(FILE *f, const Program *prg, int page,
+  bool truncate = false) {
 	static const int bytes_per_line = 16;
 	const char *sep = 0, *space = " ";
 	const char *p = &prg->get_data()[page << 8];
@@ -253,55 +254,64 @@ static void dump_page(const Program *prg, int page, bool truncate = false) {
 	n++;
 	for (int i = 0; i < n; i++) {
 		sep = (i % bytes_per_line == (bytes_per_line - 1)) ? "\n" : space;
-		printf("%d%s", p[i] & 0xff, sep);
+		fprintf(f, "%d%s", p[i] & 0xff, sep);
 	}
 	if (sep == space)
-		printf("\n");
+		fprintf(f, "\n");
 }
 
-static void convert_to_asm(const Program *prg) {
-	printf("#! /usr/bin/env jbit");
-	printf(" -a\n\n");
+static void convert_to_asm(FILE *f, const Program *prg) {
+	fprintf(f, "#! /usr/bin/env jbit");
+	fprintf(f, " -a\n\n");
 	if (prg->device_tag.is_valid())
-		printf(".device \"%s\"\n", prg->device_tag.s);
-	printf(".size %d %d\n", prg->n_of_code_pages, prg->n_of_data_pages);
+		fprintf(f, ".device \"%s\"\n", prg->device_tag.s);
+	fprintf(f, ".size %d %d\n", prg->n_of_code_pages, prg->n_of_data_pages);
 	int page = 0, i, n;
-	printf(".code\n");
+	fprintf(f, ".code\n");
 	n = prg->n_of_code_pages;
 	for (i = 0; i < n; i++)
-		dump_page(prg, page++, i == n - 1);
-	printf(".data\n");
+		dump_page(f, prg, page++, i == n - 1);
+	fprintf(f, ".data\n");
 	n = prg->n_of_data_pages;
 	for (i = 0; i < n; i++)
-		dump_page(prg, page++, i == n - 1);
+		dump_page(f, prg, page++, i == n - 1);
 }
 
-static void convert_to_jb(const Program *prg) {
-	printf("JBit");
-	putchar(0); // header size
-	putchar(12);
-	putchar(1); // version
-	putchar(0);
-	putchar(prg->n_of_code_pages);
-	putchar(prg->n_of_data_pages);
-	putchar(0); // reserved
-	putchar(0);
+static void convert_to_jb(FILE *f, const Program *prg) {
+	fprintf(f, "JBit");
+	fputc(0, f); // header size
+	fputc(12, f);
+	fputc(1, f); // version
+	fputc(0, f);
+	fputc(prg->n_of_code_pages, f);
+	fputc(prg->n_of_data_pages, f);
+	fputc(0, f); // reserved
+	fputc(0, f);
 	int i;
 	for (i = 0; i < prg->get_length(); i++)
-		putchar(prg->get_data()[i]);
+		fputc(prg->get_data()[i], f);
 	for (; i & 0xff; i++)
-		putchar(0);
+		fputc(0, f);
 }
 
-static void convert(const char *file_name, Tag dev_tag, Tag fmt_tag) {
+static void convert(const char *file_name, const char *output_filename,
+  Tag dev_tag, Tag fmt_tag) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
+	FILE *f = stdout;
+	if (output_filename) {
+		const char *mode = (fmt_tag == AsmFmtTag) ? "w" : "wb";
+		if (!(f = fopen(output_filename, mode)))
+			fatal("cannot open output file '%s'", output_filename);
+	}
 	if (fmt_tag == AsmFmtTag)
-		convert_to_asm(&prg);
+		convert_to_asm(f, &prg);
 	else if (fmt_tag == JBFmtTag)
-		convert_to_jb(&prg);
+		convert_to_jb(f, &prg);
 	else
 		fatal("internal error (convert)");
+	if (output_filename)
+		fclose(f);
 }
 
 DeviceRegistry *DeviceRegistry::get_instance() {
@@ -329,6 +339,7 @@ int main(int argc, char *argv[])
 	Tag fmt_tag;
 	Tag dev_tag;
 	int filename_i = -1;
+	const char *output_filename = 0;
 	for (int i = 1; i < argc; i++) {
 		const char *s = argv[i];
 		if (!strcmp(s, "-v")) {
@@ -353,6 +364,12 @@ int main(int argc, char *argv[])
 			if (++i == argc)
 				usage();
 			const char *f = argv[i];
+			if (++i == argc)
+				usage();
+			if (strcmp(argv[i], "-"))
+				output_filename = argv[i];
+			else
+				output_filename = 0;
 			if (!strcmp(f, "asm") || !strcmp(f, "jb"))
 				fmt_tag = Tag(f);
 			else
@@ -371,7 +388,7 @@ int main(int argc, char *argv[])
 	if (filename_i == -1)
 		usage();
 	if (fmt_tag.is_valid())
-		convert(argv[filename_i], dev_tag, fmt_tag);
+		convert(argv[filename_i], output_filename, dev_tag, fmt_tag);
 	else
 		run(argc - filename_i, &argv[filename_i], dev_tag);
 }

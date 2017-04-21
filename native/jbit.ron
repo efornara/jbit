@@ -90,6 +90,9 @@ for more information about the assembly format.
   * `-v`:
     Show the program version and exit.
 
+  * `-l`:
+    Show the program license and exit.
+
   * `-d` <device>:
     Override the device used by the simulator. If <device> is <?>,
     show the list of the available devices and exit.
@@ -99,14 +102,14 @@ for more information about the assembly format.
     If <device> is <?>, show the list of the devices with symbols
     available.
 
-  * `-c` jb|asm:
-    Convert the program to a sequence of bytes, writing them to stdout.
+  * `-c` jb|asm <file>|-:
+    Convert the program to a sequence of bytes, writing them to a file,
+    or stdout if <file> is -.
     WARNING: the _jb_ format is a binary format!
 
 ## STDOUT
 
-This is a very simple device and is the only one that can be emulated on
-Windows.
+This is a very simple device.
 
 Registers:
 
@@ -293,6 +296,9 @@ _Debug_ to debug the program.
 A fair amount of documentation for the io2 device is available here:
 
 <http://jbit.sourceforge.net/doc/jbdoc.html>
+
+UPDATE: An experimental IO2 simulator is in development, but at the moment
+it can only simulate the MICROIO subset of IO2.
 
 ## EXAMPLES
 
