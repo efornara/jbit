@@ -213,6 +213,7 @@ public static final byte VAL_IPNGGEN_FLAGS_IDX0TRANSP = (byte)0x01;
 public static final byte VAL_IPNGGEN_FLAGS_PALREF = (byte)0x02;
 public static final byte VAL_IPNGGEN_FLAGS_ZOOM0 = (byte)0x04;
 public static final byte VAL_IPNGGEN_FLAGS_ZOOM1 = (byte)0x08;
+public static final byte VAL_IPNGGEN_FLAGS_ZOOM2 = (byte)0x10;
 public static final byte VAL_IRAWRGBA_FLAGS_ALPHA = (byte)0x01;
 public static final byte VAL_DATATYPE_U8 = (byte)0x01;
 public static final byte VAL_DATATYPE_I8 = (byte)0x02;
@@ -397,6 +398,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 //@{ "VAL_" + "IPNGGEN_FLAGS_PALREF", "02" },
 //@{ "VAL_" + "IPNGGEN_FLAGS_ZOOM0", "04" },
 //@{ "VAL_" + "IPNGGEN_FLAGS_ZOOM1", "08" },
+//@{ "VAL_" + "IPNGGEN_FLAGS_ZOOM2", "10" },
 //@{ "VAL_" + "IRAWRGBA_FLAGS_ALPHA", "01" },
 //@{ "VAL_" + "DATATYPE_U8", "01" },
 //@{ "VAL_" + "DATATYPE_I8", "02" },
@@ -1534,7 +1536,7 @@ public static final byte CH_CROSS = (byte)0x8F;
 				pngDepth = req[PNG_HEADER_DEPTH_OFFSET] & 0xFF;
 				int color = req[PNG_HEADER_COLOR_OFFSET] & 0xFF;
 				if (color == VAL_IPNGGEN_CT_INDEXED_COLOR && (width & 0x3) == 0) 
-					pngZoom = 1 + ((req[PNG_HEADER_FLAGS_OFFSET] >> 2) & 0x3);
+					pngZoom = 1 + ((req[PNG_HEADER_FLAGS_OFFSET] >> 2) & 0x7);
 				else
 					pngZoom = 1;
 				strOS.writeInt(width * pngZoom); // Width

@@ -213,6 +213,8 @@ public final class Paint extends Canvas implements Module, CommandListener {
 				+ id + ".\nFlags ("
 				+ addressToTag(image + IO.PNG_HEADER_FLAGS_OFFSET) + "): ";
 		if (flags != 0) {
+			if ((flags & IO.VAL_IPNGGEN_FLAGS_ZOOM2) != 0)
+				info += " ZOOM2(16)";
 			if ((flags & IO.VAL_IPNGGEN_FLAGS_ZOOM1) != 0)
 				info += " ZOOM1(8)";
 			if ((flags & IO.VAL_IPNGGEN_FLAGS_ZOOM0) != 0)

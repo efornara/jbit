@@ -170,15 +170,17 @@ included in the image. The next byte (Flags) is a combination of the
 following:
 
 	FLAGS
-	-+----------
-	1|IDX0TRANSP
-	2|PALREF
-	4|ZOOM0
-	8|ZOOM1
+	--+----------
+	 1|IDX0TRANSP
+	 2|PALREF
+	 4|ZOOM0
+	 8|ZOOM1
+	16|ZOOM2
 
 On the example above, Flags is 3, meaning that the first color of the image
 is unused / transparent (IDX0TRANSP) and colors are described by the color
-codes of the current palette (PALREF). ZOOM0 and ZOOM1 are discussed later.
+codes of the current palette (PALREF). ZOOM0, ZOOM1 and ZOOM2 are discussed
+later.
 
 Now the description of how the image looks like begins.
 
@@ -605,7 +607,7 @@ quickly. This is especially a problem with phones with a high resolution
 display. The IPNGGEN request for a 16 colors, 16x16 image takes up more than
 half a page... and 16x16 might be quite small on a tiny 320x240 display!
 
-You can add one of the following values (ZOOM0/ZOOM1) to Flags:
+You can add one of the following values (ZOOM0/ZOOM1/ZOOM2) to Flags:
 
 	ZOOM
 	--+--
@@ -613,6 +615,10 @@ You can add one of the following values (ZOOM0/ZOOM1) to Flags:
 	 4|x2
 	 8|x3
 	12|x4
+	16|x5
+	20|x6
+	24|x7
+	28|x8
 
 If, for example, you create a 8x8 image with a zoom factor of x3 (+8), the
 actual image is going to be a 24x24 image. Note that, while this helps you to
@@ -621,3 +627,28 @@ memory as a regular 24x24 image. On the other hand, phones with high
 resolution displays usually have lots of memory, so this might be an
 acceptable trade off.
 
+For the ZOOM flags to work, the width of the original image must be a
+multiple of 8.
+
+Another use of the ZOOM flags is to create a background tileset. If you
+create a 8x1 RGB image with a zoom factor of x8 (+28), the resulting image
+will be a 64x8 images that can be used for a 8x8 LTILED (discussed later).
+Here is an example request:
+
+	(42 0)
+	25 1 8 0 1 0 8 3 28
+	7
+	  0   0   0 ; BLACK
+	255 255 255 ; WHITE
+	255   0   0 ; RED
+	  0 255   0 ; GREEN
+	  0   0 255 ; BLUE
+	255 255   0 ; YELLOW
+	  0 255 255 ; CYAN
+	255   0 255 ; MAGENTA
+	0 1 2 3 4 5 6 7
+
+This is one of the few cases where a Depth of 8 is useful: you don't
+need to use binary numbers for Data, as every pixel is exactly 1 byte
+(i.e. 8 bits), and the Data section is still small as the original image
+is small (i.e. only 8x1 pixels).

@@ -351,7 +351,7 @@ are treated as transparent and the first palette entry is ignored.
 Syntax: IPNGGEN(25)> ImageId Width:U16 Height:U16 Depth ColorType Flag
 [MaxPaletteEntry (PaletteEntry | Red Green Blue)#] Data# ; ColorType(C):
 GRAYSCALE(0), TRUECOLOR(2), INDEXED COLOR(3), GRAYSCALE ALPHA(4), TRUECOLOR
-ALPHA(6) ; Flags(O): IDX0TRANSP(1), PALREF(2), ZOOM0(4), ZOOM1(8)
+ALPHA(6) ; Flags(O): IDX0TRANSP(1), PALREF(2), ZOOM0(4), ZOOM1(8), ZOOM2(16)
 
 ### IEMPTY(26)
 
@@ -393,7 +393,7 @@ Syntax: LMPOS(33) DType OX:T OY:T
 
 Release a specific layer slot.
 
-Syntax: IDESTROY(34) LayerId
+Syntax: LDESTROY(34) LayerId
 
 ### LDIM(35)
 
