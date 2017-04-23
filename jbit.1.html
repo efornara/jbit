@@ -131,7 +131,7 @@ already familiar with 6502 assembly and new to JBit.</p>
 <p>JBit has a binary format too, although it is mostly used on the J2ME
 version of JBit (see <a href="#IO2" title="IO2" data-bare-link="true">IO2</a>).</p>
 
-<pre><code>jbit -c jb a.asm &gt;a.jb
+<pre><code>jbit -c jb a.jb a.asm
 jbit a.jb
 </code></pre>
 
@@ -178,20 +178,21 @@ for more information about the assembly format.</p>
 
 <dl>
 <dt class="flush"><code>-v</code></dt><dd><p>Show the program version and exit.</p></dd>
+<dt class="flush"><code>-l</code></dt><dd><p>Show the program license and exit.</p></dd>
 <dt><code>-d</code> <var>device</var></dt><dd><p>Override the device used by the simulator. If <var>device</var> is <var>?</var>,
 show the list of the available devices and exit.</p></dd>
 <dt><code>-s</code> <var>device</var></dt><dd><p>Show the symbols defined by the assembler for a given device.
 If <var>device</var> is <var>?</var>, show the list of the devices with symbols
 available.</p></dd>
-<dt><code>-c</code> jb|asm</dt><dd><p>Convert the program to a sequence of bytes, writing them to stdout.
+<dt><code>-c</code> jb|asm <var>file</var>|-</dt><dd><p>Convert the program to a sequence of bytes, writing them to a file,
+or stdout if <var>file</var> is -.
 WARNING: the <em>jb</em> format is a binary format!</p></dd>
 </dl>
 
 
 <h2 id="STDOUT">STDOUT</h2>
 
-<p>This is a very simple device and is the only one that can be emulated on
-Windows.</p>
+<p>This is a very simple device.</p>
 
 <p>Registers:</p>
 
@@ -297,9 +298,9 @@ blue: .req
 
 <p>The device <em>xv65</em> maps an extended subset of the traditonal Unix V6 API
 (fork, exec, pipe, dup, write etc...) and it was inspired by the
-beautiful <a href="http://pdos.csail.mit.edu/6.828/2012/xv6.html">xv6</a>.  Chapter
+beautiful <a href="https://pdos.csail.mit.edu/6.828/2016/xv6.html">xv6</a>.  Chapter
 0 of their
-<a href="http://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf">textbook/comentary</a>
+<a href="http://pdos.csail.mit.edu/6.828/2016/xv6/book-rev9.pdf">textbook/comentary</a>
 is  especially relevant.</p>
 
 <p>xv65 is quite a complex device. For an example of use, look at
@@ -325,9 +326,8 @@ the code that was used to test it:</p>
 sprites and tiled layers) and includes a PNG encoder to allow the
 generation of images. It cannot be simulated by jbit, but you can still
 use jbit to write programs for it. And if you have <em>java</em> installed, you
-can run the J2ME version of JBit using
-<a href="http://www.microemu.org/">microemulator</a> to test them.  Here are the
-instructions on how to do that.</p>
+can run the J2ME version of JBit using microemulator to test them.
+Here are the instructions on how to do that.</p>
 
 <p>I assume that every file will be placed in a new directory and you are
 working in it.</p>
@@ -341,7 +341,7 @@ directory).</p>
 
 <p>Extract <em>microemulator.jar</em> from the archive.</p>
 
-<p>Check that it runs fine and the close it:</p>
+<p>Check that it runs fine and then close it:</p>
 
 <pre><code>java -jar microemulator.jar
 </code></pre>
@@ -356,7 +356,7 @@ directory).</p>
 file <em>must</em> be named <em>out.jb</em> for this setup to work. If everything goes
 well, the command is silent. Conversion errors are sent to stderr.</p>
 
-<pre><code>jbit -c jb smile.asm &gt;out.jb
+<pre><code>jbit -c jb out.jb smile.asm
 </code></pre>
 
 <p>The directory should now look like this:</p>
@@ -381,6 +381,9 @@ the joypad), you can stop the program. Select <em>Menu</em> and then select
 <p>A fair amount of documentation for the io2 device is available here:</p>
 
 <p><a href="http://jbit.sourceforge.net/doc/jbdoc.html" data-bare-link="true">http://jbit.sourceforge.net/doc/jbdoc.html</a></p>
+
+<p>UPDATE: An experimental IO2 simulator is in development, but at the moment
+it can only simulate the MICROIO subset of IO2.</p>
 
 <h2 id="EXAMPLES">EXAMPLES</h2>
 
@@ -435,7 +438,7 @@ characters used to search for the files to load.</dd>
 
 <h2 id="BUGS">BUGS</h2>
 
-<p>The parser is too permissive, and programs that rely on it, might not
+<p>The parser is too permissive, and programs that rely on it might not
 load in future versions of jbit.</p>
 
 <p>The parser does not always provide contextual information. For example,
@@ -444,7 +447,7 @@ reported.</p>
 
 <h2 id="COPYRIGHT">COPYRIGHT</h2>
 
-<p>Copyright (C) 2012-2016  Emanuele Fornara</p>
+<p>Copyright (C) 2012-2017  Emanuele Fornara</p>
 
 <p>Released under the BSD 2-Clause License.</p>
 
@@ -456,7 +459,7 @@ reported.</p>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'></li>
-    <li class='tc'>January 2016</li>
+    <li class='tc'>April 2017</li>
     <li class='tr'>jbit(1)</li>
   </ol>
 
