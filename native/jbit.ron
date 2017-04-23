@@ -216,7 +216,7 @@ request:
 
 The device _xv65_ maps an extended subset of the traditonal Unix V6 API
 (fork, exec, pipe, dup, write etc...) and it was inspired by the
-beautiful [xv6](https://pdos.csail.mit.edu/6.828/2016/xv6.html).  Chapter
+beautiful [xv6](http://pdos.csail.mit.edu/6.828/xv6).  Chapter
 0 of their
 [textbook/comentary](http://pdos.csail.mit.edu/6.828/2016/xv6/book-rev9.pdf)
 is  especially relevant.

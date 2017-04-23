@@ -294,7 +294,7 @@ blue: \.req
 .IP "" 0
 .
 .SH "XV65"
-The device \fIxv65\fR maps an extended subset of the traditonal Unix V6 API (fork, exec, pipe, dup, write etc\.\.\.) and it was inspired by the beautiful xv6 \fIhttps://pdos\.csail\.mit\.edu/6\.828/2016/xv6\.html\fR\. Chapter 0 of their textbook/comentary \fIhttp://pdos\.csail\.mit\.edu/6\.828/2016/xv6/book\-rev9\.pdf\fR is especially relevant\.
+The device \fIxv65\fR maps an extended subset of the traditonal Unix V6 API (fork, exec, pipe, dup, write etc\.\.\.) and it was inspired by the beautiful xv6 \fIhttp://pdos\.csail\.mit\.edu/6\.828/xv6\fR\. Chapter 0 of their textbook/comentary \fIhttp://pdos\.csail\.mit\.edu/6\.828/2016/xv6/book\-rev9\.pdf\fR is especially relevant\.
 .
 .P
 xv65 is quite a complex device\. For an example of use, look at xtermpal\.asm in samples\. xtermpal just prints out some xterm escape characters to produce a color palette, and could have been written for the stdout device\. However, since sending escape characters might confuse other terminals, xtermpal uses the ENV request to query the environment variable TERM and guard against running on a non\-xterm terminal\.
