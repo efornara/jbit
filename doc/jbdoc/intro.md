@@ -28,9 +28,14 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.1.0
+
+io2sim: libretro core and win32 IO2 simulator (MicroIO only for now).
+ZOOM2 flag.
+
 ### JBit 2.0.3
 
-The new GAMESET request replaces the old gameapi / JBitGameKit.
+The new GAMESET request replaces the old template.jb / JBitGameKit.
 
 ### JBit 2.0.2
 
@@ -66,12 +71,6 @@ This is for old (MIDP1) phones. You cannot write interactive, graphical games
 or generate images with it, and this version does not include the demos.
 However, it might be the only version that works with your phone. In the
 past, I have tested it on a real Nokia 3410 and it worked.
-
-### JBitGameKit
-
-A custom version of JBit including a pre-made tileset was once available and
-is sometimes referenced in the documentation. At the moment, it is not
-available; a newer (and incompatible) version is planned for the near future.
 
 ## Documents
 
