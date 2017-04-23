@@ -61,12 +61,14 @@
 		</condition>
 
 		<condition property="demos">
-			<or>
-				<isset property="skipdemos"/>
+			<and>
+				<not>
+					<isset property="skipdemos"/>
+				</not>
 				<not>
 					<isset property="jbitrt"/>
 				</not>
-			</or>
+			</and>
 		</condition>
 
 		<wtkjad jadfile="${midlet.base}.jad"
