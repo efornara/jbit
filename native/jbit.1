@@ -57,7 +57,7 @@ JBit has a binary format too, although it is mostly used on the J2ME version of 
 .
 .nf
 
-jbit \-c jb a\.asm >a\.jb
+jbit \-c jb a\.jb a\.asm
 jbit a\.jb
 .
 .fi
@@ -294,7 +294,7 @@ blue: \.req
 .IP "" 0
 .
 .SH "XV65"
-The device \fIxv65\fR maps an extended subset of the traditonal Unix V6 API (fork, exec, pipe, dup, write etc\.\.\.) and it was inspired by the beautiful xv6 \fIhttp://pdos\.csail\.mit\.edu/6\.828/2012/xv6\.html\fR\. Chapter 0 of their textbook/comentary \fIhttp://pdos\.csail\.mit\.edu/6\.828/2012/xv6/book\-rev7\.pdf\fR is especially relevant\.
+The device \fIxv65\fR maps an extended subset of the traditonal Unix V6 API (fork, exec, pipe, dup, write etc\.\.\.) and it was inspired by the beautiful xv6 \fIhttps://pdos\.csail\.mit\.edu/6\.828/2016/xv6\.html\fR\. Chapter 0 of their textbook/comentary \fIhttp://pdos\.csail\.mit\.edu/6\.828/2016/xv6/book\-rev9\.pdf\fR is especially relevant\.
 .
 .P
 xv65 is quite a complex device\. For an example of use, look at xtermpal\.asm in samples\. xtermpal just prints out some xterm escape characters to produce a color palette, and could have been written for the stdout device\. However, since sending escape characters might confuse other terminals, xtermpal uses the ENV request to query the environment variable TERM and guard against running on a non\-xterm terminal\.
@@ -312,7 +312,7 @@ In particular, the following code shows the "syntax" of the requests:
 \fIhttps://github\.com/efornara/cc65/blob/master/samples/xv65/sys\.c\fR
 .
 .SH "IO2"
-The device \fIio2\fR maps a significant subset of the MIDP2 API (including sprites and tiled layers) and includes a PNG encoder to allow the generation of images\. It cannot be simulated by jbit, but you can still use jbit to write programs for it\. And if you have \fIjava\fR installed, you can run the J2ME version of JBit using microemulator \fIhttp://www\.microemu\.org/\fR to test them\. Here are the instructions on how to do that\.
+The device \fIio2\fR maps a significant subset of the MIDP2 API (including sprites and tiled layers) and includes a PNG encoder to allow the generation of images\. It cannot be simulated by jbit, but you can still use jbit to write programs for it\. And if you have \fIjava\fR installed, you can run the J2ME version of JBit using microemulator to test them\. Here are the instructions on how to do that\.
 .
 .P
 I assume that every file will be placed in a new directory and you are working in it\.
@@ -330,7 +330,7 @@ Download \fImicroemulator\-2\.0\.4\.zip\fR from here:
 Extract \fImicroemulator\.jar\fR from the archive\.
 .
 .P
-Check that it runs fine and the close it:
+Check that it runs fine and then close it:
 .
 .IP "" 4
 .
@@ -358,7 +358,7 @@ Convert the assembly source to the \fIjb\fR binary format\. The resulting file \
 .
 .nf
 
-jbit \-c jb smile\.asm >out\.jb
+jbit \-c jb out\.jb smile\.asm
 .
 .fi
 .
@@ -488,7 +488,7 @@ License\.
 List of one of more directory names separated by colon (:) characters used to search for the files to load\.
 .
 .SH "BUGS"
-The parser is too permissive, and programs that rely on it, might not load in future versions of jbit\.
+The parser is too permissive, and programs that rely on it might not load in future versions of jbit\.
 .
 .P
 The parser does not always provide contextual information\. For example, if a symbol is redefined, the location of the first definition is not reported\.

@@ -48,7 +48,7 @@ and run it:
 JBit has a binary format too, although it is mostly used on the J2ME
 version of JBit (see [IO2][]).
 
-    jbit -c jb a.asm >a.jb
+    jbit -c jb a.jb a.asm
     jbit a.jb
 
 Let's have a look at the program.
@@ -216,9 +216,9 @@ request:
 
 The device _xv65_ maps an extended subset of the traditonal Unix V6 API
 (fork, exec, pipe, dup, write etc...) and it was inspired by the
-beautiful [xv6](http://pdos.csail.mit.edu/6.828/2012/xv6.html).  Chapter
+beautiful [xv6](https://pdos.csail.mit.edu/6.828/2016/xv6.html).  Chapter
 0 of their
-[textbook/comentary](http://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf)
+[textbook/comentary](http://pdos.csail.mit.edu/6.828/2016/xv6/book-rev9.pdf)
 is  especially relevant.
 
 xv65 is quite a complex device. For an example of use, look at
@@ -244,9 +244,8 @@ The device _io2_ maps a significant subset of the MIDP2 API (including
 sprites and tiled layers) and includes a PNG encoder to allow the
 generation of images. It cannot be simulated by jbit, but you can still
 use jbit to write programs for it. And if you have _java_ installed, you
-can run the J2ME version of JBit using
-[microemulator](http://www.microemu.org/) to test them.  Here are the
-instructions on how to do that.
+can run the J2ME version of JBit using microemulator to test them.
+Here are the instructions on how to do that.
 
 I assume that every file will be placed in a new directory and you are
 working in it.
@@ -260,7 +259,7 @@ Download _microemulator-2.0.4.zip_ from here:
 
 Extract _microemulator.jar_ from the archive.
 
-Check that it runs fine and the close it:
+Check that it runs fine and then close it:
 
     java -jar microemulator.jar
 
@@ -274,7 +273,7 @@ Convert the assembly source to the *jb* binary format. The resulting
 file _must_ be named _out.jb_ for this setup to work. If everything goes
 well, the command is silent. Conversion errors are sent to stderr.
 
-    jbit -c jb smile.asm >out.jb
+    jbit -c jb out.jb smile.asm
 
 The directory should now look like this:
 
@@ -346,7 +345,7 @@ Fork a new process:
 
 ## BUGS
 
-The parser is too permissive, and programs that rely on it, might not
+The parser is too permissive, and programs that rely on it might not
 load in future versions of jbit.
 
 The parser does not always provide contextual information. For example,
