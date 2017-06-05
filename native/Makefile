@@ -91,7 +91,7 @@ ifeq ($(PLATFORM),dos)
 ifeq ($(ARCH),dpmi)
 CXX = i586-pc-msdosdjgpp-g++
 LDFLAGS = -s
-OBJS += stdout.o mio.o miodos.o
+OBJS += stdout.o
 OUT = jbit.exe
 endif
 ifeq ($(ARCH),dos4g)
