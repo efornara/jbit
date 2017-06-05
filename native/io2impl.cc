@@ -39,7 +39,6 @@
 
 #define IO_BASE 0x200
 
-static uint32_t *buffer;
 static const int stride = 128;
 
 #include "rom.h"
@@ -52,26 +51,23 @@ static const uint32_t bg_color = 0x0090e0c0;
 static const uint32_t console_bg_color = 0x0078c8b4;
 static const uint32_t console_fg_color = 0x00000000;
 
-bool io2_opengl = false;
+#include "blt32.h"
+typedef uint32_t color_t;
+#define get_color_rgba blt32_get_color_rgba
 
-// TODO: check endianness
-static inline uint32_t get_color(uint32_t c) {
-	if (io2_opengl) {
-		uint32_t out = c & 0xff00ff00;
-		out |= ((c & 0x000000ff) << 16);
-		out |= ((c & 0x00ff0000) >> 16);
-		return out;
-	}
-	return c;
+static color_t *buffer;
+
+color_t get_color_rgb(uint32_t c) {
+	return get_color_rgba(c | 0xff000000);
 }
 
-static void font_draw(int x, int y, uint32_t bg, uint32_t fg, uint8_t c) {
+static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
 	const uint8_t *r = &font->get_data()[c * font_height];
-	uint32_t *b = &buffer[y * stride + x];
+	color_t *b = &buffer[y * stride + x];
 	for (int y = 0; y < font_height; y++) {
 		int mask = 0x80;
 		for (int x = 0; x < font_width; x++) {
-			uint32_t color;
+			color_t color;
 			if (*r & mask)
 				color = fg;
 			else
@@ -89,7 +85,7 @@ private:
 	uint8_t *buf;
 	int cols, rows;
 	int ox, oy;
-	uint32_t fg, bg;
+	color_t fg, bg;
 public:
 	Console() : buf(0), cols(0), rows(0)  {}
 	~Console() { delete[] buf; }
@@ -101,8 +97,8 @@ public:
 		ox = (width - cols * font_width)  / 2;
 		oy = (height - rows * font_height)  / 2;
 		memset(buf, ' ', rows * cols);
-		fg = get_color(console_fg_color);
-		bg = get_color(console_bg_color);
+		fg = get_color_rgb(console_fg_color);
+		bg = get_color_rgb(console_bg_color);
 	}
 	void put(int address, uint8_t value) {
 		buf[address] = value;
@@ -132,13 +128,13 @@ private:
 	Random random;
 	MicroIOKeybuf keybuf;
 	Console console;
+	color_t bgcol;
 	int v_FRMFPS;
 	int wait_us;
 	int rel_time;
 	void render_background() {
-		uint32_t bg = get_color(bg_color);
 		for (int i = 0; i < width * height; i++)
-			buffer[i] = bg;
+			buffer[i] = bgcol;
 	}
 	void render() {
 		render_background();
@@ -197,6 +193,7 @@ public:
 		random.reset();
 		keybuf.reset();
 		console.reset(10, 4, width, height);
+		bgcol = get_color_rgb(bg_color);
 		v_FRMFPS = 40;
 		wait_us = 0;
 	}
@@ -221,8 +218,8 @@ public:
 	}
 	// IO2Impl
 	IO2Impl() : frameno(0) {
-		buffer = new uint32_t[width * height];
-		memset(buffer, 0, width * height * sizeof(uint32_t));
+		buffer = new color_t[width * height];
+		memset(buffer, 0, width * height * sizeof(color_t));
 		font = RomResource::load("vga14.rom");
 	}
 	~IO2Impl() {
