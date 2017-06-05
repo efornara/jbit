@@ -8,12 +8,31 @@ CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
 DEVSYMS = d_xv65.h d_io2.h d_mio.h
+JBIT_OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
+IO2SIM_OBJS = io2retro.o io2impl.o blt32.o devimpl.o cpu.o utils.o rom.o \
+  romdata.o
 
 #
 # BSD DEFAULTS
 #
 
-OBJS += stdout.o xv65.o
+IS_JBIT = 1
+
+.ifdef TARGET
+.if $(TARGET) == "io2sim"
+IS_JBIT = 0
+.endif
+.endif
+
+.if $(IS_JBIT) == 1
+OBJS = $(JBIT_OBJS) stdout.o xv65.o
+OUT = jbit
+.else
+OBJS = $(IO2SIM_OBJS)
+CXXFLAGS += -fPIC
+LDFLAGS += -shared
+OUT = io2sim.so
+.endif
 
 #
 # LOCAL OVERRIDE

@@ -4,7 +4,23 @@ $BSD = <<'END';
 # BSD DEFAULTS
 #
 
-OBJS += stdout.o xv65.o
+IS_JBIT = 1
+
+.ifdef TARGET
+.if $(TARGET) == "io2sim"
+IS_JBIT = 0
+.endif
+.endif
+
+.if $(IS_JBIT) == 1
+OBJS = $(JBIT_OBJS) stdout.o xv65.o
+OUT = jbit
+.else
+OBJS = $(IO2SIM_OBJS)
+CXXFLAGS += -fPIC
+LDFLAGS += -shared
+OUT = io2sim.so
+.endif
 
 #
 END

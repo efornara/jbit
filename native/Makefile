@@ -6,6 +6,9 @@ CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
 DEVSYMS = d_xv65.h d_io2.h d_mio.h
+JBIT_OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
+IO2SIM_OBJS = io2retro.o io2impl.o blt32.o devimpl.o cpu.o utils.o rom.o \
+  romdata.o
 
 #
 # TARGET / PLATFORM DEFAULT
@@ -24,12 +27,12 @@ endif
 #
 
 ifeq ($(TARGET),jbit)
-OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
+OBJS = $(JBIT_OBJS)
 OUT = jbit
 endif
 
 ifeq ($(TARGET),io2sim)
-OBJS = io2retro.o io2impl.o blt32.o devimpl.o cpu.o utils.o rom.o romdata.o
+OBJS = $(IO2SIM_OBJS)
 LIBS =
 endif
 
