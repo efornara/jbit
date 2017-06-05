@@ -47,6 +47,7 @@ static RomResource *font = 0;
 static const int font_width = 8;
 static const int font_height = 14;
 
+// TODO: extend JB format
 static const uint32_t bg_color = 0x0090e0c0;
 static const uint32_t console_bg_color = 0x0078c8b4;
 static const uint32_t console_fg_color = 0x00000000;
@@ -62,6 +63,8 @@ color_t get_color_rgb(uint32_t c) {
 }
 
 static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
+	if (!c)
+		return;
 	const uint8_t *r = &font->get_data()[c * font_height];
 	color_t *b = &buffer[y * stride + x];
 	for (int y = 0; y < font_height; y++) {
@@ -80,14 +83,51 @@ static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
 	}
 }
 
+// adapted from Vice (changes: White has been made pure)
+static const uint32_t standardPalette[] = {
+	0x000000, // Black
+	0xFFFFFF, // White
+	0xBE1A24, // Red
+	0x30E6C6, // Cyan
+	0xB41AE2, // Purple
+	0x1FD21E, // Green
+	0x211BAE, // Blue
+	0xDFF60A, // Yellow
+	0xB84104, // Orange
+	0x6A3304, // Brown
+	0xFE4A57, // Light Red
+	0x424540, // Dark Gray
+	0x70746F, // Medium Gray
+	0x59FE59, // Light Green
+	0x5F53FE, // Light Blue
+	0xA4A7A2, // Light Gray
+};
+
+class Palette {
+private:
+	color_t pal[256];
+	int mask;
+public:
+	Palette() { reset(); }
+	void reset() {
+		for (int i = 0; i < 16; i++)
+			pal[i] = standardPalette[i];
+		mask = 0x0f;
+	}
+	color_t operator[](uint8_t id) const {
+		return pal[id & mask];
+	}
+};
+
 class Console {
 private:
+	const Palette &pal;
 	uint8_t *buf;
 	int cols, rows;
 	int ox, oy;
-	color_t fg, bg;
+	uint8_t fg, bg;
 public:
-	Console() : buf(0), cols(0), rows(0)  {}
+	Console(const Palette &pal_) : pal(pal_), buf(0), cols(0), rows(0)  {}
 	~Console() { delete[] buf; }
 	void reset(int cols, int rows, int width, int height) {
 		this->cols = cols;
@@ -97,8 +137,8 @@ public:
 		ox = (width - cols * font_width)  / 2;
 		oy = (height - rows * font_height)  / 2;
 		memset(buf, ' ', rows * cols);
-		fg = get_color_rgb(console_fg_color);
-		bg = get_color_rgb(console_bg_color);
+		fg = COLOR_BLACK;
+		bg = COLOR_WHITE;
 	}
 	void put(int address, uint8_t value) {
 		buf[address] = value;
@@ -111,7 +151,7 @@ public:
 		for (int r = 0; r < rows; r++) {
 			int x = ox;
 			for (int c = 0; c < cols; c++) {
-				font_draw(x, y, bg, fg, buf[i++]);
+				font_draw(x, y, pal[bg], pal[fg], buf[i++]);
 				x += font_width;
 			}
 			y += font_height;
@@ -127,6 +167,7 @@ private:
 	int frameno;
 	Random random;
 	MicroIOKeybuf keybuf;
+	Palette palette;
 	Console console;
 	color_t bgcol;
 	int v_FRMFPS;
@@ -192,8 +233,9 @@ public:
 	void reset() {
 		random.reset();
 		keybuf.reset();
+		palette.reset();
 		console.reset(10, 4, width, height);
-		bgcol = get_color_rgb(bg_color);
+		bgcol = get_color_rgb(palette[COLOR_WHITE]);
 		v_FRMFPS = 40;
 		wait_us = 0;
 	}
@@ -217,7 +259,7 @@ public:
 		return false;
 	}
 	// IO2Impl
-	IO2Impl() : frameno(0) {
+	IO2Impl() : frameno(0), console(palette) {
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
 		font = RomResource::load("vga14.rom");
