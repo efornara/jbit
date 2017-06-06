@@ -63,8 +63,6 @@ color_t get_color_rgb(uint32_t c) {
 }
 
 static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
-	if (!c)
-		return;
 	const uint8_t *r = &font->get_data()[c * font_height];
 	color_t *b = &buffer[y * stride + x];
 	for (int y = 0; y < font_height; y++) {
@@ -121,37 +119,134 @@ public:
 
 class Console {
 private:
+	struct Cell {
+		uint8_t chr;
+		uint8_t fg;
+		uint8_t bg;
+		Cell() : chr(' '), fg(COLOR_BLACK), bg(COLOR_WHITE) {}
+	};
+	enum RWOp {
+		Read,
+		Write
+	};
 	const Palette &pal;
-	uint8_t *buf;
-	int cols, rows;
+	const int width, height;
 	int ox, oy;
-	uint8_t fg, bg;
+	Cell *buf;
+	uint8_t v_CONCOLS, v_CONROWS, v_CONCX, v_CONCY;
+	uint8_t rw(RWOp op, uint16_t reg, uint8_t value, int cx, int cy) {
+		if (cx >= v_CONCOLS || cy >= v_CONROWS)
+			return 0;
+		Cell *cell = &buf[cx + cy * v_CONCOLS];
+		if (op == Write) {
+			switch (reg) {
+			case CONCCHR:
+				cell->chr = value;
+				break;
+			case CONCFG:
+				cell->fg = value;
+				break;
+			case CONCBG:
+				cell->bg = value;
+				break;
+			}
+		} else {
+			switch (reg) {
+			case CONCCHR:
+				return cell->chr;
+			case CONCFG:
+				return cell->fg;
+			case CONCBG:
+				return cell->bg;
+			}
+		}
+		return 0;
+	}
 public:
-	Console(const Palette &pal_) : pal(pal_), buf(0), cols(0), rows(0)  {}
-	~Console() { delete[] buf; }
-	void reset(int cols, int rows, int width, int height) {
-		this->cols = cols;
-		this->rows = rows;
+	Console(const Palette &pal_, int width_, int height_)
+	  : pal(pal_), width(width_), height(height_), buf(0) {}
+	~Console() {
 		delete[] buf;
-		buf = new uint8_t[cols * rows];
-		ox = (width - cols * font_width)  / 2;
-		oy = (height - rows * font_height)  / 2;
-		memset(buf, ' ', rows * cols);
-		fg = COLOR_BLACK;
-		bg = COLOR_WHITE;
 	}
-	void put(int address, uint8_t value) {
-		buf[address] = value;
+	void reset() {
+		v_CONCOLS = 10;
+		v_CONROWS = 4;
+		v_CONCX = 0;
+		v_CONCY = 0;
+		resize();
 	}
-	uint8_t get(int address) {
-		return buf[address];
+	void resize() {
+		delete[] buf;
+		const int size = v_CONCOLS * v_CONROWS;
+		buf = new Cell[size];
+		ox = (width - v_CONCOLS * font_width)  / 2;
+		oy = (height - v_CONROWS * font_height)  / 2;
+	}
+	void put(uint16_t address, uint8_t value) {
+		switch (address) {
+		case CONCOLS: {
+			int max = width / font_width;
+			if (!value || value > max)
+				value = (uint8_t)max;
+			if (value != v_CONCOLS) {
+				v_CONCOLS = value;
+				resize();
+			}
+			} break;
+		case CONROWS: {
+			int max = height / font_height;
+			if (!value || value > max)
+				value = (uint8_t)max;
+			if (value != v_CONROWS) {
+				v_CONROWS = value;
+				resize();
+			}
+			} break;
+		case CONCX:
+			v_CONCX = value;
+			break;
+		case CONCY:
+			v_CONCY = value;
+			break;
+		case CONCCHR:
+		case CONCFG:
+		case CONCBG:
+			rw(Write, address, value, v_CONCX, v_CONCY);
+			break;
+		default: {
+			const int offset = address - CONVIDEO;
+			rw(Write, CONCCHR, value, offset % 10, offset / 10);
+			} break;
+		}
+	}
+	uint8_t get(uint16_t address) {
+		switch (address) {
+		case CONCOLS:
+			return v_CONCOLS;
+		case CONROWS:
+			return v_CONROWS;
+		case CONCX:
+			return v_CONCX;
+		case CONCY:
+			return v_CONCY;
+		case CONCCHR:
+		case CONCFG:
+		case CONCBG:
+			return rw(Read, address, 0, v_CONCX, v_CONCY);
+		default: {
+			const int offset = address - CONVIDEO;
+			return rw(Read, CONCCHR, 0, offset % 10, offset / 10);
+			} break;
+		}
 	}
 	void render() {
 		int i = 0, y = oy;
-		for (int r = 0; r < rows; r++) {
+		for (int r = 0; r < v_CONROWS; r++) {
 			int x = ox;
-			for (int c = 0; c < cols; c++) {
-				font_draw(x, y, pal[bg], pal[fg], buf[i++]);
+			for (int c = 0; c < v_CONCOLS; c++) {
+				const Cell *cell = &buf[i++];
+				if (cell->chr)
+					font_draw(x, y, pal[cell->bg], pal[cell->fg], cell->chr);
 				x += font_width;
 			}
 			y += font_height;
@@ -197,11 +292,19 @@ public:
 			return v_FRMFPS;
 		case RANDOM:
 			return random.get();
+		case CONCOLS:
+		case CONROWS:
+		case CONCX:
+		case CONCY:
+		case CONCCHR:
+		case CONCFG:
+		case CONCBG:
+			return console.get(address);
 		default:
 			if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE)
 				return keybuf.get(address - KEYBUF);
 			else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
-				return console.get(address - CONVIDEO);
+				return console.get(address);
 		}
 		return 0;
 	}
@@ -221,9 +324,18 @@ public:
 		case KEYBUF:
 			keybuf.put(address - KEYBUF, value);
 			break;
+		case CONCOLS:
+		case CONROWS:
+		case CONCX:
+		case CONCY:
+		case CONCCHR:
+		case CONCFG:
+		case CONCBG:
+			console.put(address, (uint8_t)value);
+			return;
 		default:
 			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
-				console.put(address - CONVIDEO, (uint8_t)value);
+				console.put(address, (uint8_t)value);
 		}
 	}
 	// IO
@@ -234,7 +346,7 @@ public:
 		random.reset();
 		keybuf.reset();
 		palette.reset();
-		console.reset(10, 4, width, height);
+		console.reset();
 		bgcol = get_color_rgb(palette[COLOR_WHITE]);
 		v_FRMFPS = 40;
 		wait_us = 0;
@@ -259,7 +371,7 @@ public:
 		return false;
 	}
 	// IO2Impl
-	IO2Impl() : frameno(0), console(palette) {
+	IO2Impl() : frameno(0), console(palette, width, height) {
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
 		font = RomResource::load("vga14.rom");
