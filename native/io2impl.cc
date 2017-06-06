@@ -277,8 +277,10 @@ private:
 		console.render();
 	}
 	void put_FRMDRAW() {
+		if (!v_FRMFPS)
+			return;
 		int fps4 = v_FRMFPS;
-		wait_us = (int)(1000000.0 / (fps4 / 4.0));
+		wait_us = 4000000 / fps4;
 		if (wait_us < FRAME_MIN_WAIT)
 			wait_us = FRAME_MIN_WAIT;
 		rel_time = 0;
