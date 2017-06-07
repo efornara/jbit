@@ -81,6 +81,40 @@ static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
 	}
 }
 
+class Request {
+public:
+	static const int REQDAT_SIZE = 32;
+private:
+	Buffer buf;
+	uint8_t v_REQDAT[16];
+public:
+	Request() { reset(); }
+	void reset() {
+		buf.reset();
+		memset(v_REQDAT, 0, sizeof(v_REQDAT));
+	}
+	uint8_t get(uint16_t address) {
+		if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
+			return v_REQDAT[address - REQDAT];
+		return 0;
+	}
+	void put(uint16_t address, uint8_t value) {
+		if (address == REQPUT)
+			buf.append_char(value);
+		else if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
+			v_REQDAT[address - REQDAT] = value;
+	}
+	int n() const {
+		return buf.get_length();
+	}
+	uint8_t id() const {
+		return buf.get_length() ? (uint8_t)buf.get_data()[0] : 0;
+	}
+	uint8_t get_uint8(int pos) const {
+		return (uint8_t)buf.get_data()[pos];
+	}
+};
+
 // adapted from Vice (changes: White has been made pure)
 static const uint32_t standardPalette[] = {
 	0x000000, // Black
@@ -260,6 +294,9 @@ public:
 private:
 	AddressSpace *m;
 	int frameno;
+	Request req;
+	uint8_t v_REQRES;
+	uint8_t v_REQPTRHI;
 	Random random;
 	MicroIOKeybuf keybuf;
 	Palette palette;
@@ -276,6 +313,49 @@ private:
 		render_background();
 		console.render();
 	}
+	uint8_t m_get_uint8(uint16_t addr) {
+		return (uint8_t)m->get(addr);
+	}
+	uint16_t m_get_uint16(uint16_t addr) {
+		return (uint16_t)((m_get_uint8(addr + 1) << 8) | m_get_uint8(addr));
+	}
+	bool req_SETBGCOL() {
+		switch (req.n()) {
+		case 2:
+			bgcol = get_color_rgb(palette[req.get_uint8(1)]);
+			return true;
+		case 4:
+			bgcol = get_color_rgb(
+			  (req.get_uint8(1) << 16) |
+			  (req.get_uint8(2) << 8) |
+			  (req.get_uint8(3))
+			);
+			return true;
+		default:
+			return false;
+		}
+	}
+	void request() {
+		bool res = false;
+		switch (req.id()) {
+		case REQ_SETBGCOL:
+			res = req_SETBGCOL();
+			break;
+		}
+		v_REQRES = res ? 0 : 255;
+		req.reset();
+	}
+	void put_REQPTRLO(uint8_t value) {
+		uint16_t addr = (v_REQPTRHI << 8) | value;
+		uint16_t len = m_get_uint16(addr);
+		addr += 2;
+		req.reset();
+		for (int i = 0; i < len; i++)
+			req.put(REQPUT, m_get_uint8(addr++));
+		if (!len)
+			req.put(REQPUT, 0);
+		request();
+	}
 	void put_FRMDRAW() {
 		if (!v_FRMFPS)
 			return;
@@ -287,9 +367,13 @@ private:
 	}
 public:
 	// AddressSpace
-	int get(int address) {
-		address += IO_BASE;
+	int get(int address_) {
+		uint16_t address = (uint16_t)(address_ + IO_BASE);
 		switch (address) {
+		case REQRES:
+			return v_REQRES;
+		case REQPTRHI:
+			return v_REQPTRHI;
 		case FRMFPS:
 			return v_FRMFPS;
 		case RANDOM:
@@ -307,13 +391,27 @@ public:
 				return keybuf.get(address - KEYBUF);
 			else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
 				return console.get(address);
+			else if (address >= REQDAT && address < REQDAT + Request::REQDAT_SIZE)
+				return req.get(address);
 		}
 		return 0;
 	}
-	void put(int address, int value) {
-		address += IO_BASE;
-		value &= 0xff;
+	void put(int address_, int value_) {
+		uint16_t address = (uint16_t)(address_ + IO_BASE);
+		uint8_t value = (uint8_t)value_;
 		switch (address) {
+		case REQEND:
+			request();
+			break;
+		case REQPTRLO:
+			put_REQPTRLO(value);
+			break;
+		case REQPTRHI:
+			v_REQPTRHI = value;
+			break;
+		case REQPUT:
+			req.put(address, value);
+			break;
 		case FRMFPS:
 			v_FRMFPS = value;
 			break;
@@ -333,11 +431,13 @@ public:
 		case CONCCHR:
 		case CONCFG:
 		case CONCBG:
-			console.put(address, (uint8_t)value);
+			console.put(address, value);
 			return;
 		default:
 			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
-				console.put(address, (uint8_t)value);
+				console.put(address, value);
+			else if (address >= REQDAT && address < REQDAT + Request::REQDAT_SIZE)
+				return req.put(address, value);
 		}
 	}
 	// IO
@@ -345,6 +445,9 @@ public:
 		m = dma;
 	}
 	void reset() {
+		req.reset();
+		v_REQRES = 0;
+		v_REQPTRHI = 0;
 		random.reset();
 		keybuf.reset();
 		palette.reset();
