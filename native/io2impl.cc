@@ -143,11 +143,36 @@ public:
 	Palette() { reset(); }
 	void reset() {
 		for (int i = 0; i < 16; i++)
-			pal[i] = standardPalette[i];
+			pal[i] = get_color_rgb(standardPalette[i]);
 		mask = 0x0f;
 	}
 	color_t operator[](uint8_t id) const {
 		return pal[id & mask];
+	}
+	bool req_SETPAL(Request &req) {
+		int n = req.n() - 1;
+		if (n == 0) {
+			reset();
+			return true;
+		}
+		if (n % 3 != 0)
+			return false;
+		n /= 3;
+		if (n > 256)
+			return false;
+		for (mask = 0x80; mask > 1 && mask >= n; mask >>= 1)
+			;
+		mask <<= 1;
+		mask--;
+		for (int i = 0, j = 1; i < n; i++) {
+			pal[i] = get_color_rgb(
+				((uint32_t)req.get_uint8(j) << 16) |
+				((uint32_t)req.get_uint8(j + 1) << 8) |
+				((uint32_t)req.get_uint8(j + 2))
+			);
+			j += 3;
+		}
+		return true;
 	}
 };
 
@@ -322,13 +347,13 @@ private:
 	bool req_SETBGCOL() {
 		switch (req.n()) {
 		case 2:
-			bgcol = get_color_rgb(palette[req.get_uint8(1)]);
+			bgcol = palette[req.get_uint8(1)];
 			return true;
 		case 4:
 			bgcol = get_color_rgb(
-			  (req.get_uint8(1) << 16) |
-			  (req.get_uint8(2) << 8) |
-			  (req.get_uint8(3))
+			  ((uint32_t)req.get_uint8(1) << 16) |
+			  ((uint32_t)req.get_uint8(2) << 8) |
+			  ((uint32_t)req.get_uint8(3))
 			);
 			return true;
 		default:
@@ -340,6 +365,9 @@ private:
 		switch (req.id()) {
 		case REQ_SETBGCOL:
 			res = req_SETBGCOL();
+			break;
+		case REQ_SETPAL:
+			res = palette.req_SETPAL(req);
 			break;
 		}
 		v_REQRES = res ? 0 : 255;
