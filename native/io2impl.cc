@@ -322,6 +322,7 @@ private:
 	Request req;
 	uint8_t v_REQRES;
 	uint8_t v_REQPTRHI;
+	uint8_t v_ENABLE;
 	Random random;
 	MicroIOKeybuf keybuf;
 	Palette palette;
@@ -335,8 +336,10 @@ private:
 			buffer[i] = bgcol;
 	}
 	void render() {
-		render_background();
-		console.render();
+		if (v_ENABLE & ENABLE_BGCOL)
+			render_background();
+		if (v_ENABLE & ENABLE_CONSOLE)
+			console.render();
 	}
 	uint8_t m_get_uint8(uint16_t addr) {
 		return (uint8_t)m->get(addr);
@@ -402,6 +405,8 @@ public:
 			return v_REQRES;
 		case REQPTRHI:
 			return v_REQPTRHI;
+		case ENABLE:
+			return v_ENABLE;
 		case FRMFPS:
 			return v_FRMFPS;
 		case RANDOM:
@@ -440,6 +445,9 @@ public:
 		case REQPUT:
 			req.put(address, value);
 			break;
+		case ENABLE:
+			v_ENABLE = value;
+			break;
 		case FRMFPS:
 			v_FRMFPS = value;
 			break;
@@ -476,6 +484,7 @@ public:
 		req.reset();
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
+		v_ENABLE = ENABLE_BGCOL | ENABLE_CONSOLE;
 		random.reset();
 		keybuf.reset();
 		palette.reset();
