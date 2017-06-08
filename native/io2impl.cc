@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "jbit.h"
 #include "devimpl.h"
@@ -122,6 +123,12 @@ public:
 	void put_uint16(int pos, uint16_t value) {
 		v_REQDAT[pos] = value & 0xff;
 		v_REQDAT[pos + 1] = value >> 8;
+	}
+	void put_uint64(int pos, uint64_t value) {
+		for (int i = 0; i < 8; i++) {
+			v_REQDAT[pos++] = value & 0xff;
+			value >>= 8;
+		}
 	}
 };
 
@@ -329,6 +336,7 @@ public:
 private:
 	AddressSpace *m;
 	int frameno;
+	uint64_t systime;
 	Request req;
 	uint8_t v_REQRES;
 	uint8_t v_REQPTRHI;
@@ -356,6 +364,39 @@ private:
 	}
 	uint16_t m_get_uint16(uint16_t addr) {
 		return (uint16_t)((m_get_uint8(addr + 1) << 8) | m_get_uint8(addr));
+	}
+	bool req_TIME() {
+		bool is_abs = false;
+		int fract = TIME_1000;
+		switch (req.n()) {
+		case 1:
+			break;
+		case 3:
+			fract = req.get_uint8(2);
+		case 2:
+			is_abs = req.get_uint8(1) == TIME_ABS;
+			break;
+		default:
+			return false;
+		}
+		uint64_t t = 0;
+		if (is_abs)
+			t = time(0) * (uint64_t)1000;
+		else
+			t = systime / 1000;
+		switch (fract) {
+		case TIME_1:
+			t /= 1000;
+			break;
+		case TIME_10:
+			t /= 100;
+			break;
+		case TIME_100:
+			t /= 10;
+			break;
+		}
+		req.put_uint64(0, t);
+		return true;
 	}
 	bool req_DPYINFO() {
 		if (req.n() != 1)
@@ -386,6 +427,9 @@ private:
 	void request() {
 		bool res = false;
 		switch (req.id()) {
+		case REQ_TIME:
+			res = req_TIME();
+			break;
 		case REQ_DPYINFO:
 			res = req_DPYINFO();
 			break;
@@ -504,6 +548,7 @@ public:
 		m = dma;
 	}
 	void reset() {
+		systime = 0;
 		req.reset();
 		v_REQRES = 0;
 		v_REQPTRHI = 0;
@@ -522,8 +567,10 @@ public:
 		keybuf.enque(key);
 	}
 	bool update(int dt_us) {
-		if (dt_us)
+		if (dt_us) {
+			systime += dt_us;
 			frameno++;
+		}
 		if (wait_us) {
 			rel_time += dt_us;
 			if (rel_time < wait_us)
