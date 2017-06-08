@@ -89,8 +89,11 @@ private:
 	uint8_t v_REQDAT[16];
 public:
 	Request() { reset(); }
-	void reset() {
+	void rewind() {
 		buf.reset();
+	}
+	void reset() {
+		rewind();
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	uint8_t get(uint16_t address) {
@@ -112,6 +115,13 @@ public:
 	}
 	uint8_t get_uint8(int pos) const {
 		return (uint8_t)buf.get_data()[pos];
+	}
+	void put_uint8(int pos, uint8_t value) {
+		v_REQDAT[pos] = value;
+	}
+	void put_uint16(int pos, uint16_t value) {
+		v_REQDAT[pos] = value & 0xff;
+		v_REQDAT[pos + 1] = value >> 8;
 	}
 };
 
@@ -347,6 +357,16 @@ private:
 	uint16_t m_get_uint16(uint16_t addr) {
 		return (uint16_t)((m_get_uint8(addr + 1) << 8) | m_get_uint8(addr));
 	}
+	bool req_DPYINFO() {
+		if (req.n() != 1)
+			return false;
+		req.put_uint16(DPYINFO_WIDTH, width);
+		req.put_uint16(DPYINFO_HEIGHT, height);
+		req.put_uint8(DPYINFO_COLORDEPTH, 24);
+		req.put_uint8(DPYINFO_ALPHADEPTH, 8);
+		req.put_uint8(DPYINFO_FLAGS, DPYINFO_FLAGS_ISCOLOR | DPYINFO_FLAGS_ISMIDP2);
+		return true;
+	}
 	bool req_SETBGCOL() {
 		switch (req.n()) {
 		case 2:
@@ -366,6 +386,9 @@ private:
 	void request() {
 		bool res = false;
 		switch (req.id()) {
+		case REQ_DPYINFO:
+			res = req_DPYINFO();
+			break;
 		case REQ_SETBGCOL:
 			res = req_SETBGCOL();
 			break;
@@ -374,13 +397,13 @@ private:
 			break;
 		}
 		v_REQRES = res ? 0 : 255;
-		req.reset();
+		req.rewind();
 	}
 	void put_REQPTRLO(uint8_t value) {
 		uint16_t addr = (v_REQPTRHI << 8) | value;
 		uint16_t len = m_get_uint16(addr);
 		addr += 2;
-		req.reset();
+		req.rewind();
 		for (int i = 0; i < len; i++)
 			req.put(REQPUT, m_get_uint8(addr++));
 		if (!len)
