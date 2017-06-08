@@ -48,11 +48,6 @@ static RomResource *font = 0;
 static const int font_width = 8;
 static const int font_height = 14;
 
-// TODO: extend JB format
-static const uint32_t bg_color = 0x0090e0c0;
-static const uint32_t console_bg_color = 0x0078c8b4;
-static const uint32_t console_fg_color = 0x00000000;
-
 #include "blt32.h"
 typedef uint32_t color_t;
 #define get_color_rgba blt32_get_color_rgba
@@ -152,16 +147,29 @@ static const uint32_t standardPalette[] = {
 	0xA4A7A2, // Light Gray
 };
 
+static const uint32_t microioPalette[] = {
+	0x000000, // Foreground
+	0x78c8b4, // Background
+	0x90e0c0, // Border
+	0x000000, // Unused
+};
+
 class Palette {
 private:
 	color_t pal[256];
 	int mask;
 public:
 	Palette() { reset(); }
-	void reset() {
+	void reset() { set_standard(); } // TODO: extend JB format
+	void set_standard() {
 		for (int i = 0; i < 16; i++)
 			pal[i] = get_color_rgb(standardPalette[i]);
 		mask = 0x0f;
+	}
+	void set_microio() {
+		for (int i = 0; i < 4; i++)
+			pal[i] = get_color_rgb(microioPalette[i]);
+		mask = 0x03;
 	}
 	color_t operator[](uint8_t id) const {
 		return pal[id & mask];
