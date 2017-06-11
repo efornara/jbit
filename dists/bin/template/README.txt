@@ -23,7 +23,7 @@ midp/
 
 win32/
   jbit.exe - The native version of JBit for Windows.
-  io2sim.exe - JBit IO2 Simulator for Windows (MicroIO only for now).
+  io2sim.exe - JBit IO2 Simulator for Windows (work in progress).
 
 linux/
   jbit*.bin - The native versions of JBit for Linux/Android.

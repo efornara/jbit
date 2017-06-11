@@ -147,6 +147,8 @@ static const uint32_t standardPalette[] = {
 	0xA4A7A2, // Light Gray
 };
 
+#define COLOR_MICROIO_BORDER 2
+
 static const uint32_t microioPalette[] = {
 	0x000000, // Foreground
 	0x78c8b4, // Background
@@ -159,8 +161,13 @@ private:
 	color_t pal[256];
 	int mask;
 public:
-	Palette() { reset(); }
-	void reset() { set_standard(); } // TODO: extend JB format
+	Palette() : mask(0) {}
+	void reset(bool microio) {
+		if (microio)
+			set_microio();
+		else
+			set_standard();
+	}
 	void set_standard() {
 		for (int i = 0; i < 16; i++)
 			pal[i] = get_color_rgb(standardPalette[i]);
@@ -177,7 +184,7 @@ public:
 	bool req_SETPAL(Request &req) {
 		int n = req.n() - 1;
 		if (n == 0) {
-			reset();
+			reset(false);
 			return true;
 		}
 		if (n % 3 != 0)
@@ -323,13 +330,13 @@ public:
 			} break;
 		}
 	}
-	void render() {
+	void render(bool microio) {
 		int i = 0, y = oy;
 		for (int r = 0; r < v_CONROWS; r++) {
 			int x = ox;
 			for (int c = 0; c < v_CONCOLS; c++) {
 				const Cell *cell = &buf[i++];
-				if (cell->chr)
+				if (cell->chr || microio)
 					font_draw(x, y, pal[cell->bg], pal[cell->fg], cell->chr);
 				x += font_width;
 			}
@@ -342,6 +349,7 @@ class IO2Impl : public IO2 {
 public:
 	static const int FRAME_MIN_WAIT = 10000;
 private:
+	bool microio;
 	AddressSpace *m;
 	int frameno;
 	uint64_t systime;
@@ -365,7 +373,7 @@ private:
 		if (v_ENABLE & ENABLE_BGCOL)
 			render_background();
 		if (v_ENABLE & ENABLE_CONSOLE)
-			console.render();
+			console.render(microio);
 	}
 	uint8_t m_get_uint8(uint16_t addr) {
 		return (uint8_t)m->get(addr);
@@ -563,13 +571,14 @@ public:
 		v_ENABLE = ENABLE_BGCOL | ENABLE_CONSOLE;
 		random.reset();
 		keybuf.reset();
-		palette.reset();
+		palette.reset(microio);
 		console.reset();
-		bgcol = get_color_rgb(palette[COLOR_WHITE]);
+		bgcol = palette[microio ? COLOR_MICROIO_BORDER : COLOR_WHITE];
 		v_FRMFPS = 40;
 		wait_us = 0;
 	}
 	// IO2
+	void set_microio(bool microio_) { microio = microio_; }
 	const void *get_framebuffer() { return buffer; }
 	void keypress(int key) {
 		keybuf.enque(key);
@@ -591,7 +600,7 @@ public:
 		return false;
 	}
 	// IO2Impl
-	IO2Impl() : frameno(0), console(palette, width, height) {
+	IO2Impl() : microio(false), frameno(0), console(palette, width, height) {
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
 		font = RomResource::load("vga14.rom");

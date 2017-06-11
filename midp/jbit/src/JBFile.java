@@ -55,4 +55,13 @@ public interface JBFile {
 	int OFFSET_DATAPAGES = 9;
 	int SIZE_DATAPAGES = 1;
 
+	int OFFSET_DEVID = 10;
+	int SIZE_DEVID = 1;
+
+	byte DEVID_UNSPEC = 0;
+	byte DEVID_STDOUT = 1;
+	byte DEVID_XV65 = 2;
+	byte DEVID_MICROIO = 3;
+	byte DEVID_IO2 = 4;
+
 }

@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "jbit.h"
+#include "_jbfmt.h"
 
 void fatal(const char *format, ...) {
 	va_list ap;
@@ -51,6 +52,33 @@ void fatal(const char *format, ...) {
 // pushing rich abstraction into devices not worth it
 static Tag MicroIOTag("microio");
 static Tag Xv65Tag("xv65");
+
+static struct {
+	const char *name;
+	int id;
+} dev_id_map[] = {
+	{ "stdout", JBFMT_DEVID_STDOUT },
+	{ "xv65", JBFMT_DEVID_XV65 },
+	{ "microio", JBFMT_DEVID_MICROIO },
+	{ "io2", JBFMT_DEVID_IO2 },
+	{ 0, JBFMT_DEVID_UNSPEC }
+};
+
+static Tag dev_id_to_tag(int id) {
+	int i;
+	for (i = 0; dev_id_map[i].name; i++)
+		if (id == dev_id_map[i].id)
+			break;
+	return Tag(dev_id_map[i].name);
+}
+
+static int dev_tag_to_id(Tag tag) {
+	int i;
+	for (i = 0; dev_id_map[i].name; i++)
+		if (tag == dev_id_map[i].name)
+			break;
+	return dev_id_map[i].id;
+}
 
 static void show_asm_devices() {
 	printf("asm devices:\n");
@@ -106,7 +134,12 @@ static const char *resolve_file_name(const char *name, Buffer *buffer) {
 	Buffer env_buf(size);
 	char *env = env_buf.append_raw(size);
 	memcpy(env, c_env, size);
-	const char *dir = strtok(env, ":");
+#ifdef __WIN32__
+	const char *delim = ";";
+#else
+	const char *delim = ":";
+#endif
+	const char *dir = strtok(env, delim);
 	do {
 		int n = strlen(dir);
 		if (n == 0)
@@ -119,7 +152,7 @@ static const char *resolve_file_name(const char *name, Buffer *buffer) {
 		const char *file_name = buffer->get_data();
 		if (access(file_name, F_OK) == 0) // fewer surprises than R_OK
 			return file_name;
-	} while ((dir = strtok(NULL, ":")));
+	} while ((dir = strtok(NULL, delim)));
 	return name;
 }
 
@@ -161,8 +194,8 @@ public:
 	JBParser(const Buffer *buffer_) : buffer(buffer_) {
 		jb = buffer->get_data();
 		size = buffer->get_length();
-		if (size < 12)
-			fatal("invalid jb format (size < 12)");
+		if (size < JBFMT_SIZE_HEADER)
+			fatal("invalid jb format (size < header size)");
 	}
 	static bool has_signature(const Buffer *buf) {
 		if (buf->get_length() < 4)
@@ -172,16 +205,17 @@ public:
 		return true;
 	}
 	void parse(Program *prg) {
-		int code_pages = jb[8] & 0xFF;
-		int data_pages = jb[9] & 0xFF;
+		int code_pages = jb[JBFMT_OFFSET_CODEPAGES] & 0xFF;
+		int data_pages = jb[JBFMT_OFFSET_DATAPAGES] & 0xFF;
 		if (code_pages == 0 || code_pages + data_pages > 251)
 			fatal("invalid jb format (pages)");
 		int program_size = (code_pages + data_pages) * 256;
-		if (size != 12 + program_size)
+		if (size != JBFMT_SIZE_HEADER + program_size)
 			fatal("invalid jb format (size/pages mismatch)");
 		prg->reset();
+		prg->device_tag = dev_id_to_tag(jb[JBFMT_OFFSET_DEVID]);
 		char *raw = prg->append_raw(program_size);
-		memcpy(raw, &jb[12], program_size);
+		memcpy(raw, &jb[JBFMT_SIZE_HEADER], program_size);
 		prg->n_of_code_pages = code_pages;
 		prg->n_of_data_pages = data_pages;
 	}
@@ -279,14 +313,14 @@ static void convert_to_asm(FILE *f, const Program *prg) {
 
 static void convert_to_jb(FILE *f, const Program *prg) {
 	fprintf(f, "JBit");
-	fputc(0, f); // header size
-	fputc(12, f);
-	fputc(1, f); // version
-	fputc(0, f);
+	fputc(JBFMT_SIZE_HEADER >> 8, f);
+	fputc(JBFMT_SIZE_HEADER & 0xff, f);
+	fputc(JBFMT_VERSION_0_MAJOR, f);
+	fputc(JBFMT_VERSION_1_MINOR, f);
 	fputc(prg->n_of_code_pages, f);
 	fputc(prg->n_of_data_pages, f);
+	fputc(dev_tag_to_id(prg->device_tag), f);
 	fputc(0, f); // reserved
-	fputc(0, f);
 	int i;
 	for (i = 0; i < prg->get_length(); i++)
 		fputc(prg->get_data()[i], f);

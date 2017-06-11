@@ -96,6 +96,7 @@ protected:
 public:
 	int get_width() const { return width; }
 	int get_height() const { return height; }
+	virtual void set_microio(bool microio) = 0;
 	virtual const void *get_framebuffer() = 0;
 	virtual void keypress(int key) = 0;
 	virtual bool update(int dt_us) = 0;

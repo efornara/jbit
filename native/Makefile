@@ -5,7 +5,7 @@
 CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
-DEVSYMS = d_xv65.h d_io2.h d_mio.h
+SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
 JBIT_OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
 IO2SIM_OBJS = io2retro.o io2impl.o blt32.o devimpl.o cpu.o utils.o rom.o \
   romdata.o
@@ -179,7 +179,7 @@ all: $(OUT)
 $(OUT): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $(OUT) $(OBJS) $(LIBS)
 
-gen: jbit.1 BSD.mk $(DEVSYMS)
+gen: jbit.1 BSD.mk $(SYMS)
 
 jbit.1: jbit.ron
 	ronn <jbit.ron >jbit.1
@@ -200,6 +200,9 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+_jbfmt.h: jbfmt.inc
+	perl ../tools/inc2h.pl <jbfmt.inc >_jbfmt.h
 
 resource.o: resource.rc
 	$(WINDRES) resource.rc resource.o

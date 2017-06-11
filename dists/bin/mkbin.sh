@@ -65,7 +65,6 @@ cp $IN/midp/COPYING.LIB $OUT/midp/LGPL21.txt
 # copy selection of samples
 mkdir -p $OUT/samples/6502
 cp ../../samples/*.asm $OUT/samples
-cp ../../samples/js/bytes.asm $OUT/samples/6502
 cp ../../samples/6502/*.asm $OUT/samples/6502
 
 # make archives

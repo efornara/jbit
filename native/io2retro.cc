@@ -36,6 +36,7 @@
 #include <math.h>
 
 #include "jbit.h"
+#include "_jbfmt.h"
 #include "rom.h"
 
 #include "libretro.h"
@@ -180,6 +181,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device) {
 
 extern "C"
 void retro_reset() {
+	io2->set_microio(prg.device_tag == "microio");
 	vm->reset();
 	vm->load(&prg);
 	vm_status = 0;
@@ -253,20 +255,21 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code) {
 }
 
 static const char *parse_program(const uint8_t *jb, size_t size) {
-	if (size < 12)
-		return "Invalid jb format (size < 12).\n";
+	if (size < JBFMT_SIZE_HEADER)
+		return "Invalid jb format (size < header size).\n";
 	if (memcmp(jb, "JBit", 4))
 		return "Invalid jb format (signature).\n";
-	size_t code_pages = jb[8] & 0xFF;
-	size_t data_pages = jb[9] & 0xFF;
+	size_t code_pages = jb[JBFMT_OFFSET_CODEPAGES] & 0xFF;
+	size_t data_pages = jb[JBFMT_OFFSET_DATAPAGES] & 0xFF;
 	if (code_pages == 0 || code_pages + data_pages > 251)
 		return "Invalid jb format (pages).\n";
 	size_t program_size = (code_pages + data_pages) * 256;
-	if (size != 12 + program_size)
+	if (size != JBFMT_SIZE_HEADER + program_size)
 		return "Invalid jb format (size/pages mismatch).\n";
 	prg.reset();
+	prg.device_tag = Tag(jb[JBFMT_OFFSET_DEVID] == JBFMT_DEVID_MICROIO ? "microio" : 0) ;
 	char *raw = prg.append_raw(program_size);
-	memcpy(raw, &jb[12], program_size);
+	memcpy(raw, &jb[JBFMT_SIZE_HEADER], program_size);
 	prg.n_of_code_pages = code_pages;
 	prg.n_of_data_pages = data_pages;
 	return 0;
