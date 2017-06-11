@@ -28,6 +28,10 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.1.1
+
+io2sim: Palette and console. Added device id in .jb header.
+
 ### JBit 2.1.0
 
 io2sim: libretro core and win32 IO2 simulator (MicroIO only for now).
