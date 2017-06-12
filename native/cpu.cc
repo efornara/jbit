@@ -32,9 +32,18 @@
 
 #include <string.h>
 
+// TODO: paged, cow address space
+#ifdef __DOS__
+#define AS_PAGES 0x40
+#define AS_MASK & 0x3fff
+#else
+#define AS_PAGES 256
+#define AS_MASK
+#endif
+
 class VMAddressSpace {
 private:
-	static const int mem_size = 256 * 256;
+	static const int mem_size = AS_PAGES * 256;
 	IO *io;
 	unsigned char m[mem_size];
 public:
@@ -49,7 +58,7 @@ public:
 		if ((address & 0xff00) == 0x0200)
 			io->put(address & 0xff, value);
 		else
-			m[address] = static_cast<unsigned char>(value);
+			m[address AS_MASK] = static_cast<unsigned char>(value);
 	}
 	inline int get(int address) {
 		if (address < 0 || address >= mem_size)
@@ -57,7 +66,7 @@ public:
 		if ((address & 0xff00) == 0x0200)
 			return io->get(address & 0xff);
 		else
-			return m[address];
+			return m[address AS_MASK];
 	}
 };
 
@@ -126,6 +135,7 @@ public:
 //@				"Y:" + y + " " + 
 //@		"");
 		// #endif
+
 		byte opcode = (byte)m.get(pc++);
 		switch (opcode) {
 		/// {{{ cpp opcodes.p !
@@ -1176,7 +1186,7 @@ public:
 	void load(const Program *prg) {
 		const char *p = prg->get_data();
 		int len = prg->get_length();
-		if (len > 253 * 256)
+		if (len > (AS_PAGES - 4) * 256)
 			return;
 		for (int i = 0; i < len; i++)
 			mem.put(0x300 + i, p[i] & 0xff);

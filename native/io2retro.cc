@@ -193,13 +193,13 @@ static const int CPUSvc_HALT = 1;
 
 extern "C"
 void retro_run() {
-	static const int cpu_speed = 1000000 / 60;
+	static const uint_fast32_t cpu_speed = 1000000 / 60;
 	static const int dt_us = 16667;
 	fetch_input();
 	if (!vm_terminated) {
 		dispatch_keypress();
 		if (!io2->update(dt_us)) {
-			for (int i = 0; i < cpu_speed; i++) {
+			for (uint_fast32_t i = 0; i < cpu_speed; i++) {
 				if ((vm_status = vm->step()))
 					break;
 				if (io2->update(0))

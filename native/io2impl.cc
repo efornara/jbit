@@ -48,9 +48,15 @@ static RomResource *font = 0;
 static const int font_width = 8;
 static const int font_height = 14;
 
+#ifdef __DOS__
+#include "blt08.h"
+typedef uint8_t color_t;
+#define get_color_rgba blt08_get_color_rgba
+#else
 #include "blt32.h"
 typedef uint32_t color_t;
 #define get_color_rgba blt32_get_color_rgba
+#endif
 
 static color_t *buffer;
 
@@ -363,8 +369,8 @@ private:
 	Console console;
 	color_t bgcol;
 	int v_FRMFPS;
-	int wait_us;
-	int rel_time;
+	uint_fast32_t wait_us;
+	uint_fast32_t rel_time;
 	void render_background() {
 		for (int i = 0; i < width * height; i++)
 			buffer[i] = bgcol;

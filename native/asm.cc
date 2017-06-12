@@ -702,7 +702,7 @@ struct Operand {
 	bool has_label;
 	String name;
 	TokenArg arg;
-	int value;
+	long value;
 };
 
 struct Binary {
@@ -943,7 +943,7 @@ public:
 	}
 };
 
-#define VALUE_GUARD 100000
+#define VALUE_GUARD 100000L
 
 class Pass2 : public Pass {
 private:
@@ -1042,6 +1042,10 @@ public:
 		return 0;
 	}
 };
+
+#ifdef __I86__
+#pragma code_seg("asm_part2")
+#endif
 
 class ParserEngine {
 private:

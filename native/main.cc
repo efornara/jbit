@@ -158,7 +158,7 @@ static const char *resolve_file_name(const char *name, Buffer *buffer) {
 
 static Buffer *load_file(const char *name) {
 	FILE *f;
-	int i = 0, j, n;
+	long i = 0, j, n;
 	Buffer *buffer = new Buffer();
 	
 	const char *file_name = resolve_file_name(name, buffer);
@@ -167,7 +167,7 @@ static Buffer *load_file(const char *name) {
 	buffer->reset();
 	fseek(f, 0, SEEK_END);
 	n = ftell(f);
-	if (n > 1024 * 1024)
+	if (n > 1024 * 1024L)
 		fatal("invalid file '%s' (size >1M)", file_name);
 	rewind(f);
 	char *buf = buffer->append_raw(n);

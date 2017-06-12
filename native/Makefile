@@ -90,28 +90,25 @@ OBJS += stdout.o
 OUT = jbit.exe
 endif
 
-ifeq ($(PLATFORM),dos)
-ifeq ($(ARCH),dpmi)
+ifeq ($(PLATFORM),dosdpmi)
 CXX = i586-pc-msdosdjgpp-g++
 LDFLAGS = -s
-OBJS += stdout.o
+OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 OUT = jbit.exe
 endif
-ifeq ($(ARCH),dos4g)
+ifeq ($(PLATFORM),dos4g)
 CXX = wcl386
-CXXFLAGS = -bt=dos
+CXXFLAGS = -q -bt=dos
 OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 jbit.exe: $(OBJS)
-	wcl386 -l=dos4g -fe=jbit $(OBJS)
+	wcl386 -q -l=dos4g -fe=jbit $(OBJS)
 endif
-ifeq ($(ARCH),dos16)
-# broken target: large segments, 16-bit ints, stack overflow, etc...
+ifeq ($(PLATFORM),dos16)
 CXX = wcl
-CXXFLAGS = -bt=dos -ml -os
+CXXFLAGS = -q -bt=dos -ml -os
 OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 jbit.exe: $(OBJS)
-	wcl -l=dos -fe=jbit $(OBJS)
-endif
+	wcl -q -l=dos -fe=jbit -k8192 $(OBJS)
 endif
 
 endif
