@@ -31,8 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#include <sys/time.h>
+#include <time.h>
 
 #include "jbit.h"
 #include "devimpl.h"
@@ -43,9 +42,8 @@ long long Random::next() {
 }
 
 void Random::reset() {	
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	long long t = ((long long)tv.tv_sec * 1000LL) + tv.tv_usec / 1000;
+	time_t t;
+	t = time(NULL);
 	seed[0] = t & MAXRAND;
 	seed[1] = 0;
 	put(255);
