@@ -117,14 +117,9 @@ static void load_program() {
 	}
 	rewind(f);
 	char *buf = jb.append_raw(n);
-	int i = 0, j;
-	while (i < n) {
-		if ((j = fread(&buf[i], 1, n - 1, f)) == 0)
-			break;
-		i += j;
-	}
+	int i = fread(buf, n, 1, f);
 	fclose(f);
-	if (i != n) {
+	if (i != 1) {
 		error("Size check failed for '%s'.", s);
 		return;
 	}

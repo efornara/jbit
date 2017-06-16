@@ -353,7 +353,7 @@ public:
 
 class IO2Impl : public IO2 {
 public:
-	static const int FRAME_MIN_WAIT = 10000;
+	static const unsigned FRAME_MIN_WAIT = 10000;
 private:
 	bool microio;
 	AddressSpace *m;
@@ -609,10 +609,10 @@ public:
 	IO2Impl() : microio(false), frameno(0), console(palette, width, height) {
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
-		font = RomResource::load("vga14.rom");
+		font = RomResource::get("vga14.rom");
 	}
 	~IO2Impl() {
-		RomResource::cleanup();
+		RomResource::release(font);
 		delete[] buffer;
 		buffer = 0;
 	}

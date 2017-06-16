@@ -38,5 +38,4 @@ print('RomEntry rom_entries[] = {')
 for entry in directory:
 	print('\t{ "%s", %s_data, %d, %d },' % entry)
 print('};')
-print('RomResource rom_resources[%d];' % len(roms))
 print('int n_of_roms = %d;' % len(roms))

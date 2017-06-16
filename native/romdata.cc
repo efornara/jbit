@@ -91,5 +91,4 @@ RomEntry rom_entries[] = {
 	{ "vga14.rom", vga14_rom_data, 1040, 3584 },
 	{ "intro17.jb", intro17_jb_data, 218, 524 },
 };
-RomResource rom_resources[2];
 int n_of_roms = 2;

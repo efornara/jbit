@@ -37,14 +37,16 @@ struct RomEntry {
 
 class RomResource {
 private:
+	const char *name;
 	unsigned char *data;
 	int size;
-	void release();
+	bool load_embedded();
+	bool load_external();
+	RomResource(const char *name_) : name(name_), data(0) {}
+	~RomResource() { delete[] name; delete[] data; }
 public:
-	RomResource() : data(0) {}
-	~RomResource() { release(); }
 	const unsigned char *get_data() const { return data; };
 	int get_size() const { return size; }
-	static RomResource *load(const char *name);
-	static void cleanup();
+	static RomResource *get(const char *name);
+	static void release(RomResource *res);
 };

@@ -282,17 +282,20 @@ bool retro_load_game(const struct retro_game_info *info) {
 		l(RETRO_LOG_ERROR, "Failed setting pixel format (XRGB8888).\n");
 		return false;
 	}
+	RomResource *rom = 0;
 	const uint8_t *data;
 	size_t size;
 	if (info) {
 		data = (const uint8_t *)info->data;
 		size = info->size;
 	} else {
-		RomResource *rom = RomResource::load("intro17.jb");
+		rom = RomResource::get("intro17.jb");
 		data = rom->get_data();
 		size = rom->get_size();
 	}
 	const char *error = parse_program(data, size);
+	if (rom)
+		RomResource::release(rom);
 	if (error) {
 		l(RETRO_LOG_ERROR, error);
 		return false;

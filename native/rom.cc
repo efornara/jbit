@@ -30,53 +30,95 @@
 
 #include "rom.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <stdint.h>
+
+#ifdef __I86__
+
+bool RomResource::load_embedded() {
+	return false;
+}
+
+#else
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
 #define STBI_ONLY_PNG
 #include "stb_image.h"
 
 extern const RomEntry rom_entries[];
-extern RomResource rom_resources[];
 extern int n_of_roms;
 
-void RomResource::release() {
-	delete[] data;
-	data = 0;
-}
-
-struct Rom {
-	const RomEntry *e;
-	RomResource *r;
-};
-
-static Rom find(const char *name) {
-	Rom rom = { 0, 0 };
+bool RomResource::load_embedded() {
+	const RomEntry *e = 0;
 	for (int i = 0; i < n_of_roms; i++) {
 		if (!strcmp(name, rom_entries[i].file_name)) {
-			rom.e = &rom_entries[i];
-			rom.r = &rom_resources[i];
+			e = &rom_entries[i];
 			break;
 		}
 	}
-	return rom;
-}
-
-RomResource *RomResource::load(const char *name) {
-	Rom rom = find(name);
-	if (!rom.e)
-		return 0;
-	if (rom.r->data)
-		return rom.r;
-	const int n = rom.e->original_size;
-	rom.r->data = new uint8_t[n];
-	const int decoded_n = stbi_zlib_decode_buffer((char *)rom.r->data, n,
-	  (const char *)rom.e->data, rom.e->compressed_size);
+	if (!e)
+		return false;
+	const int n = e->original_size;
+	data = new unsigned char[n];
+	const int decoded_n = stbi_zlib_decode_buffer((char *)data, n,
+	  (const char *)e->data, e->compressed_size);
 	assert(n == decoded_n);
-	rom.r->size = n;
-	return rom.r;
+	size = n;
+	return true;
 }
 
-void RomResource::cleanup() {
-	for (int i = 0; i < n_of_roms; i++)
-		rom_resources[i].release();
+#endif
+
+#ifndef __I86__
+
+bool RomResource::load_external() {
+	return false;
+}
+
+#else
+
+bool RomResource::load_external() {
+	bool ret = false;
+	FILE *f = 0;
+	long n;
+	if (!(f = fopen(name, "rb")))
+		goto done;
+	if (fseek(f, 0, SEEK_END))
+		goto done;
+	n = ftell(f);
+	if (n <= 0)
+		goto done;
+	rewind(f);
+	data = new unsigned char[n];
+	if (fread(data, n, 1, f) != 1)
+		goto done;
+	size = (int)n;
+	ret = true;
+done:
+	if (f)
+		fclose(f);
+	return ret;
+}
+
+#endif
+
+RomResource *RomResource::get(const char *name) {
+	RomResource *res;
+	const int n = strlen(name) + 1;
+	char *s = new char[n];
+	memcpy(s, name , n);
+	res = new RomResource(s);
+	if (res->load_embedded())
+		return res;
+	if (res->load_external())
+		return res;
+	delete res;
+	return 0;
+}
+
+void RomResource::release(RomResource *res) {
+	delete res;
 }
