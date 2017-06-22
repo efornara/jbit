@@ -28,6 +28,10 @@
 
 // blt08.h
 
+#define blt08_is_color_opaque(c) (c)
+
+#define blt08_mix_color(d,s) ((s) ? (s) : (d))
+
 typedef struct {
 	const uint8_t *rgb;
 	uint8_t n_of_entries;

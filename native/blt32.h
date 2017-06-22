@@ -28,4 +28,32 @@
 
 // blt32.h
 
+static inline bool blt32_is_color_opaque(uint32_t c) {
+	return (c & 0xff000000) == 0xff000000;
+}
+
+static inline uint32_t blt32_mix_color(uint32_t dst, uint32_t src) {
+	const uint8_t src_alpha = src >> 24;
+	switch (src_alpha) {
+	case 0:
+		return dst;
+	case 255:
+		return src;
+	default:
+		break;
+	}
+	const uint8_t dst_alpha = (uint8_t)(256 - src_alpha);
+	uint32_t out = 0xff000000;
+#define C(x) (((x) >> 16) & 0xff)
+	out |= ((C(dst) * dst_alpha + C(src) * src_alpha) & 0xff00) << (16 - 8);
+#undef C
+#define C(x) (((x) >> 8) & 0xff)
+	out |= ((C(dst) * dst_alpha + C(src) * src_alpha) & 0xff00) << (8 - 8);
+#undef C
+#define C(x) ((x) & 0xff)
+	out |= (C(dst) * dst_alpha + C(src) * src_alpha) >> 8; // (0 - 8)
+#undef C
+	return out;
+}
+
 extern uint32_t blt32_get_color_rgba(uint32_t c);

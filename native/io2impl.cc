@@ -62,10 +62,18 @@ static const int font_height = 14;
 #include "blt08.h"
 typedef uint8_t color_t;
 #define get_color_rgba blt08_get_color_rgba
+#define is_color_opaque blt08_is_color_opaque
+#define mix_color blt08_mix_color
+#define COLORDEPTH 7
+#define ALPHADEPTH 1
 #else
 #include "blt32.h"
 typedef uint32_t color_t;
 #define get_color_rgba blt32_get_color_rgba
+#define is_color_opaque blt32_is_color_opaque
+#define mix_color blt32_mix_color
+#define COLORDEPTH 24
+#define ALPHADEPTH 8
 #endif
 
 static color_t *buffer;
@@ -476,11 +484,18 @@ public:
 	}
 };
 
+enum ImgType {
+	IT_Alpha0,
+	IT_Alpha1,
+	IT_Alpha8,
+};
+
 class Image : public Obj {
 private:
 	u16 width;
 	u16 height;
 	color_t *data;
+	ImgType type;
 	void set_size(u16 width_, u16 height_) {
 		delete[] data;
 		width = width_;
@@ -488,7 +503,7 @@ private:
 		data = new color_t[width * height];
 	}
 public:
-	Image() : width(0), height(0), data(0) {}
+	Image() : width(0), height(0), data(0), type(IT_Alpha0) {}
 	~Image() { delete[] data; }
 	friend class Images;
 };
@@ -530,6 +545,7 @@ public:
 		Ref tmp = Ref::create(OT_Image);
 		Image *img = tmp.as<Image>();
 		img->set_size(width, height);
+		ImgType type = IT_Alpha0;
 		for (u16 i = 0, j = 7, y = 0; y < height; y++) {
 			for (u16 x = 0; x < width; x++, i++, j += 4) {
 				u32 c =
@@ -537,14 +553,26 @@ public:
 				  ((u32)req.get_uint8(j + 1) << 8) |
 				  ((u32)req.get_uint8(j + 2))
 				;
-				if (flags & IRAWRGBA_FLAGS_ALPHA)
-					img->data[i] = get_color_rgba(c |
-					  ((u32)req.get_uint8(j + 3) << 24)
-					);
-				else
+				if (flags & IRAWRGBA_FLAGS_ALPHA) {
+					u8 alpha = req.get_uint8(j + 3);
+					switch (alpha) {
+					case 0:
+						break;
+					case 255:
+						if (type == IT_Alpha0)
+							type = IT_Alpha1;
+						break;
+					default:
+						type = IT_Alpha8;
+						break;
+					}
+					img->data[i] = get_color_rgba(c | ((u32)alpha << 24));
+				} else {
 					img->data[i] = get_color_rgb(c);
+				}
 			}
 		}
+		img->type = type;
 		v[id] = tmp;
 		return true;
 	}
@@ -573,9 +601,23 @@ public:
 		}
 		u16f i = src_oy * src_stride + src_ox;
 		u16f j = dst_oy * dst_stride + dst_ox;
+		const ImgType type = img->type;
 		for (u16f y = 0; y < src_height; y++) {
 			for (u16f x = 0; x < src_width; x++) {
-				buffer[j + x] = img->data[i]; // TODO: alpha
+				const color_t src_c = img->data[i];
+				switch (type) {
+				case IT_Alpha0:
+					buffer[j + x] = src_c;
+					break;
+				case IT_Alpha1:
+					if (is_color_opaque(src_c))
+						buffer[j + x] = src_c;
+					break;
+				case IT_Alpha8: {
+					const color_t dst_c = buffer[j + x];
+					buffer[j + x] = mix_color(dst_c, src_c);
+					} break;
+				}
 				i++;
 			}
 			j += dst_stride;
@@ -679,8 +721,8 @@ private:
 			return false;
 		req.put_uint16(DPYINFO_WIDTH, width);
 		req.put_uint16(DPYINFO_HEIGHT, height);
-		req.put_uint8(DPYINFO_COLORDEPTH, 24);
-		req.put_uint8(DPYINFO_ALPHADEPTH, 8);
+		req.put_uint8(DPYINFO_COLORDEPTH, COLORDEPTH);
+		req.put_uint8(DPYINFO_ALPHADEPTH, ALPHADEPTH);
 		req.put_uint8(DPYINFO_FLAGS, DPYINFO_FLAGS_ISCOLOR | DPYINFO_FLAGS_ISMIDP2);
 		return true;
 	}

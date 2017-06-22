@@ -278,7 +278,7 @@ uint8_t blt08_get_color_rgba(uint32_t c) {
 	const uint8_t *p;
 	int i, min_d, best;
 	a = (uint8_t)(c >> 24);
-	if (a != 0xff)
+	if (!(a & 0x80))
 		return 0;
 	r = (uint8_t)(c >> 16);
 	g = (uint8_t)(c >>  8);
