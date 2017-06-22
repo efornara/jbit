@@ -33,6 +33,16 @@
 #include <stdint.h>
 #include <time.h>
 
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef uint_fast8_t u8f;
+typedef uint_fast16_t u16f;
+typedef uint_fast32_t u32f;
+typedef uint_fast64_t u64f;
+
 #include "jbit.h"
 #include "devimpl.h"
 
@@ -88,7 +98,7 @@ public:
 	static const int REQDAT_SIZE = 32;
 private:
 	Buffer buf;
-	uint8_t v_REQDAT[16];
+	u8 v_REQDAT[16];
 public:
 	Request() { reset(); }
 	void rewind() {
@@ -98,12 +108,12 @@ public:
 		rewind();
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
-	uint8_t get(uint16_t address) {
+	u8 get(u16 address) {
 		if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
 			return v_REQDAT[address - REQDAT];
 		return 0;
 	}
-	void put(uint16_t address, uint8_t value) {
+	void put(u16 address, u8 value) {
 		if (address == REQPUT)
 			buf.append_char(value);
 		else if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
@@ -112,20 +122,25 @@ public:
 	int n() const {
 		return buf.get_length();
 	}
-	uint8_t id() const {
-		return buf.get_length() ? (uint8_t)buf.get_data()[0] : 0;
+	u8 id() const {
+		return buf.get_length() ? (u8)buf.get_data()[0] : 0;
 	}
-	uint8_t get_uint8(int pos) const {
-		return (uint8_t)buf.get_data()[pos];
+	u8 get_uint8(int pos) const {
+		return (u8)buf.get_data()[pos];
 	}
-	void put_uint8(int pos, uint8_t value) {
+	u16 get_uint16(int pos) const {
+		return
+		  ((u16)buf.get_data()[pos + 1] << 8) |
+		  ((u16)buf.get_data()[pos]);
+	}
+	void put_uint8(int pos, u8 value) {
 		v_REQDAT[pos] = value;
 	}
-	void put_uint16(int pos, uint16_t value) {
+	void put_uint16(int pos, u16 value) {
 		v_REQDAT[pos] = value & 0xff;
 		v_REQDAT[pos + 1] = value >> 8;
 	}
-	void put_uint64(int pos, uint64_t value) {
+	void put_uint64(int pos, u64 value) {
 		for (int i = 0; i < 8; i++) {
 			v_REQDAT[pos++] = value & 0xff;
 			value >>= 8;
@@ -133,8 +148,118 @@ public:
 	}
 };
 
+enum ObjType {
+	OT_Image,
+};
+
+class Obj {
+private:
+	unsigned count;
+public:
+	Obj() : count(0) {}
+	virtual ~Obj() {}
+	friend class Ref;
+};
+
+class Ref {
+private:
+	unsigned id;
+	Obj *get() {
+		if (!id)
+			return 0;
+		return objs[id - 1];
+	}
+	void del() {
+		if (!id)
+			return;
+		delete objs[id - 1];
+		objs[id - 1] = 0;
+	}
+	static Obj **objs;
+	static unsigned size;
+public:
+	Ref() : id(0) {}
+	Ref(unsigned id_) : id(id_) {
+		Obj *obj = ptr();
+		if (obj)
+			obj->count++;
+	}
+	Ref(const Ref &ref) {
+		id = ref.id;
+		Obj *obj = ptr();
+		if (obj)
+			obj->count++;
+	}
+	~Ref() {
+		Obj *obj = ptr();
+		if (obj && !--obj->count)
+			del();
+	}
+	Ref& operator=(const Ref &src) {
+		if (&src == this)
+			return *this;
+		Obj *obj = ptr();
+		if (obj && !--obj->count)
+			del();
+		id = src.id;
+		obj = ptr();
+		if (obj)
+			obj->count++;
+		return *this;
+	}
+	bool is_null() { return id != 0; }
+	Obj *ptr() { return get(); }
+	template<typename T> T *as() { return (T *)ptr(); }
+	static void init(unsigned size_) {
+		objs = new Obj*[size_];
+		size = size_;
+		for (unsigned i = 0; i < size; i++)
+			objs[i] = 0;
+	}
+	static void cleanup() {
+		for (unsigned i = 0; i < size; i++)
+			delete objs[i];
+		delete[] objs;
+	}
+	static unsigned create(ObjType type);
+};
+
+Obj **Ref::objs = 0;
+unsigned Ref::size = 0;
+
+class Array {
+private:
+	Ref *refs;
+	u8 maxn;
+public:
+	Array(u8 maxn_) {
+		refs = new Ref[maxn_ + 1];
+		maxn = maxn_;
+	}
+	~Array() {
+		delete[] refs;
+	}
+	void dim(u8 maxn_) {
+		if (maxn == maxn_)
+			return;
+		Ref *old = refs;
+		refs = new Ref[maxn_ + 1];
+		u8 n = maxn < maxn_ ? maxn : maxn_;
+		for (u8 i = 0; i <= n; i++)
+			refs[i] = old[i];
+		maxn = maxn_;
+		delete[] old;
+	}
+	bool is_valid(u8 n) {
+		return n > 0 && n <= maxn;
+	}
+	Ref& operator[](int n) {
+		return refs[n];
+	}
+};
+
 // adapted from Vice (changes: White has been made pure)
-static const uint32_t standardPalette[] = {
+static const u32 standardPalette[] = {
 	0x000000, // Black
 	0xFFFFFF, // White
 	0xBE1A24, // Red
@@ -155,7 +280,7 @@ static const uint32_t standardPalette[] = {
 
 #define COLOR_MICROIO_BORDER 2
 
-static const uint32_t microioPalette[] = {
+static const u32 microioPalette[] = {
 	0x000000, // Foreground
 	0x78c8b4, // Background
 	0x90e0c0, // Border
@@ -184,7 +309,7 @@ public:
 			pal[i] = get_color_rgb(microioPalette[i]);
 		mask = 0x03;
 	}
-	color_t operator[](uint8_t id) const {
+	color_t operator[](u8 id) const {
 		return pal[id & mask];
 	}
 	bool req_SETPAL(Request &req) {
@@ -204,9 +329,9 @@ public:
 		mask--;
 		for (int i = 0, j = 1; i < n; i++) {
 			pal[i] = get_color_rgb(
-				((uint32_t)req.get_uint8(j) << 16) |
-				((uint32_t)req.get_uint8(j + 1) << 8) |
-				((uint32_t)req.get_uint8(j + 2))
+				((u32)req.get_uint8(j) << 16) |
+				((u32)req.get_uint8(j + 1) << 8) |
+				((u32)req.get_uint8(j + 2))
 			);
 			j += 3;
 		}
@@ -217,9 +342,9 @@ public:
 class Console {
 private:
 	struct Cell {
-		uint8_t chr;
-		uint8_t fg;
-		uint8_t bg;
+		u8 chr;
+		u8 fg;
+		u8 bg;
 		Cell() : chr(' '), fg(COLOR_BLACK), bg(COLOR_WHITE) {}
 	};
 	enum RWOp {
@@ -230,8 +355,8 @@ private:
 	const int width, height;
 	int ox, oy;
 	Cell *buf;
-	uint8_t v_CONCOLS, v_CONROWS, v_CONCX, v_CONCY;
-	uint8_t rw(RWOp op, uint16_t reg, uint8_t value, int cx, int cy) {
+	u8 v_CONCOLS, v_CONROWS, v_CONCX, v_CONCY;
+	u8 rw(RWOp op, u16 reg, u8 value, int cx, int cy) {
 		if (cx >= v_CONCOLS || cy >= v_CONROWS)
 			return 0;
 		Cell *cell = &buf[cx + cy * v_CONCOLS];
@@ -279,12 +404,12 @@ public:
 		ox = (width - v_CONCOLS * font_width)  / 2;
 		oy = (height - v_CONROWS * font_height)  / 2;
 	}
-	void put(uint16_t address, uint8_t value) {
+	void put(u16 address, u8 value) {
 		switch (address) {
 		case CONCOLS: {
 			int max = width / font_width;
 			if (!value || value > max)
-				value = (uint8_t)max;
+				value = (u8)max;
 			if (value != v_CONCOLS) {
 				v_CONCOLS = value;
 				resize();
@@ -293,7 +418,7 @@ public:
 		case CONROWS: {
 			int max = height / font_height;
 			if (!value || value > max)
-				value = (uint8_t)max;
+				value = (u8)max;
 			if (value != v_CONROWS) {
 				v_CONROWS = value;
 				resize();
@@ -316,7 +441,7 @@ public:
 			} break;
 		}
 	}
-	uint8_t get(uint16_t address) {
+	u8 get(u16 address) {
 		switch (address) {
 		case CONCOLS:
 			return v_CONCOLS;
@@ -351,6 +476,132 @@ public:
 	}
 };
 
+class Image : public Obj {
+private:
+	u16 width;
+	u16 height;
+	color_t *data;
+	void set_size(u16 width_, u16 height_) {
+		delete[] data;
+		width = width_;
+		height = width_;
+		data = new color_t[width * height];
+	}
+public:
+	Image() : width(0), height(0), data(0) {}
+	~Image() { delete[] data; }
+	friend class Images;
+};
+
+class Images {
+private:
+	static const int initial_dim = 3;
+	const int width, height;
+	Array v;
+	Ref bgimg;
+public:
+	Images(int width_, int height_)
+	  : width(width_), height(height_), v(initial_dim) {}
+	void reset() {
+		v.dim(initial_dim);
+		for (int id = 0; id <= initial_dim; id++)
+			v[id] = 0;
+		bgimg = 0;
+	}
+	bool req_SETBGIMG(Request &req) {
+		if (req.n() != 2)
+			return false;
+		u8 id = req.get_uint8(1);
+		bgimg = v.is_valid(id) ? v[id] : 0;
+		return true;
+	}
+	bool req_IRAWRGBA(Request &req) {
+		int n = req.n();
+		if (n < 7)
+			return false;
+		u8 id = req.get_uint8(1);
+		if (!v.is_valid(id))
+			return false;
+		u16 width = req.get_uint16(2);
+		u16 height = req.get_uint16(4);
+		u8 flags = req.get_uint8(6);
+		if (n != (int)(7 + width * height * 4))
+			return false;
+		Ref tmp = Ref::create(OT_Image);
+		Image *img = tmp.as<Image>();
+		img->set_size(width, height);
+		for (u16 i = 0, j = 7, y = 0; y < height; y++) {
+			for (u16 x = 0; x < width; x++, i++, j += 4) {
+				u32 c =
+				  ((u32)req.get_uint8(j + 0) << 16) |
+				  ((u32)req.get_uint8(j + 1) << 8) |
+				  ((u32)req.get_uint8(j + 2))
+				;
+				if (flags & IRAWRGBA_FLAGS_ALPHA)
+					img->data[i] = get_color_rgba(c |
+					  ((u32)req.get_uint8(j + 3) << 24)
+					);
+				else
+					img->data[i] = get_color_rgb(c);
+			}
+		}
+		v[id] = tmp;
+		return true;
+	}
+	void render() {
+		Image *img = bgimg.as<Image>();
+		if (!img || !img->data)
+			return;
+		const unsigned dst_stride = width;
+		const unsigned src_stride = img->width;
+		int dst_ox = (width - img->width) / 2;
+		int dst_oy = (height - img->height) / 2;
+		unsigned src_ox = 0;
+		unsigned src_oy = 0;
+		unsigned src_width = img->width;
+		unsigned src_height = img->height;
+		// TODO: test larger images
+		if (dst_ox < 0) {
+			src_ox += -dst_ox;
+			dst_ox = 0;
+			src_width = width;
+		}
+		if (dst_oy < 0) {
+			src_oy += -dst_oy;
+			dst_oy = 0;
+			src_height = height;
+		}
+		u16f i = src_oy * src_stride + src_ox;
+		u16f j = dst_oy * dst_stride + dst_ox;
+		for (u16f y = 0; y < src_height; y++) {
+			for (u16f x = 0; x < src_width; x++) {
+				buffer[j + x] = img->data[i]; // TODO: alpha
+				i++;
+			}
+			j += dst_stride;
+		}
+	}
+};
+
+unsigned Ref::create(ObjType type) {
+	unsigned id;
+	for (id = 0; id < Ref::size; id++)
+		if (!Ref::objs[id])
+			break;
+	if (id == Ref::size)
+		return 0;
+	Obj *obj = 0;
+	switch (type) {
+	case OT_Image:
+		obj = new Image();
+		break;
+	}
+	if (!obj)
+		return 0;
+	Ref::objs[id] = obj;
+	return id + 1;
+}
+
 class IO2Impl : public IO2 {
 public:
 	static const unsigned FRAME_MIN_WAIT = 10000;
@@ -360,17 +611,18 @@ private:
 	int frameno;
 	uint64_t systime;
 	Request req;
-	uint8_t v_REQRES;
-	uint8_t v_REQPTRHI;
-	uint8_t v_ENABLE;
+	u8 v_REQRES;
+	u8 v_REQPTRHI;
+	u8 v_ENABLE;
 	Random random;
 	MicroIOKeybuf keybuf;
 	Palette palette;
 	Console console;
 	color_t bgcol;
+	Images images;
 	int v_FRMFPS;
-	uint_fast32_t wait_us;
-	uint_fast32_t rel_time;
+	u32f wait_us;
+	u32f rel_time;
 	void render_background() {
 		for (int i = 0; i < width * height; i++)
 			buffer[i] = bgcol;
@@ -378,14 +630,16 @@ private:
 	void render() {
 		if (v_ENABLE & ENABLE_BGCOL)
 			render_background();
+		if (v_ENABLE & ENABLE_BGIMG)
+			images.render();
 		if (v_ENABLE & ENABLE_CONSOLE)
 			console.render(microio);
 	}
-	uint8_t m_get_uint8(uint16_t addr) {
-		return (uint8_t)m->get(addr);
+	u8 m_get_uint8(u16 addr) {
+		return (u8)m->get(addr);
 	}
-	uint16_t m_get_uint16(uint16_t addr) {
-		return (uint16_t)((m_get_uint8(addr + 1) << 8) | m_get_uint8(addr));
+	u16 m_get_uint16(u16 addr) {
+		return (u16)((m_get_uint8(addr + 1) << 8) | m_get_uint8(addr));
 	}
 	bool req_TIME() {
 		bool is_abs = false;
@@ -401,9 +655,9 @@ private:
 		default:
 			return false;
 		}
-		uint64_t t = 0;
+		u64 t = 0;
 		if (is_abs)
-			t = time(0) * (uint64_t)1000;
+			t = time(0) * (u64)1000;
 		else
 			t = systime / 1000;
 		switch (fract) {
@@ -437,9 +691,9 @@ private:
 			return true;
 		case 4:
 			bgcol = get_color_rgb(
-			  ((uint32_t)req.get_uint8(1) << 16) |
-			  ((uint32_t)req.get_uint8(2) << 8) |
-			  ((uint32_t)req.get_uint8(3))
+			  ((u32)req.get_uint8(1) << 16) |
+			  ((u32)req.get_uint8(2) << 8) |
+			  ((u32)req.get_uint8(3))
 			);
 			return true;
 		default:
@@ -461,13 +715,19 @@ private:
 		case REQ_SETPAL:
 			res = palette.req_SETPAL(req);
 			break;
+		case REQ_SETBGIMG:
+			res = images.req_SETBGIMG(req);
+			break;
+		case REQ_IRAWRGBA:
+			res = images.req_IRAWRGBA(req);
+			break;
 		}
 		v_REQRES = res ? 0 : 255;
 		req.rewind();
 	}
-	void put_REQPTRLO(uint8_t value) {
-		uint16_t addr = (v_REQPTRHI << 8) | value;
-		uint16_t len = m_get_uint16(addr);
+	void put_REQPTRLO(u8 value) {
+		u16 addr = (v_REQPTRHI << 8) | value;
+		u16 len = m_get_uint16(addr);
 		addr += 2;
 		req.rewind();
 		for (int i = 0; i < len; i++)
@@ -488,7 +748,7 @@ private:
 public:
 	// AddressSpace
 	int get(int address_) {
-		uint16_t address = (uint16_t)(address_ + IO_BASE);
+		u16 address = (u16)(address_ + IO_BASE);
 		switch (address) {
 		case REQRES:
 			return v_REQRES;
@@ -519,8 +779,8 @@ public:
 		return 0;
 	}
 	void put(int address_, int value_) {
-		uint16_t address = (uint16_t)(address_ + IO_BASE);
-		uint8_t value = (uint8_t)value_;
+		u16 address = (u16)(address_ + IO_BASE);
+		u8 value = (u8)value_;
 		switch (address) {
 		case REQEND:
 			request();
@@ -580,6 +840,7 @@ public:
 		palette.reset(microio);
 		console.reset();
 		bgcol = palette[microio ? COLOR_MICROIO_BORDER : COLOR_WHITE];
+		images.reset();
 		v_FRMFPS = 40;
 		wait_us = 0;
 	}
@@ -606,7 +867,9 @@ public:
 		return false;
 	}
 	// IO2Impl
-	IO2Impl() : microio(false), frameno(0), console(palette, width, height) {
+	IO2Impl() : microio(false), frameno(0),
+	  console(palette, width, height), images(width, height) {
+		Ref::init(100); // TODO: profile
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
 		font = RomResource::get("vga14.rom");
@@ -615,6 +878,8 @@ public:
 		RomResource::release(font);
 		delete[] buffer;
 		buffer = 0;
+		images.reset();
+		Ref::cleanup();
 	}
 };
 
