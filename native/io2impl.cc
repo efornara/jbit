@@ -103,14 +103,17 @@ static void font_draw(int x, int y, color_t bg, color_t fg, uint8_t c) {
 
 class Request {
 public:
-	static const int REQDAT_SIZE = 32;
+	static const u32f END = 0xffffffff;
+	static const unsigned SHORT_REQ_SIZE = 255;
+	static const unsigned REQDAT_SIZE = 32;
 private:
-	Buffer buf;
-	u8 v_REQDAT[16];
+	u8 buf[SHORT_REQ_SIZE];
+	u8 v_REQDAT[REQDAT_SIZE];
+	u32f length;
 public:
 	Request() { reset(); }
 	void rewind() {
-		buf.reset();
+		length = 0;
 	}
 	void reset() {
 		rewind();
@@ -122,24 +125,31 @@ public:
 		return 0;
 	}
 	void put(u16 address, u8 value) {
-		if (address == REQPUT)
-			buf.append_char(value);
-		else if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
+		if (address >= REQDAT && address < REQDAT + REQDAT_SIZE)
 			v_REQDAT[address - REQDAT] = value;
 	}
+	void append(u8 value) {
+		if (length >= SHORT_REQ_SIZE)
+			length++;
+		else
+			buf[length++] = value;
+	}
 	int n() const {
-		return buf.get_length();
+		return (int)length;
+	}
+	u32f n_streaming() {
+		return length;
 	}
 	u8 id() const {
-		return buf.get_length() ? (u8)buf.get_data()[0] : 0;
+		return length ? buf[0] : 0;
 	}
 	u8 get_uint8(int pos) const {
-		return (u8)buf.get_data()[pos];
+		return (u8)buf[pos];
 	}
 	u16 get_uint16(int pos) const {
 		return
-		  ((u16)buf.get_data()[pos + 1] << 8) |
-		  ((u16)buf.get_data()[pos]);
+		  ((u16)buf[pos + 1] << 8) |
+		  ((u16)buf[pos]);
 	}
 	void put_uint8(int pos, u8 value) {
 		v_REQDAT[pos] = value;
@@ -299,8 +309,9 @@ class Palette {
 private:
 	color_t pal[256];
 	int mask;
+	Buffer buf;
 public:
-	Palette() : mask(0) {}
+	Palette() : mask(0), buf(16 * 3) {}
 	void reset(bool microio) {
 		if (microio)
 			set_microio();
@@ -320,7 +331,14 @@ public:
 	color_t operator[](u8 id) const {
 		return pal[id & mask];
 	}
-	bool req_SETPAL(Request &req) {
+	bool req_SETPAL(Request &req, u32f pos, u8 value) {
+		if (pos != Request::END) {
+			if (pos == 0)
+				buf.reset();
+			else if (pos > 0 && pos < 1 + 256 * 3)
+				buf.append_char(value);
+			return true;
+		}
 		int n = req.n() - 1;
 		if (n == 0) {
 			reset(false);
@@ -335,11 +353,12 @@ public:
 			;
 		mask <<= 1;
 		mask--;
-		for (int i = 0, j = 1; i < n; i++) {
+		const u8 *data = (const u8 *)buf.get_data();
+		for (int i = 0, j = 0; i < n; i++) {
 			pal[i] = get_color_rgb(
-				((u32)req.get_uint8(j) << 16) |
-				((u32)req.get_uint8(j + 1) << 8) |
-				((u32)req.get_uint8(j + 2))
+				((u32)data[j] << 16) |
+				((u32)data[j + 1] << 8) |
+				((u32)data[j + 2])
 			);
 			j += 3;
 		}
@@ -510,18 +529,26 @@ public:
 
 class Images {
 private:
-	static const int initial_dim = 3;
+	static const unsigned IRAWRGBA_HEADER_SIZE = 7;
+	static const unsigned INITIAL_DIM = 3;
 	const int width, height;
 	Array v;
 	Ref bgimg;
+	Ref tmp;
+	struct {
+		u32f n;
+		u32 c;
+		int i;
+	} ctx_IRAWRGBA;
 public:
 	Images(int width_, int height_)
-	  : width(width_), height(height_), v(initial_dim) {}
+	  : width(width_), height(height_), v(INITIAL_DIM) {}
 	void reset() {
-		v.dim(initial_dim);
-		for (int id = 0; id <= initial_dim; id++)
+		v.dim(INITIAL_DIM);
+		for (unsigned id = 0; id <= INITIAL_DIM; id++)
 			v[id] = 0;
 		bgimg = 0;
+		tmp = 0;
 	}
 	bool req_SETBGIMG(Request &req) {
 		if (req.n() != 2)
@@ -530,50 +557,66 @@ public:
 		bgimg = v.is_valid(id) ? v[id] : 0;
 		return true;
 	}
-	bool req_IRAWRGBA(Request &req) {
-		int n = req.n();
-		if (n < 7)
-			return false;
-		u8 id = req.get_uint8(1);
-		if (!v.is_valid(id))
-			return false;
-		u16 width = req.get_uint16(2);
-		u16 height = req.get_uint16(4);
-		u8 flags = req.get_uint8(6);
-		if (n != (int)(7 + width * height * 4))
-			return false;
-		Ref tmp = Ref::create(OT_Image);
-		Image *img = tmp.as<Image>();
-		img->set_size(width, height);
-		ImgType type = IT_Alpha0;
-		for (u16 i = 0, j = 7, y = 0; y < height; y++) {
-			for (u16 x = 0; x < width; x++, i++, j += 4) {
-				u32 c =
-				  ((u32)req.get_uint8(j + 0) << 16) |
-				  ((u32)req.get_uint8(j + 1) << 8) |
-				  ((u32)req.get_uint8(j + 2))
-				;
+	bool req_IRAWRGBA(Request &req, u32f pos, u8 value) {
+		if (pos == 0) {
+			ctx_IRAWRGBA.n = 0;
+		} else if (pos == IRAWRGBA_HEADER_SIZE) {
+			u8 id = req.get_uint8(1);
+			if (!v.is_valid(id))
+				return true;
+			u16 width = req.get_uint16(2);
+			u16 height = req.get_uint16(4);
+			tmp = Ref::create(OT_Image);
+			Image *img = tmp.as<Image>();
+			img->set_size(width, height);
+			img->type = IT_Alpha0;
+			ctx_IRAWRGBA.i = 0;
+			ctx_IRAWRGBA.n = IRAWRGBA_HEADER_SIZE
+			  + img->width * img->height * 4;
+		} else if (pos > IRAWRGBA_HEADER_SIZE && pos <= ctx_IRAWRGBA.n) {
+			pos -= IRAWRGBA_HEADER_SIZE;
+			switch (pos & 0x3) {
+			case 0:
+				ctx_IRAWRGBA.c = (u32)value << 16;
+				break;
+			case 1:
+				ctx_IRAWRGBA.c |= (u32)value << 8;
+				break;
+			case 2:
+				ctx_IRAWRGBA.c |= value;
+				break;
+			case 3: {
+				Image *img = tmp.as<Image>();
+				const u8 flags = req.get_uint8(6);
 				if (flags & IRAWRGBA_FLAGS_ALPHA) {
-					u8 alpha = req.get_uint8(j + 3);
-					switch (alpha) {
+					switch (value) {
 					case 0:
 						break;
 					case 255:
-						if (type == IT_Alpha0)
-							type = IT_Alpha1;
+						if (img->type == IT_Alpha0)
+							img->type = IT_Alpha1;
 						break;
 					default:
-						type = IT_Alpha8;
+						img->type = IT_Alpha8;
 						break;
 					}
-					img->data[i] = get_color_rgba(c | ((u32)alpha << 24));
+					img->data[ctx_IRAWRGBA.i] = get_color_rgba(ctx_IRAWRGBA.c
+					  | ((u32)value << 24));
 				} else {
-					img->data[i] = get_color_rgb(c);
+					img->data[ctx_IRAWRGBA.i] = get_color_rgb(ctx_IRAWRGBA.c);
 				}
+				ctx_IRAWRGBA.i++;
+				} break;
 			}
+		} else if (pos == Request::END) {
+			if (req.n_streaming() != ctx_IRAWRGBA.n) {
+				tmp = 0;
+				return false;
+			}
+			const u8 id = req.get_uint8(1);
+			v[id] = tmp;
+			tmp = 0;
 		}
-		img->type = type;
-		v[id] = tmp;
 		return true;
 	}
 	void render() {
@@ -742,8 +785,36 @@ private:
 			return false;
 		}
 	}
-	void request() {
+	bool request_is_streaming() {
+		switch (req.id()) {
+		case REQ_SETPAL:
+		case REQ_IRAWRGBA:
+		case REQ_IPNGGEN:
+		case REQ_LTLPUT:
+			return true;
+		default:
+			return false;
+		}
+	}
+	bool request_stream(u32f pos, u8 value) {
+		switch (req.id()) {
+		case REQ_SETPAL:
+			return palette.req_SETPAL(req, pos, value);
+		case REQ_IRAWRGBA:
+			return images.req_IRAWRGBA(req, pos, value);
+		}
+		return false;
+	}
+	void request_put(u8 value) {
+		req.append(value);
+		if (request_is_streaming())
+			request_stream(req.n_streaming() - 1, value);
+	}
+	void request_end() {
 		bool res = false;
+		const bool is_streaming = request_is_streaming();
+		if (req.n_streaming() > Request::SHORT_REQ_SIZE && !is_streaming)
+			goto done;
 		switch (req.id()) {
 		case REQ_TIME:
 			res = req_TIME();
@@ -754,16 +825,15 @@ private:
 		case REQ_SETBGCOL:
 			res = req_SETBGCOL();
 			break;
-		case REQ_SETPAL:
-			res = palette.req_SETPAL(req);
-			break;
 		case REQ_SETBGIMG:
 			res = images.req_SETBGIMG(req);
 			break;
-		case REQ_IRAWRGBA:
-			res = images.req_IRAWRGBA(req);
+		default:
+			if (is_streaming)
+				res = request_stream(Request::END, 0);
 			break;
 		}
+done:
 		v_REQRES = res ? 0 : 255;
 		req.rewind();
 	}
@@ -773,10 +843,10 @@ private:
 		addr += 2;
 		req.rewind();
 		for (int i = 0; i < len; i++)
-			req.put(REQPUT, m_get_uint8(addr++));
+			request_put(m_get_uint8(addr++));
 		if (!len)
-			req.put(REQPUT, 0);
-		request();
+			request_put(0);
+		request_end();
 	}
 	void put_FRMDRAW() {
 		if (!v_FRMFPS)
@@ -825,7 +895,7 @@ public:
 		u8 value = (u8)value_;
 		switch (address) {
 		case REQEND:
-			request();
+			request_end();
 			break;
 		case REQPTRLO:
 			put_REQPTRLO(value);
@@ -834,7 +904,7 @@ public:
 			v_REQPTRHI = value;
 			break;
 		case REQPUT:
-			req.put(address, value);
+			request_put(value);
 			break;
 		case ENABLE:
 			v_ENABLE = value;
