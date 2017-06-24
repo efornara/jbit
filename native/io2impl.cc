@@ -780,8 +780,38 @@ public:
 	bool req_SETBGIMG(Request &req) {
 		if (req.n() != 2)
 			return false;
-		u8 id = req.get_uint8(1);
+		const u8 id = req.get_uint8(1);
 		bgimg = v.is_valid(id) ? v[id] : 0;
+		return true;
+	}
+	bool req_IDESTROY(Request &req) {
+		if (req.n() != 2)
+			return false;
+		const u8 id = req.get_uint8(1);
+		if (!v.is_valid(id))
+			return false;
+		v[id] = 0;
+		return true;
+	}
+	bool req_IDIM(Request &req) {
+		if (req.n() != 2)
+			return false;
+		const u8 last_id = req.get_uint8(1);
+		v.dim(last_id);
+		return true;
+	}
+	bool req_IINFO(Request &req) {
+		if (req.n() != 2)
+			return false;
+		const u8 id = req.get_uint8(1);
+		if (!v.is_valid(id))
+			return false;
+		Image *img = tmp.as<Image>();
+		if (!img)
+			return false;
+		req.put_uint16(IINFO_WIDTH, img->width);
+		req.put_uint16(IINFO_HEIGHT, img->height);
+		req.put_uint8(IINFO_FLAGS, 0);
 		return true;
 	}
 	bool req_IPNGGEN(Request &req, u32f pos, u8 value) {
@@ -1112,6 +1142,15 @@ private:
 			break;
 		case REQ_SETBGIMG:
 			res = images.req_SETBGIMG(req);
+			break;
+		case REQ_IDESTROY:
+			res = images.req_IDESTROY(req);
+			break;
+		case REQ_IDIM:
+			res = images.req_IDIM(req);
+			break;
+		case REQ_IINFO:
+			res = images.req_IINFO(req);
 			break;
 		default:
 			if (is_streaming)
