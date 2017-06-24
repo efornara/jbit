@@ -107,11 +107,12 @@ public:
 	static const unsigned SHORT_REQ_SIZE = 255;
 	static const unsigned REQDAT_SIZE = 32;
 private:
-	u8 buf[SHORT_REQ_SIZE];
+	u8 m[SHORT_REQ_SIZE];
 	u8 v_REQDAT[REQDAT_SIZE];
 	u32f length;
 public:
-	Request() { reset(); }
+	Buffer buf;
+	Request() : buf(16 * 4) { reset(); }
 	void rewind() {
 		length = 0;
 	}
@@ -132,7 +133,7 @@ public:
 		if (length >= SHORT_REQ_SIZE)
 			length++;
 		else
-			buf[length++] = value;
+			m[length++] = value;
 	}
 	int n() const {
 		return (int)length;
@@ -141,15 +142,15 @@ public:
 		return length;
 	}
 	u8 id() const {
-		return length ? buf[0] : 0;
+		return length ? m[0] : 0;
 	}
 	u8 get_uint8(int pos) const {
-		return (u8)buf[pos];
+		return (u8)m[pos];
 	}
 	u16 get_uint16(int pos) const {
 		return
-		  ((u16)buf[pos + 1] << 8) |
-		  ((u16)buf[pos]);
+		  ((u16)m[pos + 1] << 8) |
+		  ((u16)m[pos]);
 	}
 	void put_uint8(int pos, u8 value) {
 		v_REQDAT[pos] = value;
@@ -309,9 +310,8 @@ class Palette {
 private:
 	color_t pal[256];
 	int mask;
-	Buffer buf;
 public:
-	Palette() : mask(0), buf(16 * 3) {}
+	Palette() : mask(0) {}
 	void reset(bool microio) {
 		if (microio)
 			set_microio();
@@ -334,9 +334,9 @@ public:
 	bool req_SETPAL(Request &req, u32f pos, u8 value) {
 		if (pos != Request::END) {
 			if (pos == 0)
-				buf.reset();
+				req.buf.reset();
 			else if (pos > 0 && pos < 1 + 256 * 3)
-				buf.append_char(value);
+				req.buf.append_char(value);
 			return true;
 		}
 		int n = req.n() - 1;
@@ -353,7 +353,7 @@ public:
 			;
 		mask <<= 1;
 		mask--;
-		const u8 *data = (const u8 *)buf.get_data();
+		const u8 *data = (const u8 *)req.buf.get_data();
 		for (int i = 0, j = 0; i < n; i++) {
 			pal[i] = get_color_rgb(
 				((u32)data[j] << 16) |
@@ -518,7 +518,7 @@ private:
 	void set_size(u16 width_, u16 height_) {
 		delete[] data;
 		width = width_;
-		height = width_;
+		height = height_;
 		data = new color_t[width * height];
 	}
 public:
@@ -529,20 +529,247 @@ public:
 
 class Images {
 private:
+	static const unsigned IPNGGEN_HEADER_SIZE = 9;
 	static const unsigned IRAWRGBA_HEADER_SIZE = 7;
 	static const unsigned INITIAL_DIM = 3;
+	const Palette &pal;
 	const int width, height;
 	Array v;
 	Ref bgimg;
 	Ref tmp;
-	struct {
-		u32f n;
-		u32 c;
-		int i;
-	} ctx_IRAWRGBA;
+	enum PngStatus {
+		Invalid,
+		PalSize,
+		PalData,
+		ImgData
+	};
+	union Ctx {
+		struct {
+			PngStatus st;
+			u32f n;
+			u32f i;
+			u32f bitbuf;
+			u16f src_width;
+			u16f x;
+			u8f zoom;
+		} IPNGGEN;
+		struct {
+			u32f n;
+			u32 c;
+			int i;
+		} IRAWRGBA;
+	} ctx;
+	void png_begin(Request &req, int pal_size) {
+		const u8 id = req.get_uint8(1);
+		u16 width = req.get_uint16(2);
+		u16 height = req.get_uint16(4);
+		const u8 depth = req.get_uint8(6);
+		const u8 color = req.get_uint8(7);
+		const u8 flags = req.get_uint8(8);
+		u8 bits;
+		Image *img;
+		if (!v.is_valid(id))
+			goto error;
+		switch (depth) {
+		case 1:
+		case 2:
+		case 4:
+			if (color != IPNGGEN_CT_GRAYSCALE
+			  && color != IPNGGEN_CT_INDEXED_COLOR)
+				goto error;
+			break;
+		case 8:
+			break;
+		case 16:
+			if (color == IPNGGEN_CT_INDEXED_COLOR)
+				goto error;
+			break;
+		default:
+			goto error;
+		}
+		switch (color) {
+		case IPNGGEN_CT_GRAYSCALE:
+		case IPNGGEN_CT_INDEXED_COLOR:
+			bits = depth;
+			break;
+		case IPNGGEN_CT_GRAYSCALE_ALPHA:
+			bits = depth * 2;
+			break;
+		case IPNGGEN_CT_TRUECOLOR:
+			bits = depth * 3;
+			break;
+		case IPNGGEN_CT_TRUECOLOR_ALPHA:
+			bits = depth * 4;
+			break;
+		default:
+			goto error;
+		}
+		ctx.IPNGGEN.x = 0;
+		ctx.IPNGGEN.i = 0;
+		ctx.IPNGGEN.n = IPNGGEN_HEADER_SIZE
+		  + (((width * bits) + 7) >> 3) * height;
+		if (pal_size) {
+			if (flags & IPNGGEN_FLAGS_PALREF)
+				ctx.IPNGGEN.n += 1 + pal_size;
+			else
+				ctx.IPNGGEN.n += 1 + pal_size * 3;
+		}
+		if (color == IPNGGEN_CT_INDEXED_COLOR && (width & 0x3) == 0)
+			ctx.IPNGGEN.zoom = 1 + ((flags >> 2) & 0x7);
+		else
+			ctx.IPNGGEN.zoom = 1;
+		ctx.IPNGGEN.src_width = width;
+		width *= ctx.IPNGGEN.zoom;
+		height *= ctx.IPNGGEN.zoom;
+		tmp = Ref::create(OT_Image);
+		img = tmp.as<Image>();
+		img->set_size(width, height);
+		img->type = IT_Alpha0;
+		if (pal_size)
+			ctx.IPNGGEN.st = PalData;
+		else
+			ctx.IPNGGEN.st = ImgData;
+		return;
+error:
+		ctx.IPNGGEN.st = Invalid;
+	}
+	void png_put_pixel(Image *img, color_t c) {
+		const u8f zoom = ctx.IPNGGEN.zoom;
+		if (zoom == 1) {
+			img->data[ctx.IPNGGEN.i++] = c;
+		} else {
+			u32f offset = ctx.IPNGGEN.i;
+			for (u8f y = 0; y < ctx.IPNGGEN.zoom; y++) {
+				for (u8f x = 0; x < ctx.IPNGGEN.zoom; x++)
+					img->data[offset + x] = c;
+				offset += img->width;
+			}
+			ctx.IPNGGEN.i += zoom;
+		}
+#if ALPHADEPTH == 8
+		const u8 alpha = c >> 24;
+		switch (alpha) {
+		case 0:
+			break;
+		case 255:
+			if (img->type == IT_Alpha0)
+				img->type = IT_Alpha1;
+			break;
+		default:
+			img->type = IT_Alpha8;
+			break;
+		}
+#else
+		if (!c)
+			img->type = IT_Alpha1;
+#endif
+		ctx.IPNGGEN.x++;
+		if (ctx.IPNGGEN.x == ctx.IPNGGEN.src_width) {
+			ctx.IPNGGEN.x = 0;
+			if (zoom > 1)
+				ctx.IPNGGEN.i += img->width * (zoom - 1);
+		}
+	}
+	u8 png_get_bits(u8 *value, u8f bits) {
+		u8 v = 0;
+		u8 mask = 0x80;
+		for (u8f i = 0; i < bits; i++) {
+			v <<= 1;
+			if (*value & mask)
+				v |= 0x01;
+			*value <<= 1;
+		}
+		return v;
+	}
+	void png_index_data(Request &req, u8 value) {
+		const u8 depth = req.get_uint8(6);
+		Image *img = tmp.as<Image>();
+		const u8 *p = (const u8 *)req.buf.get_data();
+		const u8 last_entry = req.get_uint8(9);
+		const u16f src_width = ctx.IPNGGEN.src_width;
+		u8f j = 0;
+		while (j < 8 && ctx.IPNGGEN.x < src_width) {
+			u8 v = png_get_bits(&value, depth);
+			j += depth;
+			if (v > last_entry)
+				v = 0;
+			color_t c;
+			memcpy(&c, &p[v * sizeof(color_t)], sizeof(color_t));
+			if (!v) {
+				const u8 flags = req.get_uint8(8);
+				if (flags & IPNGGEN_FLAGS_IDX0TRANSP) {
+					png_put_pixel(img, 0);
+					continue;
+				}
+			}
+			png_put_pixel(img, c);
+		}
+	}
+	void png_value_data(Request &req, u32f pos, u8 value) {
+		const u8 depth = req.get_uint8(6);
+		if (depth == 16) {
+			if ((pos & 0x1) == 1)
+				return;
+			pos >>= 1;
+		}
+		Image *img = tmp.as<Image>();
+		const u8 color = req.get_uint8(7);
+		switch (color) {
+		case IPNGGEN_CT_GRAYSCALE:
+			if (depth >= 8) {
+				png_put_pixel(img, get_color_rgb(((u32)value << 16)
+				  | ((u32)value << 8) | value));
+			} else {
+				u8f j = 0;
+				int top = (1 << depth) - 1;
+				while (j < 8 && ctx.IPNGGEN.x < ctx.IPNGGEN.src_width) {
+					u8 v = png_get_bits(&value, depth);
+					v = (u8)(v * 255 / top);
+					png_put_pixel(img, get_color_rgb(((u32)v << 16)
+					  | ((u32)v << 8) | v));
+					j += depth;
+				}
+			}
+			break;
+		case IPNGGEN_CT_GRAYSCALE_ALPHA:
+			if ((pos & 0x1) == 0)
+				ctx.IPNGGEN.bitbuf = ((u32)value << 16) | ((u32)value << 8)
+				  | value;
+			else
+				png_put_pixel(img, get_color_rgba(((u32)value << 24)
+				  | ctx.IPNGGEN.bitbuf));
+			break;
+		case IPNGGEN_CT_TRUECOLOR:
+			switch (pos % 3) {
+			case 0:
+				ctx.IPNGGEN.bitbuf = (u32)value << 16;
+				return;
+			case 1:
+				ctx.IPNGGEN.bitbuf |= (u32)value << 8;
+				return;
+			}
+			png_put_pixel(img, get_color_rgb(ctx.IPNGGEN.bitbuf | value));
+			break;
+		case IPNGGEN_CT_TRUECOLOR_ALPHA:
+			switch (pos & 0x3) {
+			case 0:
+				ctx.IPNGGEN.bitbuf = (u32)value << 16;
+				return;
+			case 1:
+				ctx.IPNGGEN.bitbuf |= (u32)value << 8;
+				return;
+			case 2:
+				ctx.IPNGGEN.bitbuf |= value;
+				return;
+			}
+			png_put_pixel(img, get_color_rgba(((u32)value << 24)
+			  | ctx.IPNGGEN.bitbuf));
+			break;
+		}
+	}
 public:
-	Images(int width_, int height_)
-	  : width(width_), height(height_), v(INITIAL_DIM) {}
+	Images(const Palette &pal_, int width_, int height_)
+	  : pal(pal_), width(width_), height(height_), v(INITIAL_DIM) {}
 	void reset() {
 		v.dim(INITIAL_DIM);
 		for (unsigned id = 0; id <= INITIAL_DIM; id++)
@@ -557,33 +784,90 @@ public:
 		bgimg = v.is_valid(id) ? v[id] : 0;
 		return true;
 	}
+	bool req_IPNGGEN(Request &req, u32f pos, u8 value) {
+		if (pos == 0) {
+			ctx.IPNGGEN.st = Invalid;
+			req.buf.reset();
+		} else if (pos == IPNGGEN_HEADER_SIZE - 1) {
+			const u8 color = req.get_uint8(7);
+			if (color == IPNGGEN_CT_INDEXED_COLOR)
+				ctx.IPNGGEN.st = PalSize;
+			else
+				png_begin(req, 0);
+		} else if (ctx.IPNGGEN.st == PalSize) {
+			png_begin(req, value + 1);
+		} else if (ctx.IPNGGEN.st == PalData) {
+			const u8 flags = req.get_uint8(8);
+			int n = (int)pos - IPNGGEN_HEADER_SIZE - 1;
+			color_t c;
+			if (flags & IPNGGEN_FLAGS_PALREF) {
+				c = pal[value];
+			} else {
+				switch (n % 3) {
+				case 0:
+					ctx.IPNGGEN.bitbuf = (u32)value << 16;
+					return true;
+				case 1:
+					ctx.IPNGGEN.bitbuf |= (u32)value << 8;
+					return true;
+				}
+				c = get_color_rgb(ctx.IPNGGEN.bitbuf | value);
+				n /= 3;
+			}
+			char *b = req.buf.append_raw(sizeof(color_t));
+			memcpy(b, &c, sizeof(color_t));
+			const u8 last_entry = req.get_uint8(9);
+			if (n == (int)last_entry)
+				ctx.IPNGGEN.st = ImgData;
+		} else if (pos == Request::END) {
+			if (ctx.IPNGGEN.st != ImgData
+			  || req.n_streaming() != ctx.IPNGGEN.n) {
+				tmp = 0;
+				return false;
+			}
+			const u8 id = req.get_uint8(1);
+			v[id] = tmp;
+			tmp = 0;
+		} else if (ctx.IPNGGEN.st == ImgData) {
+			if (pos == ctx.IPNGGEN.n) {
+				ctx.IPNGGEN.st = Invalid;
+				return true;
+			}
+			const u8 color = req.get_uint8(7);
+			if (color == IPNGGEN_CT_INDEXED_COLOR)
+				png_index_data(req, value);
+			else
+				png_value_data(req, pos - IPNGGEN_HEADER_SIZE, value);
+		}
+		return true;
+	}
 	bool req_IRAWRGBA(Request &req, u32f pos, u8 value) {
 		if (pos == 0) {
-			ctx_IRAWRGBA.n = 0;
-		} else if (pos == IRAWRGBA_HEADER_SIZE) {
-			u8 id = req.get_uint8(1);
+			ctx.IRAWRGBA.n = 0;
+		} else if (pos == IRAWRGBA_HEADER_SIZE - 1) {
+			const u8 id = req.get_uint8(1);
 			if (!v.is_valid(id))
 				return true;
-			u16 width = req.get_uint16(2);
-			u16 height = req.get_uint16(4);
+			const u16 width = req.get_uint16(2);
+			const u16 height = req.get_uint16(4);
 			tmp = Ref::create(OT_Image);
 			Image *img = tmp.as<Image>();
 			img->set_size(width, height);
 			img->type = IT_Alpha0;
-			ctx_IRAWRGBA.i = 0;
-			ctx_IRAWRGBA.n = IRAWRGBA_HEADER_SIZE
+			ctx.IRAWRGBA.i = 0;
+			ctx.IRAWRGBA.n = IRAWRGBA_HEADER_SIZE
 			  + img->width * img->height * 4;
-		} else if (pos > IRAWRGBA_HEADER_SIZE && pos <= ctx_IRAWRGBA.n) {
+		} else if (pos >= IRAWRGBA_HEADER_SIZE && pos <= ctx.IRAWRGBA.n) {
 			pos -= IRAWRGBA_HEADER_SIZE;
 			switch (pos & 0x3) {
 			case 0:
-				ctx_IRAWRGBA.c = (u32)value << 16;
+				ctx.IRAWRGBA.c = (u32)value << 16;
 				break;
 			case 1:
-				ctx_IRAWRGBA.c |= (u32)value << 8;
+				ctx.IRAWRGBA.c |= (u32)value << 8;
 				break;
 			case 2:
-				ctx_IRAWRGBA.c |= value;
+				ctx.IRAWRGBA.c |= value;
 				break;
 			case 3: {
 				Image *img = tmp.as<Image>();
@@ -600,16 +884,16 @@ public:
 						img->type = IT_Alpha8;
 						break;
 					}
-					img->data[ctx_IRAWRGBA.i] = get_color_rgba(ctx_IRAWRGBA.c
+					img->data[ctx.IRAWRGBA.i] = get_color_rgba(ctx.IRAWRGBA.c
 					  | ((u32)value << 24));
 				} else {
-					img->data[ctx_IRAWRGBA.i] = get_color_rgb(ctx_IRAWRGBA.c);
+					img->data[ctx.IRAWRGBA.i] = get_color_rgb(ctx.IRAWRGBA.c);
 				}
-				ctx_IRAWRGBA.i++;
+				ctx.IRAWRGBA.i++;
 				} break;
 			}
 		} else if (pos == Request::END) {
-			if (req.n_streaming() != ctx_IRAWRGBA.n) {
+			if (req.n_streaming() != ctx.IRAWRGBA.n) {
 				tmp = 0;
 				return false;
 			}
@@ -631,7 +915,6 @@ public:
 		unsigned src_oy = 0;
 		unsigned src_width = img->width;
 		unsigned src_height = img->height;
-		// TODO: test larger images
 		if (dst_ox < 0) {
 			src_ox += -dst_ox;
 			dst_ox = 0;
@@ -647,7 +930,7 @@ public:
 		const ImgType type = img->type;
 		for (u16f y = 0; y < src_height; y++) {
 			for (u16f x = 0; x < src_width; x++) {
-				const color_t src_c = img->data[i];
+				const color_t src_c = img->data[i + x];
 				switch (type) {
 				case IT_Alpha0:
 					buffer[j + x] = src_c;
@@ -661,8 +944,8 @@ public:
 					buffer[j + x] = mix_color(dst_c, src_c);
 					} break;
 				}
-				i++;
 			}
+			i += src_stride;
 			j += dst_stride;
 		}
 	}
@@ -788,8 +1071,8 @@ private:
 	bool request_is_streaming() {
 		switch (req.id()) {
 		case REQ_SETPAL:
-		case REQ_IRAWRGBA:
 		case REQ_IPNGGEN:
+		case REQ_IRAWRGBA:
 		case REQ_LTLPUT:
 			return true;
 		default:
@@ -800,6 +1083,8 @@ private:
 		switch (req.id()) {
 		case REQ_SETPAL:
 			return palette.req_SETPAL(req, pos, value);
+		case REQ_IPNGGEN:
+			return images.req_IPNGGEN(req, pos, value);
 		case REQ_IRAWRGBA:
 			return images.req_IRAWRGBA(req, pos, value);
 		}
@@ -980,7 +1265,7 @@ public:
 	}
 	// IO2Impl
 	IO2Impl() : microio(false), frameno(0),
-	  console(palette, width, height), images(width, height) {
+	  console(palette, width, height), images(palette, width, height) {
 		Ref::init(100); // TODO: profile
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
