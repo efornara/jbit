@@ -39,8 +39,8 @@ public class Help extends Canvas implements CommandListener, Runnable {
 	private final static int MSG_BOOK = 1;
 	private final static int MSG_PREV_LINE = 2;
 	private final static int MSG_NEXT_LINE = 3;
-	private final static int MSG_PREV_PAGE = 4;
-	private final static int MSG_NEXT_PAGE = 5;
+	private final static int MSG_PREV_SCREEN = 4;
+	private final static int MSG_NEXT_SCREEN = 5;
 	private final static int MSG_EXIT = 100;
 
 	private int[] msgs = new int[MSG_BUFFER_SIZE];
@@ -71,13 +71,13 @@ public class Help extends Canvas implements CommandListener, Runnable {
 	private int[] tocSection;
 	private String[] tocLabel;
 
-	private int curBook;
+	private int curPage;
 	private int curLine;
 	private int curColumn;
 
 	private byte[] data;
 
-	private String[] books;
+	private String[] pages;
 
 	private Image initFont(String resName) {
 		try {
@@ -103,9 +103,9 @@ public class Help extends Canvas implements CommandListener, Runnable {
 			state = FAILED;
 	}
 
-	private void loadBookList() {
+	private void loadPageList() {
 		Vector vb = new Vector();
-		StringBuffer book = new StringBuffer();
+		StringBuffer page = new StringBuffer();
 
 		InputStream is = null;
 		byte[] buf = new byte[64];
@@ -119,10 +119,10 @@ public class Help extends Canvas implements CommandListener, Runnable {
 					if (c == '\r') {
 						// be nice to windows
 					} else if (c == '\n') {
-						vb.addElement(book.toString());
-						book.setLength(0);
+						vb.addElement(page.toString());
+						page.setLength(0);
 					} else {
-						book.append((char) c);
+						page.append((char) c);
 					}
 				}
 			}
@@ -137,17 +137,17 @@ public class Help extends Canvas implements CommandListener, Runnable {
 		}
 
 		n = vb.size();
-		books = new String[n];
+		pages = new String[n];
 		for (i = 0; i < n; i++)
-			books[i] = (String) vb.elementAt(i);
+			pages[i] = (String) vb.elementAt(i);
 	}
 
 	private void init() {
 		initScreen();
-		loadBookList();
+		loadPageList();
 	}
 
-	private void loadBook() {
+	private void loadPage() {
 		// TOC temporary vectors and buffers
 		Vector vp = new Vector();
 		Vector vl = new Vector();
@@ -166,7 +166,7 @@ public class Help extends Canvas implements CommandListener, Runnable {
 		tocLabel = null;
 
 		try {
-			is = getClass().getResourceAsStream(books[curBook] + ".dat");
+			is = getClass().getResourceAsStream(pages[curPage] + ".dat");
 			while ((n = is.read(buf)) >= 0) {
 				for (i = 0; i < n; i++) {
 					byte c = buf[i];
@@ -282,13 +282,13 @@ public class Help extends Canvas implements CommandListener, Runnable {
 			tocLabel[i] = (String) vl.elementAt(i);
 		}
 
-		// Ready to render the top of the book
+		// Ready to render the top of the page
 		curLine = 0;
 		state = READY;
 	}
 
 	private Command gotoCmd = new Command("GoTo", Command.SCREEN, 1);
-	private Command booksCmd = new Command("Books", Command.SCREEN, 3);
+	private Command pagesCmd = new Command("Pages", Command.SCREEN, 3);
 	private Command aboutCmd = new Command("About", Command.SCREEN, 4);
 	private Command exitCmd = new Command("Exit", Command.EXIT, 5);
 
@@ -300,7 +300,7 @@ public class Help extends Canvas implements CommandListener, Runnable {
 		this.midlet = midlet;
 		display = Display.getDisplay(midlet);
 		addCommand(gotoCmd);
-		addCommand(booksCmd);
+		addCommand(pagesCmd);
 		addCommand(aboutCmd);
 		addCommand(exitCmd);
 		setCommandListener(this);
@@ -410,34 +410,34 @@ public class Help extends Canvas implements CommandListener, Runnable {
 		display.setCurrent(this);
 	}
 
-	private List booksList;
+	private List pagesList;
 
-	private void enterBooks() {
-		booksList = new List("Books", List.IMPLICIT);
-		int n = books.length;
+	private void enterPages() {
+		pagesList = new List("Pages", List.IMPLICIT);
+		int n = pages.length;
 		for (int i = 0; i < n; i++)
-			booksList.append(books[i], null);
-		booksList.addCommand(cancelCmd);
-		booksList.setCommandListener(this);
-		display.setCurrent(booksList);
+			pagesList.append(pages[i], null);
+		pagesList.addCommand(cancelCmd);
+		pagesList.setCommandListener(this);
+		display.setCurrent(pagesList);
 	}
 
-	private void handleBooks(Command c) {
+	private void handlePages(Command c) {
 		if (c != cancelCmd) {
-			curBook = booksList.getSelectedIndex();
+			curPage = pagesList.getSelectedIndex();
 			state = LOADING;
 			repaint();
 			enqueMsg(MSG_BOOK);
 		}
-		booksList = null;
+		pagesList = null;
 		display.setCurrent(this);
 	}
 
 	private static final String aboutText = "JBDoc - Documentation for JBit.\n"
 			+ "JBDoc comes with ABSOLUTELY NO WARRANTY.\n"
 			+ "http://jbit.sf.net/m\n\n"
-			+ "Keypad: 1: prev page, 3: next page, 2: prev line, 8: next line, 4: scroll left, 6: scroll right, 7: start of line\n"
-			+ "Touchpad: (middle edges) left: prev page, right: next page, top: prev line, bottom: next line; (corners) top-left: scroll left, top-right: scroll right, bottom-left: start of line\n";
+			+ "Keypad: 1: prev screen, 3: next screen, 2: prev line, 8: next line, 4: scroll left, 6: scroll right, 7: start of line\n"
+			+ "Touchpad: (middle edges) left: prev screen, right: next screen, top: prev line, bottom: next line; (corners) top-left: scroll left, top-right: scroll right, bottom-left: start of line\n";
 
 	private void handleAbout() {
 		Alert alert = new Alert("JBDoc", aboutText, null, AlertType.INFO);
@@ -448,13 +448,13 @@ public class Help extends Canvas implements CommandListener, Runnable {
 	protected void keyPressed(int keyCode) {
 		switch (keyCode) {
 		case '1':
-			enqueMsg(MSG_PREV_PAGE);
+			enqueMsg(MSG_PREV_SCREEN);
 			break;
 		case '2':
 			enqueMsg(MSG_PREV_LINE);
 			break;
 		case '3':
-			enqueMsg(MSG_NEXT_PAGE);
+			enqueMsg(MSG_NEXT_SCREEN);
 			break;
 		case '4':
 			if (curColumn > 0)
@@ -508,16 +508,16 @@ public class Help extends Canvas implements CommandListener, Runnable {
 	public void commandAction(Command c, Displayable d) {
 		if (d == gotoList) {
 			handleGoto(c);
-		} else if (d == booksList) {
-			handleBooks(c);
+		} else if (d == pagesList) {
+			handlePages(c);
 		} else if (c == gotoCmd) {
 			if (state != READY)
 				return;
 			enterGoto();
-		} else if (c == booksCmd) {
+		} else if (c == pagesCmd) {
 			if (state != READY)
 				return;
-			enterBooks();
+			enterPages();
 		} else if (c == aboutCmd) {
 			handleAbout();
 		} else if (c == exitCmd) {
@@ -545,12 +545,12 @@ public class Help extends Canvas implements CommandListener, Runnable {
 			curLine = 0;
 	}
 
-	private void nextPage() {
+	private void nextScreen() {
 		for (int i = 0; i < screenRows; i++)
 			nextLine();
 	}
 
-	private void prevPage() {
+	private void prevScreen() {
 		for (int i = 0; i < screenRows; i++)
 			prevLine();
 	}
@@ -565,7 +565,7 @@ public class Help extends Canvas implements CommandListener, Runnable {
 		}
 		if (state != FAILED) {
 			state = LOADING;
-			curBook = 0;
+			curPage = 0;
 			enqueMsg(MSG_BOOK);
 		}
 		repaint();
@@ -574,7 +574,7 @@ public class Help extends Canvas implements CommandListener, Runnable {
 			while ((msg = dequeMsg()) != 0) {
 				switch (msg) {
 				case MSG_BOOK:
-					loadBook();
+					loadPage();
 					repaint();
 					break;
 				case MSG_NEXT_LINE:
@@ -585,12 +585,12 @@ public class Help extends Canvas implements CommandListener, Runnable {
 					prevLine();
 					repaint();
 					break;
-				case MSG_NEXT_PAGE:
-					nextPage();
+				case MSG_NEXT_SCREEN:
+					nextScreen();
 					repaint();
 					break;
-				case MSG_PREV_PAGE:
-					prevPage();
+				case MSG_PREV_SCREEN:
+					prevScreen();
 					repaint();
 					break;
 				case MSG_EXIT:

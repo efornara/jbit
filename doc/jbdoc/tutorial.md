@@ -596,9 +596,9 @@ the two sentences above, or, in 6502 jargon, the addressing mode.
 The addressing modes here are #n and n:n, where n is the abbreviation of
 number.
 
-The "qsref" book contains the full list of the addressing modes of the CPU.
+The "qsref" page contains the full list of the addressing modes of the CPU.
 You are not expected to understand all of them by the brief descriptions
-contained in that book, but, even if you do not understand them, you can
+contained in that page, but, even if you do not understand them, you can
 still get some information from the way they look: the number of lower-case
 characters of an addressing mode is the number of extra bytes an operation
 needs. For example, the addressing mode n:n,X requires two extra bytes beside
@@ -664,9 +664,9 @@ Press 7 (pqrS), 8 (Tuv) and 2 (Abc).
 STA is the mnemonic of STore Accumulator and is in a way the opposite of LDA:
 it replaces the content of a cell with the content of the Accumulator.
 
-The "qsref" book contains the full list of the mnemonics of the CPU. Again,
+The "qsref" page contains the full list of the mnemonics of the CPU. Again,
 you are not expected to understand all of them by the brief descriptions
-contained in that book, but, even without looking at the list, you should
+contained in that page, but, even without looking at the list, you should
 already be able to guess what a few other valid mnemonics (LDX, STX, LDY,
 STY, INY, DEX and DEY) stand for.
 

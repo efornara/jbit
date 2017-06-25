@@ -1,6 +1,6 @@
 # IO Programming (2) #
 
-In this book, the color codes of the standard palette are used throughout. As
+In this page, the color codes of the standard palette are used throughout. As
 a quick reminder, here is a subset of them (see ioref for the complete list):
 
 	STD PALETTE
