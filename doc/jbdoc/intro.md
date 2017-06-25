@@ -28,6 +28,10 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.1.2
+
+io2sim: Images and IPNGGEN. MS-DOS minimal libretro frontend.
+
 ### JBit 2.1.1
 
 io2sim: Palette and console. Added device id in .jb header.
