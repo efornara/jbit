@@ -197,7 +197,7 @@ pairs.
     sta REQPTRLO
 
     .data
-    blue: 5 0 17 0 0 255
+    blue: 4 0 17 0 0 255
 
 The order is important! The request is issued when REQPTRLO is written.
 This allows to put multiple requests on the same page and to issue them
@@ -296,8 +296,15 @@ A fair amount of documentation for the io2 device is available here:
 
 <http://jbit.sourceforge.net/doc/jbdoc.html>
 
-UPDATE: An experimental IO2 simulator is in development, but at the moment
-it can only simulate the MICROIO subset of IO2.
+UPDATE: An experimental IO2 simulator for libretro is in development.
+It is quite limited at the moment (i.e. no sprites or tiled layers),
+but it is useable enough to be able to run, for example, the out.jb
+file generated above.
+
+A couple of more examples are available in the samples/extra directory.
+They are written in C and their source code is available here:
+
+<https://github.com/efornara/cc65/blob/master/samples/io2/extra>
 
 ## EXAMPLES
 
@@ -361,4 +368,4 @@ Released under the BSD 2-Clause License.
 ## SEE ALSO
 
 [Wiki for `jbit`](http://github.com/efornara/jbit/wiki),
-[JBit - J2ME Version](http://jbit.sourceforge.net/),
+[JBit - J2ME Version](http://jbit.sourceforge.net/)
