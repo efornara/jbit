@@ -3,8 +3,7 @@ MIDP
 
 To compile from source you need:
 
-* [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downlo
-ads/index.html).
+* [Java SE Development Kit](http://www.oracle.com/technetwork/java/javase/downloads/index.html).
   Tested with OpenJDK version 1.7.0.
 * [Oracle Java Wireless Toolkit](http://www.oracle.com/technetwork/java/download-135801.html).
   Tested with version 2.5.2.
