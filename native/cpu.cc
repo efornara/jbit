@@ -32,41 +32,42 @@
 
 #include <string.h>
 
-// TODO: paged, cow address space
-#ifdef __DOS__
-#define AS_PAGES 0x40
-#define AS_MASK & 0x3fff
-#else
-#define AS_PAGES 256
-#define AS_MASK
-#endif
-
 class VMAddressSpace {
 private:
-	static const int mem_size = AS_PAGES * 256;
 	IO *io;
-	unsigned char m[mem_size];
+	unsigned char *m[256];
 public:
 	VMAddressSpace(IO *io_) : io(io_) {}
-	inline void reset() {
-		memset(m, 0, mem_size);
+	~VMAddressSpace() {
+		for (int i = 0; i < 256; i++)
+			delete[] m[i];
 	}
-	inline void put(int address, int value) {
-		if (address < 0 || address >= mem_size)
+	void reset() {
+		memset(m, 0, sizeof(m));
+	}
+	void put(int address, int value) {
+		value = value & 0xff;
+		int page = (address >> 8) & 0xff;
+		int offset = address & 0xff;
+		if (page == 2) {
+			io->put(offset, value);
 			return;
-		value = value & 0xFF;
-		if ((address & 0xff00) == 0x0200)
-			io->put(address & 0xff, value);
-		else
-			m[address AS_MASK] = static_cast<unsigned char>(value);
+		}
+		if (!m[page]) {
+			m[page] = new unsigned char[256];
+			memset(m[page], 0, 256);
+		}
+		m[page][offset] = (unsigned char)value;
 	}
-	inline int get(int address) {
-		if (address < 0 || address >= mem_size)
-			return 0;
-		if ((address & 0xff00) == 0x0200)
-			return io->get(address & 0xff);
+	int get(int address) {
+		int page = (address >> 8) & 0xff;
+		int offset = address & 0xff;
+		if (page == 2)
+			return io->get(offset);
+		if (m[page])
+			return m[page][offset];
 		else
-			return m[address AS_MASK];
+			return 0;
 	}
 };
 
@@ -1186,7 +1187,7 @@ public:
 	void load(const Program *prg) {
 		const char *p = prg->get_data();
 		int len = prg->get_length();
-		if (len > (AS_PAGES - 4) * 256)
+		if ((unsigned)len > 64768U)
 			return;
 		for (int i = 0; i < len; i++)
 			mem.put(0x300 + i, p[i] & 0xff);
