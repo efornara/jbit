@@ -64,8 +64,10 @@ cp $IN/midp/COPYING.LIB $OUT/midp/LGPL21.txt
 
 # copy selection of samples
 mkdir -p $OUT/samples/6502
+mkdir -p $OUT/samples/extra
 cp ../../samples/*.asm $OUT/samples
 cp ../../samples/6502/*.asm $OUT/samples/6502
+cp ../../samples/extra/*.jb $OUT/samples/extra
 
 # make archives
 ( cd tmp ; rm -f ../$ID-bin.zip ; zip ../$ID-bin.zip -l -r $ID )
