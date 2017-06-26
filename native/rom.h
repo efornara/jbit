@@ -31,22 +31,22 @@
 struct RomEntry {
 	const char *file_name;
 	const unsigned char *data;
-	int compressed_size;
-	int original_size;
+	unsigned compressed_size;
+	unsigned original_size;
 };
 
 class RomResource {
 private:
 	const char *name;
 	unsigned char *data;
-	int size;
+	unsigned size;
 	bool load_embedded();
 	bool load_external();
 	RomResource(const char *name_) : name(name_), data(0) {}
 	~RomResource() { delete[] name; delete[] data; }
 public:
 	const unsigned char *get_data() const { return data; };
-	int get_size() const { return size; }
+	unsigned get_size() const { return size; }
 	static RomResource *get(const char *name);
 	static void release(RomResource *res);
 };

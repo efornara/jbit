@@ -61,9 +61,9 @@ bool RomResource::load_embedded() {
 	}
 	if (!e)
 		return false;
-	const int n = e->original_size;
+	const unsigned n = e->original_size;
 	data = new unsigned char[n];
-	const int decoded_n = stbi_zlib_decode_buffer((char *)data, n,
+	const unsigned decoded_n = stbi_zlib_decode_buffer((char *)data, n,
 	  (const char *)e->data, e->compressed_size);
 	assert(n == decoded_n);
 	size = n;
@@ -95,7 +95,7 @@ bool RomResource::load_external() {
 	data = new unsigned char[n];
 	if (fread(data, n, 1, f) != 1)
 		goto done;
-	size = (int)n;
+	size = (unsigned)n;
 	ret = true;
 done:
 	if (f)
@@ -106,11 +106,12 @@ done:
 #endif
 
 RomResource *RomResource::get(const char *name) {
-	RomResource *res;
+	if (*name == '/')
+		name++;
 	const int n = strlen(name) + 1;
 	char *s = new char[n];
 	memcpy(s, name , n);
-	res = new RomResource(s);
+	RomResource *res = new RomResource(s);
 	if (res->load_embedded())
 		return res;
 	if (res->load_external())

@@ -5,6 +5,7 @@ import os
 
 roms = [
 	'vga14.rom',
+	'../midp/jbit/res/cga.rom',
 	'../midp/jbit/res/intro17.jb',
 ]
 

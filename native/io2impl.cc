@@ -152,6 +152,16 @@ public:
 		  ((u16)m[pos + 1] << 8) |
 		  ((u16)m[pos]);
 	}
+	const char *get_string0(int pos, int *next_pos) const {
+		for (unsigned i = pos; i < length; i++) {
+			if (!m[i]) {
+				if (next_pos)
+					*next_pos = i + 1;
+				return (const char *)&m[pos];
+			}
+		}
+		return 0;
+	}
 	void put_uint8(int pos, u8 value) {
 		v_REQDAT[pos] = value;
 	}
@@ -1072,6 +1082,41 @@ private:
 		req.put_uint64(0, t);
 		return true;
 	}
+	bool req_LOADROM() {
+		int n = req.n();
+		if (n < 4)
+			return false;
+		const u16f addr = req.get_uint16(1);
+		if (addr < 0x300)
+			return false;
+		int pos;
+		const char *s = req.get_string0(3, &pos);
+		if (!s)
+			return false;
+		u16f offset = 0;
+		u16f size = 0;
+		if (pos <= n - 2) {
+			offset = req.get_uint16(pos);
+			pos += 2;
+		}
+		if (pos <= n - 2) {
+			size = req.get_uint16(pos);
+			pos += 2;
+		}
+		if (pos != n)
+			return false;
+		RomResource *rom = RomResource::get(s);
+		if (!rom)
+			return false;
+		const u8 *data = (const u8 *)rom->get_data();
+		const u16f rom_size = rom->get_size();
+		if (!size || rom_size < (u32f)(offset + size))
+			size = rom_size - offset;
+		for (u16f i = addr, j = offset, k = 0; i < 0xff00 && k < size; k++)
+			m->put(i++, data[j++]);
+		RomResource::release(rom);
+		return true;
+	}
 	bool req_DPYINFO() {
 		if (req.n() != 1)
 			return false;
@@ -1133,6 +1178,9 @@ private:
 		switch (req.id()) {
 		case REQ_TIME:
 			res = req_TIME();
+			break;
+		case REQ_LOADROM:
+			res = req_LOADROM();
 			break;
 		case REQ_DPYINFO:
 			res = req_DPYINFO();
