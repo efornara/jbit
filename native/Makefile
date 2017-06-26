@@ -159,7 +159,7 @@ CXX = wcl
 CXXFLAGS = -q -0 -bt=dos -ml -os
 OBJS = io2dos.o io2retro.o io2impl.o blt08.o devimpl.o cpu.o utils.o rom.o
 io2sim.exe: $(OBJS)
-	wcl -q -l=dos -fe=io2sim -q $(OBJS)
+	wcl -q -l=dos -fe=io2sim -k4096 $(OBJS)
 endif
 
 ifeq ($(PLATFORM),osx)
