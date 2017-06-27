@@ -62,10 +62,17 @@ bool RomResource::load_embedded() {
 	if (!e)
 		return false;
 	const unsigned n = e->original_size;
-	data = new unsigned char[n];
-	const unsigned decoded_n = stbi_zlib_decode_buffer((char *)data, n,
-	  (const char *)e->data, e->compressed_size);
-	assert(n == decoded_n);
+	if (!e->compressed_size) {
+		data = e->data;
+		own_data = false;
+	} else {
+		unsigned char *m = new unsigned char[n];
+		const unsigned decoded_n = stbi_zlib_decode_buffer((char *)m, n,
+		  (const char *)e->data, e->compressed_size);
+		assert(n == decoded_n);
+		data = m;
+		own_data = true;
+	}
 	size = n;
 	return true;
 }
@@ -84,6 +91,7 @@ bool RomResource::load_external() {
 	bool ret = false;
 	FILE *f = 0;
 	long n;
+	unsigned char *m;
 	if (!(f = fopen(name, "rb")))
 		goto done;
 	if (fseek(f, 0, SEEK_END))
@@ -92,12 +100,16 @@ bool RomResource::load_external() {
 	if (n <= 0)
 		goto done;
 	rewind(f);
-	data = new unsigned char[n];
-	if (fread(data, n, 1, f) != 1)
+	m = new unsigned char[n];
+	if (fread(m, n, 1, f) != 1)
 		goto done;
 	size = (unsigned)n;
+	data = m;
+	own_data = true;
 	ret = true;
 done:
+	if (!ret)
+		delete[] m;
 	if (f)
 		fclose(f);
 	return ret;
@@ -121,5 +133,60 @@ RomResource *RomResource::get(const char *name) {
 }
 
 void RomResource::release(RomResource *res) {
+	delete res;
+}
+
+ImageResource::~ImageResource() {
+	RomResource::release(rom);
+#ifndef __I86__
+	if (format == IRF_IRAWRGBA && data)
+		stbi_image_free((void *)data);
+#endif
+}
+
+#ifndef __I86__
+
+ImageResource *ImageResource::get(const char *name) {
+	RomResource *rom = RomResource::get(name);
+	if (!rom)
+		return 0;
+	int x, y, ch;
+	unsigned char *data = stbi_load_from_memory(rom->get_data(),
+	  rom->get_size(), &x, &y, &ch, 4);
+	if (!data)
+		return 0;
+	ImageResource *res = new ImageResource(rom);
+	res->format = IRF_IRAWRGBA;
+	res->data = data;
+	res->size = x * y * 4;
+	res->width = x;
+	res->height = y;
+	return res;
+}
+
+#else
+
+ImageResource *ImageResource::get(const char *name) {
+	char s[32];
+	int n = strlen(name);
+	if (n >= sizeof(s))
+		return 0;
+	memcpy(s, name, n + 1);
+	strcpy(&s[n - 4], ".jbr");
+	RomResource *rom = RomResource::get(s);
+	if (!rom)
+		return 0;
+	ImageResource *res = new ImageResource(rom);
+	res->format = IRF_IPNGGEN;
+	res->data = rom->get_data() + 8;
+	res->size = rom->get_size() - 8;
+	res->width = 0;
+	res->height = 0;
+	return res;
+}
+
+#endif
+
+void ImageResource::release(ImageResource *res) {
 	delete res;
 }

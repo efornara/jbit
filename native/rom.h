@@ -38,15 +38,41 @@ struct RomEntry {
 class RomResource {
 private:
 	const char *name;
-	unsigned char *data;
+	const unsigned char *data;
 	unsigned size;
+	bool own_data;
 	bool load_embedded();
 	bool load_external();
-	RomResource(const char *name_) : name(name_), data(0) {}
-	~RomResource() { delete[] name; delete[] data; }
+	RomResource(const char *name_) : name(name_), data(0), own_data(false) {}
+	~RomResource() { delete[] name; if (own_data) delete[] data; }
 public:
 	const unsigned char *get_data() const { return data; };
 	unsigned get_size() const { return size; }
 	static RomResource *get(const char *name);
 	static void release(RomResource *res);
+};
+
+enum ImageResourceFormat {
+	IRF_IRAWRGBA,
+	IRF_IPNGGEN
+};
+
+class ImageResource {
+private:
+	RomResource *rom;
+	ImageResourceFormat format;
+	const unsigned char *data;
+	unsigned size;
+	unsigned width;
+	unsigned height;
+	ImageResource(RomResource *rom_) : rom(rom_), data(0) {}
+	~ImageResource();
+public:
+	ImageResourceFormat get_format() const { return format; }
+	const unsigned char *get_data() const { return data; };
+	unsigned get_size() const { return size; }
+	unsigned get_width() const { return width; }
+	unsigned get_height() const { return height; }
+	static ImageResource *get(const char *name);
+	static void release(ImageResource *res);
 };

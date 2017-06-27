@@ -135,6 +135,10 @@ public:
 		else
 			m[length++] = value;
 	}
+	void append_uint16(u16 value) {
+		append(value & 0xff);
+		append(value >> 8);
+	}
 	int n() const {
 		return (int)length;
 	}
@@ -824,6 +828,52 @@ public:
 		req.put_uint8(IINFO_FLAGS, 0);
 		return true;
 	}
+	bool req_ILOAD(Request &req) {
+		int n = req.n();
+		if (n < 4)
+			return false;
+		const u8 id = req.get_uint8(1);
+		int pos;
+		const char *s = req.get_string0(2, &pos);
+		if (!s || pos != n)
+			return false;
+		ImageResource *image = ImageResource::get(s);
+		if (!image)
+			return false;
+		req.rewind();
+		bool res = false;
+		const ImageResourceFormat format = image->get_format();
+		if (format == IRF_IRAWRGBA) {
+			req.append(REQ_IRAWRGBA);
+			req.append(id);
+			req.append_uint16((u16)image->get_width());
+			req.append_uint16((u16)image->get_height());
+			req.append(IRAWRGBA_FLAGS_ALPHA);
+			unsigned i;
+			for (i = 0; i < IRAWRGBA_HEADER_SIZE; i++)
+				req_IRAWRGBA(req, i, req.get_uint8(i));
+			const u8 *data = image->get_data();
+			for (unsigned j = 0; j < image->get_size(); j++) {
+				req.append(data[j]);
+				req_IRAWRGBA(req, i++, data[j]);
+			}
+			res = req_IRAWRGBA(req, Request::END, 0);
+		} else if (format == IRF_IPNGGEN) {
+			const u8 *data = image->get_data();
+			for (unsigned i = 0; i < image->get_size(); i++) {
+				u8 value;
+				if (i == 1)
+					value = id;
+				else
+					value = data[i];
+				req.append(value);
+				req_IPNGGEN(req, i, value);
+			}
+			res = req_IPNGGEN(req, Request::END, 0);
+		}
+		ImageResource::release(image);
+		return res;
+	}
 	bool req_IPNGGEN(Request &req, u32f pos, u8 value) {
 		if (pos == 0) {
 			ctx.IPNGGEN.st = Invalid;
@@ -1199,6 +1249,9 @@ private:
 			break;
 		case REQ_IINFO:
 			res = images.req_IINFO(req);
+			break;
+		case REQ_ILOAD:
+			res = images.req_ILOAD(req);
 			break;
 		default:
 			if (is_streaming)

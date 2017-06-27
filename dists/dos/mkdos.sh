@@ -25,6 +25,10 @@ cp $IN/native/io2sim.exe $OUT
 
 # copy support files
 cp $IN/tools/vga14.rom $OUT
+cp $IN/midp/jbit/res/cga.rom $OUT
+for i in icon ; do
+	../../tools/ipnggen.py $IN/midp/jbit/res/$i.png $OUT/$i.jbr
+done
 
 # make archive
 ( cd tmp ; rm -f ../$ID.zip ; zip ../$ID.zip -r $DIR )
