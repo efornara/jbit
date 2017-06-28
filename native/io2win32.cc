@@ -32,8 +32,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define WINVER 0x500
-#define _WIN32_IE 0x0500
+#define WINVER 0x400
+#define _WIN32_IE 0x0300
 #include <windows.h>
 #include <commctrl.h>
 
