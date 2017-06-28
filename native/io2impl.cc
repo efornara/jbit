@@ -284,7 +284,7 @@ public:
 		delete[] old;
 	}
 	bool is_valid(u8 n) {
-		return n > 0 && n <= maxn;
+		return n <= maxn;
 	}
 	Ref& operator[](int n) {
 		return refs[n];
@@ -538,7 +538,24 @@ private:
 public:
 	Image() : width(0), height(0), data(0), type(IT_Alpha0) {}
 	~Image() { delete[] data; }
+	void render_pixel(u32f buf_offset, u32f img_offset) {
+		const color_t src_c = data[img_offset];
+		switch (type) {
+		case IT_Alpha0:
+			buffer[buf_offset] = src_c;
+			break;
+		case IT_Alpha1:
+			if (is_color_opaque(src_c))
+				buffer[buf_offset] = src_c;
+			break;
+		case IT_Alpha8: {
+			const color_t dst_c = buffer[buf_offset];
+			buffer[buf_offset] = mix_color(dst_c, src_c);
+			} break;
+		}
+	}
 	friend class Images;
+	friend class Layers;
 };
 
 class Images {
@@ -551,6 +568,7 @@ private:
 	Array v;
 	Ref bgimg;
 	Ref tmp;
+	bool load_external;
 	enum PngStatus {
 		Invalid,
 		PalSize,
@@ -582,7 +600,7 @@ private:
 		const u8 flags = req.get_uint8(8);
 		u8 bits;
 		Image *img;
-		if (!v.is_valid(id))
+		if (!load_external && !v.is_valid(id))
 			goto error;
 		switch (depth) {
 		case 1:
@@ -782,14 +800,20 @@ error:
 		}
 	}
 public:
-	Images(const Palette &pal_, int width_, int height_)
-	  : pal(pal_), width(width_), height(height_), v(INITIAL_DIM) {}
+	Images(const Palette &pal_, int width_, int height_) :
+	  pal(pal_), width(width_), height(height_), v(INITIAL_DIM),
+	  load_external(false) {}
 	void reset() {
 		v.dim(INITIAL_DIM);
 		for (unsigned id = 0; id <= INITIAL_DIM; id++)
 			v[id] = 0;
 		bgimg = 0;
 		tmp = 0;
+	}
+	Ref get(u8 id) {
+		if (!v.is_valid(id))
+			return Ref();
+		return v[id];
 	}
 	bool req_SETBGIMG(Request &req) {
 		if (req.n() != 2)
@@ -837,6 +861,18 @@ public:
 		const char *s = req.get_string0(2, &pos);
 		if (!s || pos != n)
 			return false;
+		return load(req, id, s);
+	}
+	void load_begin_external() {
+		load_external = true;
+	}
+	Ref load_end_external() {
+		load_external = false;
+		Ref res = tmp;
+		tmp = 0;
+		return res;
+	}
+	bool load(Request &req, u8 id, const char *s) {
 		ImageResource *image = ImageResource::get(s);
 		if (!image)
 			return false;
@@ -915,9 +951,11 @@ public:
 				tmp = 0;
 				return false;
 			}
-			const u8 id = req.get_uint8(1);
-			v[id] = tmp;
-			tmp = 0;
+			if (!load_external) {
+				const u8 id = req.get_uint8(1);
+				v[id] = tmp;
+				tmp = 0;
+			}
 		} else if (ctx.IPNGGEN.st == ImgData) {
 			if (pos == ctx.IPNGGEN.n) {
 				ctx.IPNGGEN.st = Invalid;
@@ -936,7 +974,7 @@ public:
 			ctx.IRAWRGBA.n = 0;
 		} else if (pos == IRAWRGBA_HEADER_SIZE - 1) {
 			const u8 id = req.get_uint8(1);
-			if (!v.is_valid(id))
+			if (!load_external && !v.is_valid(id))
 				return true;
 			const u16 width = req.get_uint16(2);
 			const u16 height = req.get_uint16(4);
@@ -987,9 +1025,11 @@ public:
 				tmp = 0;
 				return false;
 			}
-			const u8 id = req.get_uint8(1);
-			v[id] = tmp;
-			tmp = 0;
+			if (!load_external) {
+				const u8 id = req.get_uint8(1);
+				v[id] = tmp;
+				tmp = 0;
+			}
 		}
 		return true;
 	}
@@ -1017,29 +1057,203 @@ public:
 		}
 		u16f i = src_oy * src_stride + src_ox;
 		u16f j = dst_oy * dst_stride + dst_ox;
-		const ImgType type = img->type;
 		for (u16f y = 0; y < src_height; y++) {
-			for (u16f x = 0; x < src_width; x++) {
-				const color_t src_c = img->data[i + x];
-				switch (type) {
-				case IT_Alpha0:
-					buffer[j + x] = src_c;
-					break;
-				case IT_Alpha1:
-					if (is_color_opaque(src_c))
-						buffer[j + x] = src_c;
-					break;
-				case IT_Alpha8: {
-					const color_t dst_c = buffer[j + x];
-					buffer[j + x] = mix_color(dst_c, src_c);
-					} break;
-				}
-			}
+			for (u16f x = 0; x < src_width; x++)
+				img->render_pixel(j + x, i + x);
 			i += src_stride;
 			j += dst_stride;
 		}
 	}
 };
+
+#ifdef __I86__
+// too big for single code segment, freezes if multisegment is enabled
+class Layers {
+public:
+	Layers(const Palette &pal_, Images &images_, int width_, int height_) {}
+	void reset() {}
+	void put(u16 address, u8 value) {}
+	u8 get(u16 address) { return 0; }
+	bool req_GAMESET(Request &req) { return false; }
+	void render() {}
+};
+#else
+
+class Layers {
+private:
+	const Palette &pal;
+	Images &images;
+	const int width, height;
+	struct Layer {
+		Ref img;
+	};
+	struct TiledLayer : Layer {
+		u8 twidth;
+		u8 theight;
+		u16 cols;
+		u16 rows;
+		u16 cx;
+		u16 cy;
+		u8 *cells;
+	} gameset;
+public:
+	Layers(const Palette &pal_, Images &images_, int width_, int height_)
+	  : pal(pal_), images(images_), width(width_), height(height_) {
+		gameset.cells = 0;
+	}
+	void reset() {
+		gameset.img = 0;
+		delete[] gameset.cells;
+		gameset.cells = 0;
+	}
+	void put(u16 address, u8 value) {
+		if (!gameset.cells)
+			return;
+		switch (address) {
+		case TCOLLO:
+			if (value < gameset.cols)
+				gameset.cx = value;
+			break;
+		case TROWLO:
+			if (value < gameset.rows)
+				gameset.cy = value;
+			break;
+		case TCELL:
+			gameset.cells[gameset.cy * gameset.cols + gameset.cx] = value;
+			break;
+		}
+	}
+	u8 get(u16 address) {
+		if (!gameset.cells)
+			return 0;
+		switch (address) {
+		case TCOLLO:
+			return gameset.cx;
+		case TROWLO:
+			return gameset.cy;
+		case TCELL:
+			return gameset.cells[gameset.cy * gameset.cols + gameset.cx];
+		}
+		return 0;
+	}
+	bool req_GAMESET(Request &req) {
+		int n = req.n();
+		u8 image_id = TILESET_SILK; // layer_id = 0
+		u8 cols = 0, rows = 0, twidth = 0, theight = 0;
+		u8 default_twidth = 8, default_theight = 8;
+		const char *tileset = 0;
+		Ref tmp;
+		int pos = 1;
+		if (n > pos)
+			image_id = req.get_uint8(pos++);
+		if (n > pos) {
+			if (n - pos < 2)
+				return false;
+			cols = req.get_uint8(pos++);
+			rows = req.get_uint8(pos++);
+		}
+		if (n > pos)
+			req.get_uint8(pos++); // layer_id (not used yet)
+		if (n > pos) {
+			if (n - pos < 2)
+				return false;
+			twidth = req.get_uint8(pos++);
+			theight = req.get_uint8(pos++);
+		}
+		if (n != pos)
+			return false;
+		switch (image_id) {
+		case TILESET_SILK:
+			tileset = "/silk.png";
+			default_twidth = 16;
+			default_theight = 16;
+			image_id = 0;
+			break;
+		case TILESET_FONT:
+			tileset = "/font.png";
+			image_id = 0;
+			break;
+		case TILESET_MICRO:
+			tileset = "/micro.png";
+			image_id = 0;
+			break;
+		}
+		if (!twidth)
+			twidth = default_twidth;
+		if (!theight)
+			theight = default_theight;
+		if (!cols)
+			cols = width / twidth;
+		if (!rows)
+			rows = height / theight;
+		if (!rows || !cols)
+			return false;
+		if ((rows * twidth > width) || (cols * theight > height))
+			return false;
+		if (tileset) {
+			images.load_begin_external();
+			bool res = images.load(req, 0, tileset);
+			tmp = images.load_end_external();
+			if (!res)
+				return false;
+		} else {
+			tmp = images.get(image_id);
+		}
+		Image *img = tmp.as<Image>();
+		if (!img || !img->data)
+			return false;
+		if (img->width % twidth || img->height % theight)
+			return false;
+		delete[] gameset.cells;
+		TiledLayer *tl = &gameset;
+		tl->img = tmp;
+		tl->twidth = twidth;
+		tl->theight = theight;
+		tl->cols = cols;
+		tl->rows = rows;
+		tl->cx = 0;
+		tl->cy = 0;
+		const int size = rows * cols;
+		tl->cells = new u8[size];
+		memset(tl->cells, 0, size);
+		req.put_uint16(GAMESET_COLS, cols);
+		req.put_uint16(GAMESET_ROWS, rows);
+		return true;
+	}
+	void render() {
+		TiledLayer *tl = &gameset;
+		Image *img = tl->img.as<Image>();
+		if (!img || !img->data)
+			return;
+		const unsigned dst_stride = width;
+		const unsigned src_stride = img->width;
+		const unsigned dst_ox = (width - (tl->rows * tl->twidth)) / 2;
+		const unsigned dst_oy = (height - (tl->cols * tl->theight)) / 2;
+		const unsigned src_cols = img->width / tl->twidth;
+		u16f j = dst_oy * dst_stride + dst_ox;
+		u16f cell_id = 0;
+		for (u16f r = 0; r < tl->rows; r++) {
+			for (u16f c = 0; c < tl->cols; c++, j += tl->twidth) {
+				u16f cell = tl->cells[cell_id++];
+				if (!cell--)
+					continue;
+				const u16f src_x = (cell % src_cols) * tl->twidth;
+				const u16f src_y = (cell / src_cols) * tl->theight;
+				u16f i = src_y * src_stride + src_x;
+				u16f jj = j;
+				for (u8f y = 0; y < tl->theight; y++) {
+					for (u8f x = 0; x < tl->twidth; x++)
+						img->render_pixel(jj + x, i + x);
+					i += src_stride;
+					jj += dst_stride;
+				}
+			}
+			j += dst_stride * (tl->theight - 1);
+		}
+	}
+};
+
+#endif
 
 unsigned Ref::create(ObjType type) {
 	unsigned id;
@@ -1078,6 +1292,7 @@ private:
 	Console console;
 	color_t bgcol;
 	Images images;
+	Layers layers;
 	int v_FRMFPS;
 	u32f wait_us;
 	u32f rel_time;
@@ -1092,6 +1307,8 @@ private:
 			images.render();
 		if (v_ENABLE & ENABLE_CONSOLE)
 			console.render(microio);
+		if (v_ENABLE & ENABLE_LAYERS)
+			layers.render();
 	}
 	u8 m_get_uint8(u16 addr) {
 		return (u8)m->get(addr);
@@ -1253,6 +1470,11 @@ private:
 		case REQ_ILOAD:
 			res = images.req_ILOAD(req);
 			break;
+		case REQ_GAMESET:
+			res = layers.req_GAMESET(req);
+			if (res)
+				v_ENABLE = ENABLE_BGCOL | ENABLE_LAYERS;
+			break;
 		default:
 			if (is_streaming)
 				res = request_stream(Request::END, 0);
@@ -1305,6 +1527,12 @@ public:
 		case CONCFG:
 		case CONCBG:
 			return console.get(address);
+		case TCOLLO:
+		case TCOLHI:
+		case TROWLO:
+		case TROWHI:
+		case TCELL:
+			return layers.get(address);
 		default:
 			if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE)
 				return keybuf.get(address - KEYBUF);
@@ -1355,6 +1583,13 @@ public:
 		case CONCBG:
 			console.put(address, value);
 			return;
+		case TCOLLO:
+		case TCOLHI:
+		case TROWLO:
+		case TROWHI:
+		case TCELL:
+			layers.put(address, value);
+			return;
 		default:
 			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
 				console.put(address, value);
@@ -1378,6 +1613,7 @@ public:
 		console.reset();
 		bgcol = palette[microio ? COLOR_MICROIO_BORDER : COLOR_WHITE];
 		images.reset();
+		layers.reset();
 		v_FRMFPS = 40;
 		wait_us = 0;
 	}
@@ -1405,7 +1641,8 @@ public:
 	}
 	// IO2Impl
 	IO2Impl() : microio(false), frameno(0),
-	  console(palette, width, height), images(palette, width, height) {
+	  console(palette, width, height), images(palette, width, height),
+	  layers(palette, images, width, height) {
 		Ref::init(100); // TODO: profile
 		buffer = new color_t[width * height];
 		memset(buffer, 0, width * height * sizeof(color_t));
@@ -1416,6 +1653,7 @@ public:
 		delete[] buffer;
 		buffer = 0;
 		images.reset();
+		layers.reset();
 		Ref::cleanup();
 	}
 };
