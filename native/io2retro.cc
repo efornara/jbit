@@ -289,7 +289,7 @@ bool retro_load_game(const struct retro_game_info *info) {
 		data = (const uint8_t *)info->data;
 		size = info->size;
 	} else {
-		rom = RomResource::get("intro17.jb");
+		rom = RomResource::get("iload.jb");
 		data = rom->get_data();
 		size = rom->get_size();
 	}

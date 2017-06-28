@@ -89,7 +89,7 @@ req.u16(w, 'Width')
 req.u16(h, 'Height')
 req.u8(depth, 'Depth')
 req.u8(3, 'INDEXED_COLOR')
-if transp is None:
+if transp is not None:
 	req.u8(1, 'IDX0TRANSP')
 else:
 	req.u8(0)

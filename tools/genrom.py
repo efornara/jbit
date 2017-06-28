@@ -8,7 +8,7 @@ roms = [
 	'../midp/jbit/res/icon.png',
 	'../midp/jbit/res/cga.rom',
 	'../midp/jbit/res/silk.png',
-	'../midp/jbit/res/intro17.jb',
+	'../midp/jbit/res/iload.jb',
 ]
 
 directory = []
