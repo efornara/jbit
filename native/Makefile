@@ -6,9 +6,11 @@ CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
 SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
-JBIT_OBJS = main.o devimpl.o cpu.o asm.o utils.o symdefs.o
-IO2SIM_OBJS = io2retro.o io2impl.o blt32.o devimpl.o cpu.o utils.o rom.o \
-  romdata.o
+
+JBIT_OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
+
+IO2SIM_OBJS = io2retro.o io2impl.o layers.o images.o console.o palette.o \
+	devimpl.o cpu.o utils.o rom.o
 
 #
 # TARGET / PLATFORM DEFAULT
@@ -42,20 +44,16 @@ endif
 
 ifeq ($(TARGET),jbit)
 
-ifeq ($(PLATFORM),std)
-OBJS += stdout.o
-endif
-
 ifeq ($(PLATFORM),posix)
-OBJS += stdout.o xv65.o
+OBJS += xv65.o devimpl.o
 endif
 
 ifeq ($(PLATFORM),linux)
-OBJS += stdout.o xv65.o
+OBJS += xv65.o devimpl.o
 endif
 
 ifeq ($(PLATFORM),osx)
-OBJS += stdout.o xv65.o
+OBJS += xv65.o devimpl.o
 LDFLAGS =
 endif
 
@@ -79,34 +77,30 @@ ifeq ($(ELF),static)
 LDFLAGS += -static
 endif
 # OUT
-OBJS += stdout.o xv65.o
+OBJS += xv65.o devimpl.o
 OUT = jbit-android-$(ARCH)-$(ELF).bin
 endif
 
 ifeq ($(PLATFORM),win32)
 CXX = i586-mingw32msvc-g++
 LDFLAGS = -mconsole -s
-OBJS += stdout.o
 OUT = jbit.exe
 endif
 
 ifeq ($(PLATFORM),dosdpmi)
 CXX = i586-pc-msdosdjgpp-g++
 LDFLAGS = -s
-OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 OUT = jbit.exe
 endif
 ifeq ($(PLATFORM),dos4g)
 CXX = wcl386
 CXXFLAGS = -q -bt=dos
-OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 jbit.exe: $(OBJS)
 	wcl386 -q -l=dos4g -fe=jbit $(OBJS)
 endif
 ifeq ($(PLATFORM),dos16)
 CXX = wcl
 CXXFLAGS = -q -bt=dos -ml -os
-OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
 jbit.exe: $(OBJS)
 	wcl -q -l=dos -fe=jbit -k8192 $(OBJS)
 endif
@@ -118,6 +112,12 @@ endif
 #
 
 ifeq ($(TARGET),io2sim)
+
+ifeq ($(PLATFORM),dos16)
+OBJS += blt08.o
+else
+OBJS += blt32.o romdata.o
+endif
 
 ifeq ($(PLATFORM),osx)
 LDFLAGS = -dynamiclib
@@ -157,7 +157,7 @@ endif
 ifeq ($(PLATFORM),dos16)
 CXX = wcl
 CXXFLAGS = -q -0 -bt=dos -ml -os
-OBJS = io2dos.o io2retro.o io2impl.o blt08.o devimpl.o cpu.o utils.o rom.o
+OBJS += io2dos.o
 io2sim.exe: $(OBJS)
 	wcl -q -l=dos -fe=io2sim -k4096 $(OBJS)
 endif

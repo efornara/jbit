@@ -13,10 +13,10 @@ IS_JBIT = 0
 .endif
 
 .if $(IS_JBIT) == 1
-OBJS = $(JBIT_OBJS) stdout.o xv65.o
+OBJS = $(JBIT_OBJS) xv65.o devimpl.o
 OUT = jbit
 .else
-OBJS = $(IO2SIM_OBJS)
+OBJS = $(IO2SIM_OBJS) blt32.o romdata.o
 CXXFLAGS += -fPIC
 LDFLAGS += -shared
 OUT = io2sim.so
