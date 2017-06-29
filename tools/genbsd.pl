@@ -13,7 +13,7 @@ IS_JBIT = 0
 .endif
 
 .if $(IS_JBIT) == 1
-OBJS = $(JBIT_OBJS) xv65.o devimpl.o
+OBJS = $(JBIT_OBJS) $(XV65_OBJS)
 OUT = jbit
 .else
 OBJS = $(IO2SIM_OBJS) blt32.o romdata.o

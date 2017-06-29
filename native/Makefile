@@ -10,7 +10,9 @@ SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
 JBIT_OBJS = main.o stdout.o cpu.o asm.o passes.o token.o utils.o symdefs.o
 
 IO2SIM_OBJS = io2retro.o io2impl.o layers.o images.o console.o palette.o \
-	devimpl.o cpu.o utils.o rom.o
+	random.o keybuf.o cpu.o utils.o rom.o
+
+XV65_OBJS = xv65.o random.o keybuf.o
 
 #
 # TARGET / PLATFORM DEFAULT
@@ -45,15 +47,15 @@ endif
 ifeq ($(TARGET),jbit)
 
 ifeq ($(PLATFORM),posix)
-OBJS += xv65.o devimpl.o
+OBJS += $(XV65_OBJS)
 endif
 
 ifeq ($(PLATFORM),linux)
-OBJS += xv65.o devimpl.o
+OBJS += $(XV65_OBJS)
 endif
 
 ifeq ($(PLATFORM),osx)
-OBJS += xv65.o devimpl.o
+OBJS += $(XV65_OBJS)
 LDFLAGS =
 endif
 
@@ -77,7 +79,7 @@ ifeq ($(ELF),static)
 LDFLAGS += -static
 endif
 # OUT
-OBJS += xv65.o devimpl.o
+OBJS += $(XV65_OBJS)
 OUT = jbit-android-$(ARCH)-$(ELF).bin
 endif
 

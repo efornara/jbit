@@ -12,7 +12,9 @@ SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
 JBIT_OBJS = main.o stdout.o cpu.o asm.o passes.o token.o utils.o symdefs.o
 
 IO2SIM_OBJS = io2retro.o io2impl.o layers.o images.o console.o palette.o \
-	devimpl.o cpu.o utils.o rom.o
+	random.o keybuf.o cpu.o utils.o rom.o
+
+XV65_OBJS = xv65.o random.o keybuf.o
 
 #
 # BSD DEFAULTS
@@ -27,7 +29,7 @@ IS_JBIT = 0
 .endif
 
 .if $(IS_JBIT) == 1
-OBJS = $(JBIT_OBJS) xv65.o devimpl.o
+OBJS = $(JBIT_OBJS) $(XV65_OBJS)
 OUT = jbit
 .else
 OBJS = $(IO2SIM_OBJS) blt32.o romdata.o

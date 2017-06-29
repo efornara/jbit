@@ -30,6 +30,8 @@
 
 #include "io2impl.h"
 
+static const int CONVIDEO_SIZE = 40;
+
 static RomResource *font = 0;
 
 color_t *buffer;
@@ -338,7 +340,7 @@ public:
 		default:
 			if (address >= KEYBUF && address < KEYBUF + MicroIOKeybuf::KEYBUF_SIZE)
 				return keybuf.get(address - KEYBUF);
-			else if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+			else if (address >= CONVIDEO && address < CONVIDEO + CONVIDEO_SIZE)
 				return console.get(address);
 			else if (address >= REQDAT && address < REQDAT + Request::REQDAT_SIZE)
 				return req.get(address);
@@ -393,7 +395,7 @@ public:
 			layers.put(address, value);
 			return;
 		default:
-			if (address >= CONVIDEO && address < CONVIDEO + MicroIODisplay::CONVIDEO_SIZE)
+			if (address >= CONVIDEO && address < CONVIDEO + CONVIDEO_SIZE)
 				console.put(address, value);
 			else if (address >= REQDAT && address < REQDAT + Request::REQDAT_SIZE)
 				return req.put(address, value);

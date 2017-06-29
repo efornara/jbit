@@ -26,58 +26,46 @@
  * SUCH DAMAGE.
  */
 
-// devimpl.h
+// random.cc
 
-class Random {
-private:
-	static const long long MAXRAND = 0xFFFFFFFFFFFFLL;
-	long long seed[2];
-	int n;
-	long long divisor;
-	long long next();
-public:
-	Random() { reset(); }
-	void reset();
-	int get();
-	void put(int max);
-};
+#include <stdio.h>
+#include <time.h>
 
-class MicroIODisplay {
-public:
-	static const int COLS = 10;
-	static const int ROWS = 4;
-	static const int CONVIDEO_SIZE = COLS * ROWS;
-	static const int N_OF_LINES = ROWS + 2;
-private:
-	char video_buf[CONVIDEO_SIZE];
-	mutable char line_buf[COLS + 3];
-public:
-	void reset();
-	void put(int address, int value);
-	int get(int address) const;
-	const char *get_line(int i) const;
-};
+#include "jbit.h"
+#include "devparts.h"
 
-class MicroIOKeybuf {
-public:
-	static const int KEYBUF_SIZE = 8;
-private:
-	char key_buf[KEYBUF_SIZE];
-public:
-	static int map_keypad(int c);
-	void reset();
-	void put(int address, int value);
-	int get(int address) const;
-	void enque(int value);
-};
+Random::Random() {
+	reset();
+}
 
-class MicroIODeviceDriver {
-public:
-	virtual void set_display(const MicroIODisplay *display_) = 0;
-	virtual void reset() = 0;
-	virtual void flush(const char *status, int ms) = 0;
-	virtual int get_key() = 0;
-	virtual ~MicroIODeviceDriver() {}
-};
+long long Random::next() {
+	seed[0] = (seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
+	return seed[0];
+}
 
-extern MicroIODeviceDriver *new_MicroIODeviceDriver();
+void Random::reset() {	
+	time_t t;
+	t = time(NULL);
+	seed[0] = t & MAXRAND;
+	seed[1] = 0;
+	put(255);
+
+}
+
+int Random::get() {
+	long long i;
+	while (n <= (i = next() / divisor))
+		;
+	return (int)i;
+
+}
+void Random::put(int max) {
+	if (max == 0) {
+		long long t = seed[0];
+		seed[0] = seed[1];
+		seed[1] = t;
+	} else {
+		n = max + 1;
+		divisor = MAXRAND / n;
+	}
+}

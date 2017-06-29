@@ -26,78 +26,13 @@
  * SUCH DAMAGE.
  */
 
-// devimpl.cc
+// keybuf.cc
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <time.h>
 
 #include "jbit.h"
-#include "devimpl.h"
-
-long long Random::next() {
-	seed[0] = (seed[0] * 0x5DEECE66DLL + 0xBLL) & MAXRAND;
-	return seed[0];
-}
-
-void Random::reset() {	
-	time_t t;
-	t = time(NULL);
-	seed[0] = t & MAXRAND;
-	seed[1] = 0;
-	put(255);
-
-}
-
-int Random::get() {
-	long long i;
-	while (n <= (i = next() / divisor))
-		;
-	return (int)i;
-
-}
-void Random::put(int max) {
-	if (max == 0) {
-		long long t = seed[0];
-		seed[0] = seed[1];
-		seed[1] = t;
-	} else {
-		n = max + 1;
-		divisor = MAXRAND / n;
-	}
-}
-
-void MicroIODisplay::reset() {
-	memset(video_buf, ' ', sizeof(video_buf));
-}
-
-void MicroIODisplay::put(int address, int value) {
-	if (address >= 0 && address < (int)sizeof(video_buf))
-		video_buf[address] = value;
-}
-
-int MicroIODisplay::get(int address) const {
-	if (address >= 0 && address < (int)sizeof(video_buf))
-		return video_buf[address] & 0xff;
-	return 0;
-}
-
-const char *MicroIODisplay::get_line(int i) const {
-	if (i <= 0 || i >= (N_OF_LINES - 1)) {
-		memcpy(line_buf, "+----------+", 1 + COLS + 1 + 1);
-	} else {
-		line_buf[0] = '|';
-		const char *p = &video_buf[(i - 1) * COLS];
-		for (i = 1; i <= COLS; i++) {
-			char c = *p++;
-			line_buf[i] = isprint((int)c) ? c : ' ';
-		}
-		line_buf[COLS + 1] = '|';
-		line_buf[COLS + 2] = 0;
-	}
-	return line_buf;
-}
+#include "devparts.h"
 
 int MicroIOKeybuf::map_keypad(int c) {
 	switch (c) {

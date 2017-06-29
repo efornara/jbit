@@ -44,7 +44,7 @@ typedef uint_fast32_t u32f;
 typedef uint_fast64_t u64f;
 
 #include "jbit.h"
-#include "devimpl.h"
+#include "devparts.h"
 
 #include "_io2.h"
 

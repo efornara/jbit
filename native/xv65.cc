@@ -49,7 +49,7 @@
 #include <termios.h>
 
 #include "jbit.h"
-#include "devimpl.h"
+#include "devparts.h"
 
 #include "_xv65.h"
 
@@ -226,6 +226,45 @@ const char *errno_to_string(int id) {
 #define STR_ESC_HOME "\x1b[;H"
 #define STR_ESC_NORMAL "\x1b[0m"
 #define STR_ESC_CSI "\x1b["
+
+class MicroIODisplay {
+public:
+	static const int COLS = 10;
+	static const int ROWS = 4;
+	static const int CONVIDEO_SIZE = COLS * ROWS;
+	static const int N_OF_LINES = ROWS + 2;
+private:
+	char video_buf[CONVIDEO_SIZE];
+	mutable char line_buf[COLS + 3];
+public:
+	void reset() {
+		memset(video_buf, ' ', sizeof(video_buf));
+	}
+	void put(int address, int value) {
+		if (address >= 0 && address < (int)sizeof(video_buf))
+			video_buf[address] = value;
+	}
+	int get(int address) const {
+		if (address >= 0 && address < (int)sizeof(video_buf))
+			return video_buf[address] & 0xff;
+		return 0;
+	}
+	const char *get_line(int i) const {
+		if (i <= 0 || i >= (N_OF_LINES - 1)) {
+			memcpy(line_buf, "+----------+", 1 + COLS + 1 + 1);
+		} else {
+			line_buf[0] = '|';
+			const char *p = &video_buf[(i - 1) * COLS];
+			for (i = 1; i <= COLS; i++) {
+				char c = *p++;
+				line_buf[i] = isprint((int)c) ? c : ' ';
+			}
+			line_buf[COLS + 1] = '|';
+			line_buf[COLS + 2] = 0;
+		}
+		return line_buf;
+	}
+};
 
 class Xv65Device : public Device {
 private:
