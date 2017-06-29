@@ -7,7 +7,7 @@ LDFLAGS ?= -s
 
 SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
 
-JBIT_OBJS = main.o stdout.o cpu.o asm.o utils.o symdefs.o
+JBIT_OBJS = main.o stdout.o cpu.o asm.o passes.o token.o utils.o symdefs.o
 
 IO2SIM_OBJS = io2retro.o io2impl.o layers.o images.o console.o palette.o \
 	devimpl.o cpu.o utils.o rom.o
