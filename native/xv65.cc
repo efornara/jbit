@@ -288,6 +288,7 @@ private:
 	int v_ERREXIT;
 	int v_TTYCTL;
 	FILE *putfp;
+	int std_c;
 	unsigned char v_REQDAT[16];
 	const char *r;
 	int n;
@@ -942,6 +943,7 @@ public:
 		v_ERREXIT = 0;
 		v_TTYCTL = TTY_ICANON;
 		putfp = stdout;
+		std_c = EOF;
 		memset(v_REQDAT, 0, sizeof(v_REQDAT));
 	}
 	void put(int address, int value) {
@@ -972,6 +974,9 @@ public:
 			break;
 		case FRMDRAW:
 			put_FRMDRAW();
+			break;
+		case GETCHAR:
+			std_c = getchar();
 			break;
 		case PUTUINT8:
 			fprintf(putfp, "%d", value);
@@ -1030,6 +1035,10 @@ public:
 			return sizeof(pid_t);
 		case FRMFPS:
 			return v_FRMFPS;
+		case GETCHAR:
+			return std_c & 0xff;
+		case GETEOF:
+			return (feof(stdin) || ferror(stdin)) ? 255 : 0;
 		case TTYCTL:
 			return get_TTYCTL();
 		case RANDOM:

@@ -5,14 +5,14 @@
 CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
 LDFLAGS ?= -s
 
-SYMS = d_xv65.h d_io2.h d_mio.h _jbfmt.h
+SYMS = d_xv65.h d_io2.h d_mio.h d_std.h _jbfmt.h
 
-JBIT_OBJS = main.o stdout.o cpu.o asm.o passes.o token.o utils.o symdefs.o
+JBIT_OBJS = main.o std.o random.o cpu.o asm.o passes.o token.o utils.o symdefs.o
 
 IO2SIM_OBJS = io2retro.o io2impl.o layers.o images.o console.o palette.o \
 	random.o keybuf.o cpu.o utils.o rom.o
 
-XV65_OBJS = xv65.o random.o keybuf.o
+XV65_OBJS = xv65.o keybuf.o
 
 #
 # TARGET / PLATFORM DEFAULT
@@ -207,6 +207,10 @@ d_io2.h: io2.inc
 
 d_mio.h: mio.inc
 	perl ../tools/inc2sym.pl <mio.inc >d_mio.h
+
+d_std.h: std.inc
+	perl ../tools/inc2sym.pl <std.inc >d_std.h
+	perl ../tools/inc2h.pl <std.inc >_std.h
 
 _jbfmt.h: jbfmt.inc
 	perl ../tools/inc2h.pl <jbfmt.inc >_jbfmt.h

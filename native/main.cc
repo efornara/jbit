@@ -57,7 +57,7 @@ static struct {
 	const char *name;
 	int id;
 } dev_id_map[] = {
-	{ "stdout", JBFMT_DEVID_STDOUT },
+	{ "std", JBFMT_DEVID_STD },
 	{ "xv65", JBFMT_DEVID_XV65 },
 	{ "microio", JBFMT_DEVID_MICROIO },
 	{ "io2", JBFMT_DEVID_IO2 },
@@ -134,10 +134,12 @@ static const char *resolve_file_name(const char *name, Buffer *buffer) {
 	Buffer env_buf(size);
 	char *env = env_buf.append_raw(size);
 	memcpy(env, c_env, size);
-#ifdef __WIN32__
+#if defined(__WIN32__) || defined(__DOS__)
 	const char *delim = ";";
+	const char separator = '\\';
 #else
 	const char *delim = ":";
+	const char separator = '/';
 #endif
 	const char *dir = strtok(env, delim);
 	do {
@@ -146,8 +148,8 @@ static const char *resolve_file_name(const char *name, Buffer *buffer) {
 			continue;
 		buffer->reset();
 		buffer->append_data(dir, n);
-		if (dir[n - 1] != '/')
-			buffer->append_char('/');
+		if (dir[n - 1] != separator)
+			buffer->append_char(separator);
 		buffer->append_string(name);
 		const char *file_name = buffer->get_data();
 		if (access(file_name, F_OK) == 0) // fewer surprises than R_OK
@@ -236,8 +238,8 @@ static void startup(const char *file_name, Tag dev_tag, VM **vm, Device **dev) {
 	Program prg;
 	parse(file_name, dev_tag, &prg);
 	if (!prg.device_tag.is_valid()) {
-#ifdef __WIN32__
-		const char *def_device = "stdout";
+#if defined(__WIN32__) || defined(__DOS__)
+		const char *def_device = "std";
 #else
 		const char *def_device = "xv65";
 #endif

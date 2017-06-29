@@ -18,7 +18,7 @@ and can be provided either in binary (jb) or in assembly (asm) form.
 
 When the processor starts, it is attached to a device that defines and
 limits its ability to interact with the environment. For example, the
-_stdout_ device can only write characters to its standard output. On the
+_std_ device can only read/write characters to its standard I/O. On the
 other hand, the _xv65_ device can spawn other processes, modify the file
 system, and, if tools like nc(1) are installed, access the network. The
 list of devices available depends on the system and can be found by
@@ -69,16 +69,16 @@ JBit uses the non-standard notation _page:offset_ for decimal words:
 You don't need to remember the location of the IO registers. If you
 select a device, you get some symbols defined:
 
-    .device "stdout"
+    .device "std"
     169 'A' 141 PUTCHAR
 
 To see the list of the symbols defined for a particular device, type:
 
-    jbit -s stdout
+    jbit -s std
 
 You can of course write the same program in assembly:
 
-    .device "stdout"
+    .device "std"
     lda #'A'
     sta PUTCHAR
 
@@ -107,14 +107,31 @@ for more information about the assembly format.
     or stdout if <file> is -.
     WARNING: the _jb_ format is a binary format!
 
-## STDOUT
+## DEVICES
 
-This is a very simple device.
+This register is common to every device:
+
+  * `RANDOM` (RW):
+     On read: get a random number <= n (255 by default). On write: set n
+     (if > 0), or swap the number generator (if == 0). There are two
+     number generators: one (used by default) is initialized using the
+     time at the start of the program, the other is initialized with
+     a constant.
+
+## STD
+
+This device allows simple access to stdin and stdout.
 
 Registers:
 
   * `PUTCHAR` (W):
      Mapped to putchar(3).
+
+  * `GETCHAR` (RW):
+     Mapped to getchar(3). Write any value into it to make a call.
+
+  * `GETEOF` (R):
+     255 if feof(3) || ferror(3), 0 otherwise.
 
   * `PUTUINT8` (W):
      Send the decimal representation of a byte (0-255) to stdout.
@@ -122,8 +139,8 @@ Registers:
 ## MICROIO
 
 This device provides a display with a 10x4 matrix of characters (also
-called console), a keypad similar to the ones found on classic phones
-(keys 0-9, * and #) and two random number generators.
+called console) and a keypad similar to the ones found on classic phones
+(keys 0-9, * and #).
 
 Registers:
 
@@ -135,13 +152,6 @@ Registers:
   * `FRMFPS` (RW):
      The desired refresh rate in frames per seconds * 4. For example, 40
      means 10 frames per seconds.
-
-  * `RANDOM` (RW):
-     On read: get a random number <= n (255 by default). On write: set n
-     (if > 0), or swap the number generator (if == 0). There are two
-     number generators: one (used by default) is initialized using the
-     time at the start of the program, the other is initialized with
-     a constant.
 
   * `KEYBUF` (8 bytes, RW):
      The standard KeyPresses (the ones that can be represented by ASCII
@@ -224,7 +234,7 @@ is  especially relevant.
 xv65 is quite a complex device. For an example of use, look at
 xtermpal.asm in samples. xtermpal just prints out some xterm escape
 characters to produce a color palette, and could have been written for
-the stdout device.  However, since sending escape characters might
+the std device.  However, since sending escape characters might
 confuse other terminals, xtermpal uses the ENV request to query the
 environment variable TERM and guard against running on a non-xterm
 terminal.
@@ -338,6 +348,7 @@ Fork a new process:
     ; the pid returned by fork() is stored starting from REQDAT
 
 ## FILES
+
   * `/usr/share/jbit/samples`:
     Sample programs.
 
@@ -364,8 +375,3 @@ reported.
 Copyright (C) 2012-2017  Emanuele Fornara
 
 Released under the BSD 2-Clause License.
-
-## SEE ALSO
-
-[Wiki for `jbit`](http://github.com/efornara/jbit/wiki),
-[JBit - J2ME Version](http://jbit.sourceforge.net/)

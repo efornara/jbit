@@ -1,14 +1,16 @@
 ; Hello World in jbit
 
-	.device "stdout"
+	.device "std"
 
 	ldx	#0
-l1:	lda	msg,X
+l1:
+	lda	msg,X
 	beq	exit
 	sta	PUTCHAR
 	inx
 	bne	l1
-exit:	brk
+exit:
+	brk
 
 .data
 

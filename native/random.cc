@@ -46,10 +46,9 @@ long long Random::next() {
 void Random::reset() {	
 	time_t t;
 	t = time(NULL);
-	seed[0] = t & MAXRAND;
+	seed[0] = ((long long)t * t) & MAXRAND;
 	seed[1] = 0;
 	put(255);
-
 }
 
 int Random::get() {

@@ -43,6 +43,8 @@
 
 #define FRMFPS 0x0211
 #define FRMDRAW 0x0212
+#define GETCHAR 0x0213
+#define GETEOF 0x0214
 #define TTYCTL 0x0215
 #define PUTUINT8 0x0216
 #define RANDOM 0x0217

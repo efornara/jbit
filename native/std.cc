@@ -26,22 +26,28 @@
  * SUCH DAMAGE.
  */
 
-// stdout.cc
+// std.cc
 
 #include <stdio.h>
 
 #include "jbit.h"
+#include "devparts.h"
 
-#include "_xv65.h"
+#include "_std.h"
 
 #define IO_BASE 0x200
 
-class StdoutDevice : public Device {
+class StdDevice : public Device {
+private:
+	Random random;
+	int std_c;
 public:
 	// IO
 	void set_address_space(AddressSpace *dma) {
 	}
 	void reset() {
+		random.reset();
+		std_c = EOF;
 	}
 	void put(int address, int value) {
 		address += IO_BASE;
@@ -50,14 +56,26 @@ public:
 		case PUTCHAR:
 			putchar(value);
 			break;
+		case GETCHAR:
+			std_c = getchar();
+			break;
 		case PUTUINT8:
 			printf("%d", value);
+			break;
+		case RANDOM:
+			random.put(value);
 			break;
 		}
 	}
 	int get(int address) {
 		address += IO_BASE;
 		switch (address) {
+		case GETCHAR:
+			return std_c & 0xff;
+		case GETEOF:
+			return (feof(stdin) || ferror(stdin)) ? 255 : 0;
+		case RANDOM:
+			return random.get();
 		default:
 			return 0;
 		}
@@ -71,7 +89,7 @@ public:
 };
 
 static Device *new_Device(Tag tag) {
-	return new StdoutDevice();
+	return new StdDevice();
 }
 
-static DeviceEntry entry("stdout", new_Device);
+static DeviceEntry entry("std", new_Device);

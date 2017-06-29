@@ -32,10 +32,9 @@
 
 #include "core.h"
 
-static const SymDef stdout_symdefs[] = {
-{"PUTCHAR",0x0200},
-{"PUTUINT8",0x0216},
-{0,0},
+static const SymDef std_symdefs[] = {
+#include "d_std.h"
+{ 0, 0 },
 }; 
 
 static const SymDef xv65_symdefs[] = {
@@ -54,7 +53,7 @@ static const SymDef io2_symdefs[] = {
 }; 
 
 const char *asm_devices[] = {
-	"stdout",
+	"std",
 	"xv65",
 	"microio",
 	"io2",
@@ -62,8 +61,8 @@ const char *asm_devices[] = {
 };
 
 const SymDef *get_device_symdefs(const char *device) {
-	if (!strcmp(device, "stdout"))
-		return stdout_symdefs;
+	if (!strcmp(device, "std"))
+		return std_symdefs;
 	if (!strcmp(device, "xv65"))
 		return xv65_symdefs;
 	if (!strcmp(device, "microio"))
