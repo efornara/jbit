@@ -2,21 +2,41 @@
 
 standardPalette = [
 	0x000000, # Black
-	0xFFFFFF, # White
-	0xBE1A24, # Red
-	0x30E6C6, # Cyan
-	0xB41AE2, # Purple
-	0x1FD21E, # Green
-	0x211BAE, # Blue
-	0xDFF60A, # Yellow
-	0xB84104, # Orange
-	0x6A3304, # Brown
-	0xFE4A57, # Light Red
+	0xffffff, # White
+	0xbe1a24, # Red
+	0x30e6c6, # Cyan
+	0xb41ae2, # Purple
+	0x1fd21e, # Green
+	0x211bae, # Blue
+	0xdff60a, # Yellow
+	0xb84104, # Orange
+	0x6a3304, # Brown
+	0xfe4a57, # Light Red
 	0x424540, # Dark Gray
-	0x70746F, # Medium Gray
-	0x59FE59, # Light Green
-	0x5F53FE, # Light Blue
-	0xA4A7A2, # Light Gray
+	0x70746f, # Medium Gray
+	0x59fe59, # Light Green
+	0x5f53fe, # Light Blue
+	0xa4a7a2, # Light Gray
+]
+
+# see: http://pixeljoint.com/forum/forum_posts.asp?TID=12795 (DawnBringer)
+db16Palette = [
+	0x140c1c,
+	0x442434,
+	0x30346d,
+	0x4e4a4e,
+	0x854c30,
+	0x346524,
+	0xd04648,
+	0x757161,
+	0x597dce,
+	0xd27d2c,
+	0x8595a1,
+	0x6daa2c,
+	0xd2aa99,
+	0x6dc2ca,
+	0xdad45e,
+	0xdeeed6,
 ]
 
 microioPalette = [
@@ -40,6 +60,7 @@ def merge_palette(accum, palette):
 
 palette = []
 merge_palette(palette, standardPalette)
+merge_palette(palette, db16Palette)
 merge_palette(palette, microioPalette)
 merge_palette(palette, websafePalette)
 
