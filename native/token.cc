@@ -50,6 +50,10 @@ int LineReader::get() {
 	char c = d[i];
 	while (i < len && c == '\r')
 		c = d[++i];
+	if (c == '\x1a') {
+		i = len;
+		return EOL;
+	}
 	if (c == 0 || c == '\n' || c == '\r')
 		return EOL;
 	i++;
@@ -59,10 +63,9 @@ int LineReader::get() {
 bool LineReader::nextline() {
 	while (get() != EOL)
 		;
-	i++;
-	if (i >= len)
+	if (i >= (len - 1))
 		return false;
-	start = i;
+	start = ++i;
 	lineno++;
 	return true;
 }
