@@ -26,7 +26,7 @@ cp $IN/native/io2sim.exe $OUT
 # copy support files
 cp $IN/tools/vga14.rom $OUT
 cp $IN/midp/jbit/res/cga.rom $OUT
-for i in icon silk ; do
+for i in icon silk font ; do
 	../../tools/ipnggen.py $IN/midp/jbit/res/$i.png $OUT/$i.jbr
 done
 
