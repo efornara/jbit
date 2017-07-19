@@ -86,11 +86,6 @@ cross development ([efornara/jbit](https://hub.docker.com/r/efornara/jbit/)):
 	dos      Development setup for MS-DOS (djgpp/watcom cross compilers)
 	doc      Development setup for extra documentation (sheets and mobi)
 
-A small image is also available for trying out the native version of
-jbit:
-
-	busybox  The jbit binary hosted in a busybox environment
-
 Even if you don't use docker, reading the files in
 [dists/docker](dists/docker) can give you a few hints on how to setup
 your own development environment.
