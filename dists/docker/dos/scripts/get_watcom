@@ -1,7 +1,6 @@
 #! /bin/sh
 
 cd /opt
-apt-get install -y wget p7zip
 mkdir watcom
 cd watcom
 wget -nv -c http://downloads.sourceforge.net/project/openwatcom/current-build/ow-snapshot.7z

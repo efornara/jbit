@@ -1,16 +1,15 @@
 #! /bin/sh
 
 cd /opt
-apt-get install -y wget
-wget http://www.mirrorservice.org/sites/ftp.apache.org//ant/binaries/apache-ant-1.9.6-bin.tar.gz
-tar xzf apache-ant-1.9.6-bin.tar.gz
-rm apache-ant-1.9.6-bin.tar.gz
-PATH="$PATH:/opt/apache-ant-1.9.6/bin"
-wget http://downloads.sourceforge.net/project/proguard/proguard/5.2/proguard5.2.1.tar.gz
+wget -nv -c http://www.mirrorservice.org/sites/ftp.apache.org//ant/binaries/apache-ant-1.9.9-bin.tar.gz
+tar xzf apache-ant-1.9.9-bin.tar.gz
+rm apache-ant-1.9.9-bin.tar.gz
+PATH="$PATH:/opt/apache-ant-1.9.9/bin"
+wget -nv -c http://downloads.sourceforge.net/project/proguard/proguard/5.2/proguard5.2.1.tar.gz
 tar xzf proguard5.2.1.tar.gz
 rm proguard5.2.1.tar.gz
-ln -s /opt/proguard5.2.1/lib/proguard.jar apache-ant-1.9.6/lib
-wget http://downloads.sourceforge.net/project/antenna/antenna/Antenna%201.2.1-beta/antenna-bin-1.2.1-beta.jar
-mv antenna-bin-1.2.1-beta.jar apache-ant-1.9.6/lib/
+ln -s /opt/proguard5.2.1/lib/proguard.jar apache-ant-1.9.9/lib
+wget -nv -c http://downloads.sourceforge.net/project/antenna/antenna/Antenna%201.2.1-beta/antenna-bin-1.2.1-beta.jar
+mv antenna-bin-1.2.1-beta.jar apache-ant-1.9.9/lib/
 rm get_midp
 cd /

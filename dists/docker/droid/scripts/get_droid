@@ -1,8 +1,7 @@
 #! /bin/sh
 
 cd /opt
-apt-get install -y wget
-wget http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+wget -nv -c http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
 chmod 755 android-ndk-r10e-linux-x86_64.bin
 ./android-ndk-r10e-linux-x86_64.bin
 rm android-ndk-r10e-linux-x86_64.bin
