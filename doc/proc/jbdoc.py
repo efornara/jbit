@@ -1,4 +1,4 @@
-#! /usr/bin/python2
+#! /usr/bin/python3
 
 #
 # Copyright (C) 2015-2017  Emanuele Fornara
@@ -76,7 +76,7 @@ def resource(res):
 
 def template_resource(res, subs):
 	s = resource(res)
-	for k, v in subs.iteritems():
+	for k, v in subs.items():
 		s = s.replace('__' + k + '__', v)
 	return s
 
@@ -265,7 +265,7 @@ def convert(in_file_name, fmt, out_file_name):
 		elif out_file_name.endswith('.html') or out_file_name.endswith('.htm'):
 			fmt = 'xhtml1'
 		else:
-			raise StandardError('unrecognized output extension')
+			raise Exception('unrecognized output extension')
 	if fmt == 'txt':
 		converter = TextPageConverter()
 	elif fmt == 'dat':
@@ -273,7 +273,7 @@ def convert(in_file_name, fmt, out_file_name):
 	elif fmt == 'xhtml1' or fmt == 'epub' or fmt == 'html5':
 		converter = HTMLPageConverter()
 	else:
-		raise StandardError('unrecognized format')
+		raise Exception('unrecognized format')
 	converter.doc = JBDoc(in_file_name)
 	converter.fmt = fmt
 	converter.f = open(out_file_name, 'w')
