@@ -219,7 +219,7 @@ class HTMLPageConverter(PageConverter):
 		def out_section(kind, content, indexed):
 			if kind == '#':
 				if indir:
-					key = hashlib.sha1(content).hexdigest()
+					key = hashlib.sha1(content.encode('ascii')).hexdigest()
 					if (key + '.gif') in indir:
 						file = key[:8]
 						self.outln('<div style="width: 5.12cm;"><img src="' +
