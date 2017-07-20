@@ -4,8 +4,8 @@
 # VARIABLES
 #
 
-CXXFLAGS ?= -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
-LDFLAGS ?= -s
+CXXFLAGS = -fno-exceptions -fno-rtti -Wall -Os -fomit-frame-pointer
+LDFLAGS = -s
 
 SYMS = d_xv65.h d_io2.h d_mio.h d_std.h _jbfmt.h
 
