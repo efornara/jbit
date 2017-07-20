@@ -28,6 +28,11 @@ limited wap site is also available:
 
 ## News
 
+### JBit 2.1.3
+
+Device std replaces stdout.  Completed FONT tileset.
+io2sim: Minimal GAMESET implementation.
+
 ### JBit 2.1.2
 
 io2sim: Images and IPNGGEN. MS-DOS minimal libretro frontend.
